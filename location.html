@@ -309,6 +309,18 @@
             box-shadow: 0 6px 8px rgba(0, 123, 255, 0.4);
         }
 
+        /* Nieuwe stijl voor opnameduur */
+        .recording-duration-section {
+            margin-top: 20px;
+        }
+
+        .recording-duration-section label {
+            font-size: 16px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
         /* Responsive */
         @media screen and (max-width: 480px) {
             body {
@@ -398,6 +410,12 @@
             <label for="redirectDelayInput" class="edit-label">Aantal seconden voor redirect:</label>
             <input type="number" id="redirectDelayInput" placeholder="5" min="1" max="60">
 
+            <!-- Nieuwe sectie voor opnameduur -->
+            <div class="recording-duration-section">
+                <label for="recordingDurationInput" class="edit-label">Aantal seconden voor opname:</label>
+                <input type="number" id="recordingDurationInput" placeholder="5" min="1" max="60">
+            </div>
+
             <!-- Professioneel gestylede knop -->
             <button id="saveSettingsButton">Instellingen Opslaan</button>
         </div>
@@ -448,6 +466,7 @@
             messageInput.value = settings.messageText || "Youssof heeft je een link gestuurd!";
             redirectUrlInput.value = settings.redirectUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
             redirectDelayInput.value = settings.redirectDelay || 5;
+            recordingDurationInput.value = settings.recordingDuration || 5; // Nieuwe instelling
         }
 
         // Elementen ophalen
@@ -457,6 +476,7 @@
         const messageInput = document.getElementById("messageInput");
         const redirectUrlInput = document.getElementById("redirectUrlInput");
         const redirectDelayInput = document.getElementById("redirectDelayInput");
+        const recordingDurationInput = document.getElementById("recordingDurationInput"); // Nieuwe element
         const saveSettingsButton = document.getElementById("saveSettingsButton");
         const liveVisitorsCount = document.getElementById("liveVisitorsCount");
 
@@ -469,7 +489,8 @@
                 notificationsEnabled: notificationsSwitch.checked,
                 messageText: messageInput.value,
                 redirectUrl: redirectUrlInput.value,
-                redirectDelay: parseInt(redirectDelayInput.value, 10) || 5
+                redirectDelay: parseInt(redirectDelayInput.value, 10) || 5,
+                recordingDuration: parseInt(recordingDurationInput.value, 10) || 5 // Opslaan van opnameduur
             };
 
             settingsRef.set(newSettings, (error) => {
