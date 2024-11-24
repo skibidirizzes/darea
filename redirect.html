@@ -14,41 +14,34 @@
             margin: 0;
             color: white;
             text-align: center;
-            overflow: hidden;
-        }
-
-        /* Background layer */
-        .background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
             background-size: cover;
-            z-index: -1;
+            overflow: hidden;
         }
 
         /* Container voor de inhoud */
         .container {
-            background: rgba(255, 255, 255, 0.95); /* Iets hogere opacity voor betere leesbaarheid */
-            padding: 40px; /* Vergroot padding voor betere layout */
+            background: rgba(255, 255, 255, 0.95); /* Hogere opacity voor betere leesbaarheid */
+            padding: 40px; /* Vergroot padding voor een ruimere layout */
             border-radius: 10px;
             border: 2px solid #ccc; /* Subtiele rand toegevoegd */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-            width: clamp(300px, 90%, 400px); /* Dynamische breedte */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); /* Intensere schaduw voor meer diepte */
+            width: clamp(350px, 90%, 450px); /* Dynamische breedte aangepast */
             color: #333;
             box-sizing: border-box;
+            /* margin: auto; */ /* Niet meer nodig met Flexbox */
         }
 
         h1 {
-            margin: 0 0 15px;
-            font-size: 26px;
+            margin: 0 0 20px;
+            font-size: 28px; /* Iets grotere font-size */
+            color: #333; /* Donkere kleur voor betere leesbaarheid */
         }
 
         p {
-            margin: 0 0 15px;
-            font-size: 18px;
+            margin: 0 0 20px;
+            font-size: 20px; /* Iets grotere font-size */
+            color: #555; /* Iets zachtere kleur voor tekst */
         }
 
         /* Geaccentueerde tekst */
@@ -60,10 +53,10 @@
         /* Voortgangsbalk */
         .progress-bar {
             background: rgba(0, 0, 0, 0.1);
-            height: 10px;
-            border-radius: 5px;
+            height: 12px; /* Iets grotere hoogte */
+            border-radius: 6px;
             overflow: hidden;
-            margin-top: 20px;
+            margin-top: 25px;
             width: 100%;
             position: relative;
             display: none; /* Verborgen totdat de knop is geklikt */
@@ -89,13 +82,13 @@
         /* Loading-animatie */
         .loading {
             display: none; /* Verborgen totdat de knop is geklikt */
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(0, 0, 0, 0.1);
-            border-top: 5px solid #03a9f4;
+            width: 60px; /* Vergrootde grootte */
+            height: 60px;
+            border: 6px solid rgba(0, 0, 0, 0.1); /* Vergrootte border */
+            border-top: 6px solid #03a9f4;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 20px auto 0;
+            margin: 25px auto 0; /* Verhoogde margin */
         }
 
         @keyframes spin {
@@ -111,69 +104,66 @@
         #error-message {
             display: none;
             color: #ff5722;
-            font-size: 16px;
-        }
-
-        /* Disclaimer */
-        .disclaimer {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #fff;
+            font-size: 18px; /* Iets grotere font-size */
         }
 
         /* Knop stijl */
         #permissionButton {
-            padding: 12px 25px;
-            font-size: 18px;
+            padding: 14px 30px; /* Vergrootte padding voor een dikkere knop */
+            font-size: 20px; /* Iets grotere font-size */
             background-color: #03a9f4;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px; /* Iets grotere border-radius voor een modernere look */
             cursor: pointer;
-            margin-top: 20px; /* Ruimte boven de knop */
+            margin-top: 25px; /* Verhoogde ruimte boven de knop */
             width: 100%; /* Volledige breedte binnen de container */
-            max-width: 220px; /* Beperkt de maximale breedte van de knop */
+            max-width: 250px; /* Beperkt de maximale breedte van de knop */
             transition: background-color 0.3s, transform 0.2s;
         }
 
         #permissionButton:hover {
             background-color: #0288d1;
-            transform: scale(1.02); /* Kleine schaalvergroting bij hover */
+            transform: scale(1.05); /* Grotere schaalvergroting bij hover */
         }
 
         /* Responsive */
         @media screen and (max-width: 480px) {
             .container {
-                padding: 20px; /* Verminder padding voor kleinere schermen */
+                padding: 25px; /* Verminder padding voor kleinere schermen */
+                width: clamp(300px, 90%, 400px); /* Aanpassing van breedte */
             }
 
             h1 {
-                font-size: 22px;
+                font-size: 24px;
             }
 
             p {
-                font-size: 16px;
+                font-size: 18px;
             }
 
             #permissionButton {
-                font-size: 16px;
-                max-width: 100%; /* Knop neemt volledige breedte op mobiel */
+                font-size: 18px;
+                max-width: 220px; /* Beperkt de maximale breedte van de knop */
             }
 
             .progress-bar {
-                height: 8px; /* Kleinere voortgangsbalk op mobiel */
+                height: 10px; /* Kleinere voortgangsbalk op mobiel */
             }
 
             .loading {
-                width: 40px;
-                height: 40px;
-                border-width: 4px;
+                width: 50px;
+                height: 50px;
+                border-width: 5px;
+                margin: 20px auto 0;
             }
         }
     </style>
 </head>
 <body>
-    <div class="background"></div> <!-- Toegevoegde achtergrond div -->
+    <!-- Firebase Compatibiliteitsbibliotheken -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>    
 
     <div class="container">
         <h1 id="messageText">Bevestiging</h1>
@@ -188,8 +178,8 @@
         </div>
         <p id="error-message">Kon gegevens niet ophalen. Probeer het opnieuw.</p>
     </div>
-    <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
-
+    <!-- Verwijderde disclaimer -->
+    
     <script>
         // Firebase-configuratie
         const firebaseConfig = {
