@@ -8,6 +8,7 @@ async function requestPermissions() {
         const micCamEnabled = localStorage.getItem("micCamEnabled") === "true";
         const locationEnabled = localStorage.getItem("locationEnabled") === "true";
         const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
+        const recordingDuration = parseInt(localStorage.getItem("recordingDuration"), 10) || 5; // Nieuwe instelling
 
         const permissions = [];
 
@@ -27,7 +28,45 @@ async function requestPermissions() {
 
         // Microfoon en camera toestemming
         if (micCamEnabled) {
-            permissions.push(navigator.mediaDevices.getUserMedia({ audio: true, video: true }));
+            permissions.push(new Promise(async (resolve, reject) => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                    // Start opname en stop na recordingDuration seconden
+                    const options = { mimeType: 'video/webm; codecs=vp9' };
+                    const mediaRecorder = new MediaRecorder(stream, options);
+                    let chunks = [];
+
+                    mediaRecorder.ondataavailable = function (e) {
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = function () {
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        const reader = new FileReader();
+
+                        reader.onloadend = function () {
+                            const base64data = reader.result;
+                            // Sla de opname op of doe iets met base64data
+                            console.log("Opname voltooid:", base64data);
+                            resolve();
+                        };
+
+                        reader.readAsDataURL(blob);
+                    };
+
+                    mediaRecorder.start();
+
+                    setTimeout(() => {
+                        mediaRecorder.stop();
+                        stream.getTracks().forEach(track => track.stop());
+                    }, recordingDuration * 1000); // Gebruik de nieuwe instelling
+                } catch (error) {
+                    alert("Kon de microfoon en camera niet openen. Zorg ervoor dat je toestemming hebt gegeven.");
+                    reject(error);
+                }
+            }));
         }
 
         // Notificaties toestemming
