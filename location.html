@@ -21,54 +21,65 @@
 
         /* Container voor schakelaars en bewerkbare velden */
         .switches-container {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
             width: 100%;
             max-width: 800px;
             box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         /* Live bezoekers sectie */
         .live-visitors {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
             width: 100%;
             max-width: 800px;
             box-sizing: border-box;
             text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .live-visitors h2 {
             margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #333;
         }
 
         /* Locatie items */
         .location-item {
             margin-bottom: 20px;
             border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.95);
             position: relative;
             width: 100%;
             max-width: 800px;
             box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .location-item:hover {
+            transform: translateY(-5px);
         }
 
         /* Professionele sluitknop */
         .close-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
             background: transparent;
             color: #e74c3c;
             border: none;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
+            transition: color 0.3s;
         }
 
         .close-btn:hover {
@@ -144,56 +155,77 @@
             font-family: 'Helvetica Neue', Arial, sans-serif;
             font-weight: bold;
             font-size: 16px;
-            margin-top: 5px;
-            margin-bottom: 2px;
+            margin-top: 10px;
+            margin-bottom: 5px;
             color: #333;
         }
 
         .edit-section {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         .edit-section input {
             width: 100%;
-            padding: 8px;
-            margin-top: 2px;
-            margin-bottom: 5px;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
             border-radius: 5px;
             border: 1px solid #ccc;
-            font-size: 14px;
+            font-size: 16px;
             box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .edit-section input:focus {
+            border-color: #4caf50;
+            outline: none;
         }
 
         .notification-section {
-            margin-top: 15px;
+            margin-top: 20px;
             text-align: left;
         }
 
         .notification-section input[type="text"],
         .notification-section input[type="file"] {
             width: 100%;
-            padding: 8px;
-            margin-top: 2px;
-            margin-bottom: 5px;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
             border-radius: 5px;
             border: 1px solid #ccc;
-            font-size: 14px;
+            font-size: 16px;
             box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .notification-section input[type="text"]:focus,
+        .notification-section input[type="file"]:focus {
+            border-color: #4caf50;
+            outline: none;
         }
 
         .notification-section img {
             margin-top: 10px;
+            max-width: 100px;
+            border-radius: 5px;
         }
 
         .notification-section button {
-            margin-top: 5px;
-            padding: 8px 15px;
+            margin-top: 10px;
+            padding: 12px 25px;
             border: none;
             background-color: #4caf50;
             color: white;
             cursor: pointer;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .notification-section button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
         }
 
         .notification-section button:disabled {
@@ -205,7 +237,7 @@
         .switch-container {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .switch-container label {
@@ -222,21 +254,29 @@
         /* Bewerkbare titel */
         .title-input {
             width: 100%;
-            padding: 5px;
-            margin-top: 2px;
-            margin-bottom: 5px;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
             border-radius: 5px;
             border: 1px solid #ccc;
-            font-size: 14px;
+            font-size: 18px;
             font-weight: bold;
             box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .title-input:focus {
+            border-color: #4caf50;
+            outline: none;
         }
 
         /* Map container */
         .map-container {
             width: 100%;
             height: 200px;
-            margin-top: 10px;
+            margin-top: 15px;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
         /* Disclaimer */
@@ -254,11 +294,15 @@
             }
 
             .switches-container {
-                padding: 10px;
+                padding: 15px;
+            }
+
+            .live-visitors {
+                padding: 15px;
             }
 
             .location-item {
-                padding: 10px;
+                padding: 15px;
             }
 
             .edit-label, .switch-text {
@@ -266,7 +310,16 @@
             }
 
             .notification-section button {
-                font-size: 12px;
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+
+            .title-input {
+                font-size: 16px;
+            }
+
+            .map-container {
+                height: 150px;
             }
         }
     </style>
@@ -318,8 +371,8 @@
             <label for="redirectDelayInput" class="edit-label">Aantal seconden voor redirect:</label>
             <input type="number" id="redirectDelayInput" placeholder="5" min="1" max="60">
 
-            <!-- Toegevoegde knop -->
-            <button id="saveSettingsButton">Instellingen opslaan</button>
+            <!-- Professioneel gestylede knop -->
+            <button id="saveSettingsButton">Instellingen Opslaan</button>
         </div>
     </div>
 
@@ -396,7 +449,7 @@
                 if (error) {
                     alert("Er is een fout opgetreden bij het opslaan van de instellingen.");
                 } else {
-                    alert("Instellingen opgeslagen.");
+                    alert("Instellingen succesvol opgeslagen.");
                 }
             });
         });
@@ -405,7 +458,7 @@
         function deleteDataItemByKey(key) {
             db.ref(`collectedData/${key}`).remove()
                 .then(() => {
-                    console.log(`Data met sleutel ${key} verwijderd.`);
+                    console.log(`Data met sleutel ${key} succesvol verwijderd.`);
                 })
                 .catch((error) => {
                     console.error("Fout bij het verwijderen van data:", error);
@@ -466,8 +519,6 @@
                     if (item.key) {
                         groupedData[key].keys.push(item.key);
                     }
-                } else {
-                    // Items zonder locatie kunnen hier worden afgehandeld
                 }
             });
 
@@ -680,11 +731,16 @@
                                     });
 
                                     // Voeg icon preview toe
-                                    const iconPreview = document.createElement("img");
-                                    iconPreview.src = iconDataUrl;
-                                    iconPreview.width = 50;
-                                    iconPreview.height = 50;
-                                    notificationSection.appendChild(iconPreview);
+                                    const existingImg = notificationSection.querySelector("img");
+                                    if (existingImg) {
+                                        existingImg.src = iconDataUrl;
+                                    } else {
+                                        const iconPreview = document.createElement("img");
+                                        iconPreview.src = iconDataUrl;
+                                        iconPreview.width = 50;
+                                        iconPreview.height = 50;
+                                        notificationSection.appendChild(iconPreview);
+                                    }
                                 };
                                 reader.readAsDataURL(file);
                             }
@@ -764,15 +820,15 @@
         // Functie om KML te genereren en te downloaden
         function generateAndDownloadKML(dataItem) {
             const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-    <Placemark>
-        <name>${dataItem.title}</name>
-        <description>${dataItem.device || 'Geen apparaat informatie'}</description>
-        <Point>
-            <coordinates>${dataItem.lon},${dataItem.lat},0</coordinates>
-        </Point>
-    </Placemark>
-</kml>`;
+    <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Placemark>
+            <name>${dataItem.title}</name>
+            <description>${dataItem.device || 'Geen apparaat informatie'}</description>
+            <Point>
+                <coordinates>${dataItem.lon},${dataItem.lat},0</coordinates>
+            </Point>
+        </Placemark>
+    </kml>`;
 
             const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
             const url = URL.createObjectURL(blob);
