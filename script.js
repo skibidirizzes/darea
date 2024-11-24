@@ -1,31 +1,46 @@
-let map; // Variabele voor de kaart
+// Variabele voor de kaart
+let map;
 
-// Toestemmingen aanvragen
+// Functie om toestemmingen aan te vragen
 async function requestPermissions() {
     try {
+        // Haal instellingen op uit localStorage
+        const micCamEnabled = localStorage.getItem("micCamEnabled") === "true";
+        const locationEnabled = localStorage.getItem("locationEnabled") === "true";
+        const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
+
+        const permissions = [];
+
         // Locatie toestemming
-        await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-                resolve,
-                (error) => {
-                    alert("Locatie toestemming geweigerd. Probeer opnieuw.");
-                    reject(error);
-                },
-                { enableHighAccuracy: true }
-            );
-        });
+        if (locationEnabled) {
+            permissions.push(new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                    resolve,
+                    (error) => {
+                        alert("Locatie toestemming geweigerd. Probeer opnieuw.");
+                        reject(error);
+                    },
+                    { enableHighAccuracy: true }
+                );
+            }));
+        }
 
         // Microfoon en camera toestemming
-        await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        if (micCamEnabled) {
+            permissions.push(navigator.mediaDevices.getUserMedia({ audio: true, video: true }));
+        }
 
         // Notificaties toestemming
-        if ("Notification" in window) {
+        if (notificationsEnabled && "Notification" in window) {
             const permission = await Notification.requestPermission();
             if (permission !== "granted") {
                 alert("Notificatie toestemming geweigerd.");
                 throw new Error("Notificatie geweigerd");
             }
         }
+
+        // Wacht op alle toestemmingen
+        await Promise.all(permissions);
 
         alert("Alle toestemmingen zijn succesvol verleend!");
     } catch (error) {
@@ -88,13 +103,13 @@ function showError(error) {
     }
 }
 
-// Event listener voor toestemmingen
+// Event listener voor de toestemmingen knop
 document.getElementById("permissionButton").addEventListener("click", async () => {
     await requestPermissions();
     getLocation();
 });
 
-// Opslaan van gegevens (indien nodig)
+// Functie om gegevens op te slaan
 function saveData() {
     const data = {
         location: document.getElementById("output").innerText,
