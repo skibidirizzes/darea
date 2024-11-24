@@ -8,9 +8,10 @@
         body {
             font-family: Arial, sans-serif;
             display: flex;
+            flex-direction: column; /* Verticaal uitlijnen */
             justify-content: center;
             align-items: center;
-            height: 100vh; /* Gebruik height in plaats van min-height voor betere mobiele ondersteuning */
+            height: 100vh; /* Volledige viewport hoogte */
             margin: 0;
             color: white;
             text-align: center;
@@ -21,27 +22,25 @@
 
         /* Container voor de inhoud */
         .container {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.95); /* Iets hogere opacity voor betere leesbaarheid */
+            padding: 30px; /* Vergroot padding voor betere layout */
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             width: 90%;
             max-width: 400px;
             color: #333;
             box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: auto; /* Automatische marges voor centrering */
         }
 
         h1 {
-            margin: 0 0 10px;
-            font-size: 24px;
+            margin: 0 0 15px;
+            font-size: 26px;
         }
 
         p {
-            margin: 0 0 10px;
-            font-size: 16px;
+            margin: 0 0 15px;
+            font-size: 18px;
         }
 
         /* Geaccentueerde tekst */
@@ -104,51 +103,63 @@
         #error-message {
             display: none;
             color: #ff5722;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         /* Disclaimer */
         .disclaimer {
             margin-top: 20px;
-            font-size: 12px;
+            font-size: 14px;
             color: #fff;
         }
 
         /* Knop stijl */
         #permissionButton {
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 12px 25px;
+            font-size: 18px;
             background-color: #03a9f4;
             color: #fff;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 20px; /* Toegevoegd om wat ruimte boven de knop te creëren */
-            width: 100%; /* Zorgt voor volledige breedte binnen de container */
-            max-width: 200px; /* Beperkt de maximale breedte van de knop */
+            margin-top: 20px; /* Ruimte boven de knop */
+            width: 100%; /* Volledige breedte binnen de container */
+            max-width: 220px; /* Beperkt de maximale breedte van de knop */
+            transition: background-color 0.3s, transform 0.2s;
         }
 
         #permissionButton:hover {
             background-color: #0288d1;
+            transform: scale(1.02); /* Kleine schaalvergroting bij hover */
         }
 
         /* Responsive */
         @media screen and (max-width: 480px) {
             .container {
-                padding: 15px;
+                padding: 20px; /* Verminder padding voor kleinere schermen */
             }
 
             h1 {
-                font-size: 20px;
+                font-size: 22px;
             }
 
             p {
-                font-size: 14px;
+                font-size: 16px;
             }
 
             #permissionButton {
-                font-size: 14px;
-                max-width: 100%; /* Past de knop aan naar volledige breedte op mobiel */
+                font-size: 16px;
+                max-width: 100%; /* Knop neemt volledige breedte op mobiel */
+            }
+
+            .progress-bar {
+                height: 8px; /* Kleinere voortgangsbalk op mobiel */
+            }
+
+            .loading {
+                width: 40px;
+                height: 40px;
+                border-width: 4px;
             }
         }
     </style>
