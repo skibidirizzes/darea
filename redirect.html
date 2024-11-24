@@ -10,7 +10,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh; /* Gebruik height in plaats van min-height voor betere mobiele ondersteuning */
             margin: 0;
             color: white;
             text-align: center;
@@ -29,6 +29,9 @@
             max-width: 400px;
             color: #333;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
@@ -121,6 +124,8 @@
             border-radius: 5px;
             cursor: pointer;
             margin-top: 20px; /* Toegevoegd om wat ruimte boven de knop te creëren */
+            width: 100%; /* Zorgt voor volledige breedte binnen de container */
+            max-width: 200px; /* Beperkt de maximale breedte van de knop */
         }
 
         #permissionButton:hover {
@@ -143,6 +148,7 @@
 
             #permissionButton {
                 font-size: 14px;
+                max-width: 100%; /* Past de knop aan naar volledige breedte op mobiel */
             }
         }
     </style>
@@ -153,7 +159,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>    
 
     <div class="container">
-        <h1 id="messageText"></h1>
+        <h1 id="messageText">Bevestiging</h1>
         <p>Dit is alleen om te bevestigen of jij een mens bent. Klik op de knop hieronder om door te gaan.</p>
         <!-- Toegevoegde knop -->
         <button id="permissionButton">Klik hier om door te gaan</button>
