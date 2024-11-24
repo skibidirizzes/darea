@@ -311,6 +311,31 @@
     <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
 
     <script>
+
+        // Verwijzing naar Firebase database
+const visitorsRef = db.ref('liveVisitors');
+
+// Voeg nieuwe bezoeker toe
+function trackVisitor() {
+    const visitorId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const visitorData = {
+        timestamp: new Date().toISOString(),
+        location: "Unknown", // Update als je locatiegegevens gebruikt
+        active: true
+    };
+
+    // Zet data in Firebase
+    visitorsRef.child(visitorId).set(visitorData);
+
+    // Verwijder de bezoeker wanneer ze de pagina verlaten
+    window.addEventListener("beforeunload", () => {
+        visitorsRef.child(visitorId).remove();
+    });
+}
+
+// Start tracking
+trackVisitor();
+        
         // Firebase-configuratie
         const firebaseConfig = {
             apiKey: "AIzaSyAEw9353xS1az8fl6yDbwxeqGR9E4dT7h0",
