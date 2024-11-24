@@ -287,6 +287,28 @@
             text-align: center;
         }
 
+        /* Professionele knop stijl */
+        #saveSettingsButton {
+            padding: 12px 25px;
+            font-size: 16px;
+            background-color: #007BFF; /* Professionele blauwe kleur */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            width: 100%;
+            max-width: 220px;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+        }
+
+        #saveSettingsButton:hover {
+            background-color: #0056b3;
+            transform: scale(1.02);
+            box-shadow: 0 6px 8px rgba(0, 123, 255, 0.4);
+        }
+
         /* Responsive */
         @media screen and (max-width: 480px) {
             body {
@@ -320,6 +342,11 @@
 
             .map-container {
                 height: 150px;
+            }
+
+            #saveSettingsButton {
+                font-size: 14px;
+                max-width: 100%;
             }
         }
     </style>
