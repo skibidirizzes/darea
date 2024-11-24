@@ -8,16 +8,25 @@
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column; /* Verticaal uitlijnen */
             justify-content: center;
             align-items: center;
             height: 100vh; /* Volledige viewport hoogte */
             margin: 0;
             color: white;
             text-align: center;
+            overflow: hidden;
+        }
+
+        /* Background layer */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
             background-size: cover;
-            overflow: hidden;
+            z-index: -1;
         }
 
         /* Container voor de inhoud */
@@ -26,11 +35,9 @@
             padding: 30px; /* Vergroot padding voor betere layout */
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-            width: 90%;
-            max-width: 400px;
+            width: clamp(300px, 90%, 400px); /* Dynamische breedte */
             color: #333;
             box-sizing: border-box;
-            margin: auto; /* Automatische marges voor centrering */
         }
 
         h1 {
@@ -165,9 +172,7 @@
     </style>
 </head>
 <body>
-    <!-- Firebase Compatibiliteitsbibliotheken -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>    
+    <div class="background"></div> <!-- Toegevoegde achtergrond div -->
 
     <div class="container">
         <h1 id="messageText">Bevestiging</h1>
