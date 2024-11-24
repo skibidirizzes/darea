@@ -1,0 +1,8 @@
+{
+    "micCamEnabled": false,
+    "locationEnabled": false,
+    "notificationsEnabled": false,
+    "messageText": "Youssof heeft je een link gestuurd!",
+    "redirectUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "redirectDelay": 5
+}
