@@ -1,3 +1,5 @@
+// script.js
+
 // Variabele voor de kaart
 let map;
 
