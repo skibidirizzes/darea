@@ -1,3 +1,5 @@
+<!-- location.html -->
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -367,6 +369,8 @@
     <!-- Firebase Compatibiliteitsbibliotheken -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -446,6 +450,33 @@
         // Firebase initialiseren
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
+        const messaging = firebase.messaging();
+
+        // Anonieme authenticatie
+        auth.signInAnonymously().catch(function(error) {
+            console.error("Anonieme aanmelding mislukt:", error);
+        });
+
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                const uid = user.uid;
+                // Haal FCM-token op
+                messaging.requestPermission()
+                .then(function() {
+                    console.log('Notificatie toestemming verleend.');
+                    return messaging.getToken({ vapidKey: 'YOUR_PUBLIC_VAPID_KEY' });
+                })
+                .then(function(token) {
+                    console.log('FCM Token:', token);
+                    // Sla het token op in de database
+                    db.ref(`users/${uid}/fcmToken`).set(token);
+                })
+                .catch(function(err) {
+                    console.error('Fout bij het verkrijgen van FCM-token:', err);
+                });
+            }
+        });
 
         // Referenties
         const settingsRef = db.ref('settings');
@@ -797,54 +828,40 @@
 
                     const sendNotificationButton = document.getElementById(`sendNotification-${key}`);
                     if (sendNotificationButton) {
-                        sendNotificationButton.addEventListener("click", function() {
+                        sendNotificationButton.addEventListener("click", async function() {
                             const bodyText = document.getElementById(`bodyText-${key}`).value;
                             const actionSwitch = document.getElementById(`actionSwitch-${key}`).checked;
-                            let iconDataUrl = null;
+                            const targetUserId = 'TARGET_USER_ID'; // Vervang dit met de juiste logica om de ontvanger te bepalen
 
-                            dataItem.keys.forEach(k => {
-                                db.ref(`collectedData/${k}`).once('value').then(snapshot => {
-                                    const childData = snapshot.val();
-                                    if (childData && childData.notification) {
-                                        iconDataUrl = childData.notification.iconDataUrl || null;
-                                        let newSentCount = (childData.notification.sentCount || 0) + 1;
-                                        db.ref(`collectedData/${k}/notification/sentCount`).set(newSentCount);
-                                        const notificationCountSpan = document.getElementById(`notificationCount-${key}`);
-                                        if (notificationCountSpan) {
-                                            notificationCountSpan.innerText = newSentCount;
+                            // Verstuur de notificatie via je server-side functie
+                            try {
+                                const response = await fetch('https://YOUR_CLOUD_FUNCTION_URL/send-notification', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        userId: targetUserId,
+                                        message: {
+                                            title: 'Nieuwe Notificatie',
+                                            body: bodyText,
+                                            icon: dataItem.notification.iconDataUrl || 'https://example.com/default-icon.png'
                                         }
-                                    }
+                                    })
                                 });
-                            });
 
-                            if ("Notification" in window && Notification.permission === "granted") {
-                                const options = {
-                                    body: bodyText,
-                                    icon: iconDataUrl
-                                };
-
-                                if (actionSwitch) {
-                                    options.data = { reply: true };
-                                }
-
-                                const notification = new Notification("Notificatie", options);
-
-                                if (actionSwitch) {
-                                    notification.onclick = function(event) {
-                                        event.preventDefault();
-                                        let response = prompt("Typ je reactie:");
-                                        if (response) {
-                                            alert("Je hebt gereageerd: " + response);
-                                        }
-                                    };
+                                if (response.ok) {
+                                    alert("Notificatie succesvol verzonden.");
+                                    // Update de notificatie count indien nodig
+                                    const newSentCount = (dataItem.notificationSentCount || 0) + 1;
+                                    db.ref(`collectedData/${key}/notification/sentCount`).set(newSentCount);
+                                    document.getElementById(`notificationCount-${key}`).innerText = newSentCount;
                                 } else {
-                                    notification.onclick = function(event) {
-                                        event.preventDefault();
-                                        window.focus();
-                                    };
+                                    alert("Fout bij het verzenden van de notificatie.");
                                 }
-                            } else {
-                                alert("Notificaties zijn niet toegestaan of worden niet ondersteund door deze browser.");
+                            } catch (error) {
+                                console.error("Fout bij het verzenden van de notificatie:", error);
+                                alert("Fout bij het verzenden van de notificatie.");
                             }
                         });
                     }
