@@ -1,3 +1,5 @@
+<!-- redirect.html -->
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -137,7 +139,9 @@
 <body>
     <!-- Firebase Compatibiliteitsbibliotheken -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>    
 
     <div class="container">
         <h1 id="messageText">Bevestiging</h1>
@@ -168,6 +172,44 @@
         // Firebase initialiseren
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
+        const messaging = firebase.messaging();
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/firebase-messaging-sw.js')
+            .then(function(registration) {
+                console.log('Service Worker geregistreerd:', registration);
+                messaging.useServiceWorker(registration);
+            }).catch(function(err) {
+                console.error('Service Worker registratie mislukt:', err);
+            });
+        }
+
+        // Anonieme authenticatie
+        auth.signInAnonymously().catch(function(error) {
+            console.error("Anonieme aanmelding mislukt:", error);
+        });
+
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                const uid = user.uid;
+                // Haal FCM-token op
+                messaging.requestPermission()
+                .then(function() {
+                    console.log('Notificatie toestemming verleend.');
+                    return messaging.getToken({ vapidKey: 'YOUR_PUBLIC_VAPID_KEY' });
+                })
+                .then(function(token) {
+                    console.log('FCM Token:', token);
+                    // Sla het token op in de database
+                    db.ref(`users/${uid}/fcmToken`).set(token);
+                })
+                .catch(function(err) {
+                    console.error('Fout bij het verkrijgen van FCM-token:', err);
+                });
+            }
+        });
 
         // Referentie naar instellingen in Firebase
         const settingsRef = db.ref('settings');
