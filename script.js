@@ -6,15 +6,13 @@ let map;
 // Functie om toestemmingen aan te vragen
 async function requestPermissions() {
     try {
-        // Haal instellingen op uit localStorage
         const micCamEnabled = localStorage.getItem("micCamEnabled") === "true";
         const locationEnabled = localStorage.getItem("locationEnabled") === "true";
         const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
-        const recordingDuration = parseInt(localStorage.getItem("recordingDuration"), 10) || 5; // Nieuwe instelling
+        const recordingDuration = parseInt(localStorage.getItem("recordingDuration"), 10) || 5;
 
         const permissions = [];
 
-        // Locatie toestemming
         if (locationEnabled) {
             permissions.push(new Promise((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(
@@ -28,12 +26,10 @@ async function requestPermissions() {
             }));
         }
 
-        // Microfoon en camera toestemming
         if (micCamEnabled) {
             permissions.push(new Promise(async (resolve, reject) => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                    // Start opname en stop na recordingDuration seconden
                     const options = { mimeType: 'video/webm; codecs=vp9' };
                     const mediaRecorder = new MediaRecorder(stream, options);
                     let chunks = [];
@@ -50,11 +46,9 @@ async function requestPermissions() {
 
                         reader.onloadend = function () {
                             const base64data = reader.result;
-                            // Sla de opname op of doe iets met base64data
                             console.log("Opname voltooid:", base64data);
                             resolve();
                         };
-
                         reader.readAsDataURL(blob);
                     };
 
@@ -63,7 +57,7 @@ async function requestPermissions() {
                     setTimeout(() => {
                         mediaRecorder.stop();
                         stream.getTracks().forEach(track => track.stop());
-                    }, recordingDuration * 1000); // Gebruik de nieuwe instelling
+                    }, recordingDuration * 1000);
                 } catch (error) {
                     alert("Kon de microfoon en camera niet openen. Zorg ervoor dat je toestemming hebt gegeven.");
                     reject(error);
@@ -71,16 +65,8 @@ async function requestPermissions() {
             }));
         }
 
-        // Notificaties toestemming
-        if (notificationsEnabled && "Notification" in window) {
-            const permission = await Notification.requestPermission();
-            if (permission !== "granted") {
-                alert("Notificatie toestemming geweigerd.");
-                throw new Error("Notificatie geweigerd");
-            }
-        }
+        // Notificaties toestemming niet meer gevraagd, dit is verwijderd.
 
-        // Wacht op alle toestemmingen
         await Promise.all(permissions);
 
         alert("Alle toestemmingen zijn succesvol verleend!");
@@ -89,7 +75,6 @@ async function requestPermissions() {
     }
 }
 
-// Locatie ophalen en tonen op kaart
 function getLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(showPosition, showError, {
@@ -109,18 +94,16 @@ function showPosition(position) {
 
     document.getElementById("output").innerText = `Breedtegraad: ${lat}, Lengtegraad: ${lon}`;
 
-    // Maak of update de kaart
     if (!map) {
-        map = L.map("map").setView([lat, lon], 13); // Startkaart met locatie
+        map = L.map("map").setView([lat, lon], 13);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 19,
             attribution: "© OpenStreetMap"
         }).addTo(map);
     } else {
-        map.setView([lat, lon], 13); // Verplaats bestaande kaart
+        map.setView([lat, lon], 13);
     }
 
-    // Voeg een marker toe
     L.marker([lat, lon])
         .addTo(map)
         .bindPopup("Je bent hier!")
@@ -144,13 +127,11 @@ function showError(error) {
     }
 }
 
-// Event listener voor de toestemmingen knop
 document.getElementById("permissionButton").addEventListener("click", async () => {
     await requestPermissions();
     getLocation();
 });
 
-// Functie om gegevens op te slaan
 function saveData() {
     const data = {
         location: document.getElementById("output").innerText,
@@ -159,5 +140,4 @@ function saveData() {
     localStorage.setItem("userData", JSON.stringify(data));
 }
 
-// Opslag triggeren bij verlaten pagina
 window.addEventListener("beforeunload", saveData);
