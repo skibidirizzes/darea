@@ -1,105 +1,48 @@
-<!-- location.html -->
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Opgeslagen Gegevens</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Settings</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            padding: 20px;
+            font-family: sans-serif;
+            background-color: #f0f0f0;
             margin: 0;
-            background: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: #333;
-            overflow-x: hidden;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .setting-row {
             display: flex;
-            flex-direction: column;
             align-items: center;
-        }
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
 
-        .switches-container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 800px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        .setting-row:last-child {
+            border-bottom: none;
+             padding-bottom: 0px;
 
-        .live-visitors {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 800px;
-            box-sizing: border-box;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
-        .live-visitors h2 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-            color: #333;
-        }
-
-        .location-item {
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            padding: 20px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.95);
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .location-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: transparent;
-            color: #e74c3c;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .close-btn:hover {
-            color: #c0392b;
-        }
-
-        .close-btn::before {
-            content: '\2715';
-        }
-
-        .switch {
+        .toggle-switch {
             position: relative;
             display: inline-block;
             width: 50px;
             height: 24px;
-            margin-right: 10px;
-            vertical-align: middle;
         }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
+        .toggle-switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
         }
 
         .slider {
@@ -110,579 +53,236 @@
             right: 0;
             bottom: 0;
             background-color: #ccc;
+            -webkit-transition: .4s;
             transition: .4s;
             border-radius: 24px;
+
         }
 
-        .slider::before {
+         .slider:before {
             position: absolute;
             content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
             background-color: white;
+             -webkit-transition: .4s;
             transition: .4s;
-            border-radius: 50%;
+              border-radius: 50%;
+
+
         }
 
         input:checked + .slider {
-            background-color: #4caf50;
+          background-color: #4CAF50;
         }
 
         input:focus + .slider {
-            box-shadow: 0 0 1px #4caf50;
+         box-shadow: 0 0 1px #4CAF50;
         }
 
-        input:checked + .slider::before {
-            transform: translateX(26px);
+        input:checked + .slider:before {
+          -webkit-transform: translateX(26px);
+          -ms-transform: translateX(26px);
+           transform: translateX(26px);
+
         }
 
-        label {
-            font-size: 16px;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            font-weight: bold;
-        }
 
-        .edit-label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: bold;
-            font-size: 16px;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .edit-section {
-            margin-bottom: 20px;
-        }
-
-        .edit-section input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
-
-        .edit-section input:focus {
-            border-color: #4caf50;
-            outline: none;
-        }
-
-        .switch-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .switch-container label {
-            margin: 0;
-        }
-
-        .switch-text {
+        .label {
             margin-left: 10px;
-            font-size: 16px;
-            color: #333;
-            font-weight: bold;
+            flex: 1;
         }
-
-        .title-input {
-            width: 100%;
-            padding: 10px;
+        .input-field {
             margin-top: 5px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 18px;
-            font-weight: bold;
+            width: 100%;
+            padding: 8px;
             box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
+             border: 1px solid #ddd;
+            border-radius: 4px;
 
-        .title-input:focus {
-            border-color: #4caf50;
-            outline: none;
         }
+          .input-row {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
 
-        .map-container {
-            width: 100%;
-            height: 200px;
-            margin-top: 15px;
-            border-radius: 10px;
-            overflow: hidden;
         }
-
-        .disclaimer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #fff;
-            text-align: center;
-        }
-
-        #saveSettingsButton {            padding: 12px 25px;
-            font-size: 16px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
-            width: 100%;
-            max-width: 220px;
-            margin-top: 10px;
-            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
-        }
-
-        #saveSettingsButton:hover {
-            background-color: #0056b3;
-            transform: scale(1.02);
-            box-shadow: 0 6px 8px rgba(0, 123, 255, 0.4);
-        }
-
-        .recording-duration-section {
-            margin-top: 20px;
-        }
-
-        .recording-duration-section label {
-            font-size: 16px;
-            font-weight: bold;
-            display: block;
+         .input-row label {
             margin-bottom: 5px;
         }
+        .save-button {
+           background-color: #007bff;
+           color: white;
+           padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
 
-        @media screen and (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-
-            .switches-container {
-                padding: 15px;
-            }
-
-            .live-visitors {
-                padding: 15px;
-            }
-
-            .location-item {
-                padding: 15px;
-            }
-
-            .edit-label, .switch-text {
-                font-size: 14px;
-            }
-
-            .title-input {
-                font-size: 16px;
-            }
-
-            .map-container {
-                height: 150px;
-            }
-
-            #saveSettingsButton {
-                font-size: 14px;
-                max-width: 100%;
-            }
         }
+
+          .data-section {
+             margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+             border: 1px solid #ddd;
+             border-radius: 4px;
+
+         }
+
     </style>
 </head>
 <body>
-    <!-- Firebase Compatibiliteitsbibliotheken -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <div class="container">
+        <h2>Opgeslagen Gegevens</h2>
+        <div class="setting-row">
+             <label class="toggle-switch">
+              <input type="checkbox" checked>
+                <span class="slider"></span>
+             </label>
+           <span class="label">Microfoon en Camera toestemming inschakelen</span>
+        </div>
 
-    <h1>Opgeslagen Gegevens</h1>
-
-    <div class="switches-container">
-        <!-- On/Off schakelaars -->
-        <div class="switch-container">
-            <label class="switch">
-                <input type="checkbox" id="micCamSwitch">
+         <div class="setting-row">
+              <label class="toggle-switch">
+               <input type="checkbox" checked>
                 <span class="slider"></span>
             </label>
-            <span class="switch-text">Microfoon en Camera toestemming inschakelen</span>
+           <span class="label">Locatie toestemming inschakelen</span>
         </div>
 
-        <div class="switch-container">
-            <label class="switch">
-                <input type="checkbox" id="locationSwitch">
-                <span class="slider"></span>
+         <div class="setting-row">
+               <label class="toggle-switch">
+               <input type="checkbox" checked>
+               <span class="slider"></span>
             </label>
-            <span class="switch-text">Locatie toestemming inschakelen</span>
+           <span class="label">Notificatie toestemming inschakelen</span>
         </div>
 
-        <div class="switch-container">
-            <label class="switch">
-                <input type="checkbox" id="notificationsSwitch">
-                <span class="slider"></span>
-            </label>
-            <span class="switch-text">Notificatie toestemming inschakelen</span>
+        <div class="input-row">
+            <label>Bewerk de berichttekst:</label>
+            <input type="text" class="input-field" value="ee">
         </div>
 
-        <div class="edit-section">
-            <label for="messageInput" class="edit-label">Bewerk de berichttekst:</label>
-            <input type="text" id="messageInput" placeholder="Youssof heeft je een link gestuurd!">
-
-            <label for="redirectUrlInput" class="edit-label">Voer de redirect URL in:</label>
-            <input type="text" id="redirectUrlInput" placeholder="https://example.com">
-
-            <label for="redirectDelayInput" class="edit-label">Aantal seconden voor redirect:</label>
-            <input type="number" id="redirectDelayInput" placeholder="5" min="1" max="60">
-
-            <div class="recording-duration-section">
-                <label for="recordingDurationInput" class="edit-label">Aantal seconden voor opname:</label>
-                <input type="number" id="recordingDurationInput" placeholder="5" min="1" max="60">
-            </div>
-
-            <button id="saveSettingsButton">Instellingen Opslaan</button>
+        <div class="input-row">
+           <label>Voer de redirect URL in:</label>
+           <input type="text" class="input-field" value="ee">
         </div>
+
+          <div class="input-row">
+            <label>Aantal seconden voor redirect:</label>
+            <input type="text" class="input-field" value="4">
+        </div>
+         <div class="input-row">
+             <label>Aantal seconden voor opname:</label>
+            <input type="text" class="input-field" value="4">
+         </div>
+
+        <button class="save-button">Instellingen Opslaan</button>
+          <div class="data-section">
+            <h3>Collected Data:</h3>
+            <ul id="data-list">
+             </ul>
+
+           </div>
+
+
     </div>
 
-    <div class="live-visitors">
-        <h2>Live Bezoekers: <span id="liveVisitorsCount">0</span></h2>
-    </div>
 
-    <div id="saved-locations"></div>
+<script>
+  // Example of collecting data
+  function updateData() {
+      const dataList = document.getElementById('data-list');
+    dataList.innerHTML = "";
 
-    <p class="disclaimer">Dit is een schoolproject en er wordt op geen enkele manier misbruik van gemaakt.</p>
+    // Function to get battery percentage
+     const getBattery = async () => {
+          if (navigator.getBattery) {
+             try{
+                   const battery = await navigator.getBattery();
+                  dataList.innerHTML += `<li>Battery Percentage:  ${(battery.level*100).toFixed(0)}% </li>`;
 
-    <script>
-        // Firebase-configuratie
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DB_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
-        };
+             } catch(e){
+              console.log("error reading battery: ", e);
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
-
-        // Anonieme authenticatie
-        auth.signInAnonymously().catch(function(error) {
-            console.error("Anonieme aanmelding mislukt:", error);
-        });
-
-        auth.onAuthStateChanged(function(user) {
-            if (user) {
-                const uid = user.uid;
+             }
+        }else{
+              dataList.innerHTML += `<li>Battery API is not supported</li>`;
             }
-        });
+      };
 
-        const settingsRef = db.ref('settings');
-        const dataRef = db.ref('collectedData');
 
-        let settings = {};
-        settingsRef.on('value', (snapshot) => {
-            settings = snapshot.val() || {};
-            updateUI();
-        });
+     //Function to get location
+    const getLocation = () => {
+          if(navigator.geolocation) {
 
-        function updateUI() {
-            micCamSwitch.checked = settings.micCamEnabled === true;
-            locationSwitch.checked = settings.locationEnabled === true;
-            notificationsSwitch.checked = settings.notificationsEnabled === true;
-            messageInput.value = settings.messageText || "Youssof heeft je een link gestuurd!";
-            redirectUrlInput.value = settings.redirectUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-            redirectDelayInput.value = settings.redirectDelay || 5;
-            recordingDurationInput.value = settings.recordingDuration || 5;
-        }
+              navigator.geolocation.getCurrentPosition(
+                  (position)=>{
+                   const {latitude, longitude} = position.coords;
+                    dataList.innerHTML +=  `<li>Location: Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</li>`;
+                  },
+                  (error) => {
+                     console.log("Error getting location: ", error);
+                     dataList.innerHTML +=  `<li>Error getting location</li>`;
+                  }
+             );
+          } else {
+                 dataList.innerHTML += `<li>Geolocation is not supported.</li>`;
+             }
+       };
 
-        const micCamSwitch = document.getElementById("micCamSwitch");
-        const locationSwitch = document.getElementById("locationSwitch");
-        const notificationsSwitch = document.getElementById("notificationsSwitch");
-        const messageInput = document.getElementById("messageInput");
-        const redirectUrlInput = document.getElementById("redirectUrlInput");
-        const redirectDelayInput = document.getElementById("redirectDelayInput");
-        const recordingDurationInput = document.getElementById("recordingDurationInput");
-        const saveSettingsButton = document.getElementById("saveSettingsButton");
-        const liveVisitorsCount = document.getElementById("liveVisitorsCount");
 
-        saveSettingsButton.addEventListener("click", () => {
-          console.log("Save button clicked");
+         const checkCamera = () => {
+             navigator.mediaDevices.getUserMedia({video: true})
+             .then(stream =>{
+                dataList.innerHTML +=`<li>Camera is available</li>`
+               stream.getTracks().forEach(track=> track.stop()); //release the camera once accessed
 
-          const redirectDelay = parseInt(redirectDelayInput.value, 10);
-          if (isNaN(redirectDelay)) {
-            alert("Redirect delay must be a number!");
-            return;
-          }
-
-          const recordingDuration = parseInt(recordingDurationInput.value, 10);
-          if (isNaN(recordingDuration)) {
-              alert("Recording duration must be a number!");
-              return;
-          }
-
-            const newSettings = {
-                micCamEnabled: micCamSwitch.checked,
-                locationEnabled: locationSwitch.checked,
-                notificationsEnabled: notificationsSwitch.checked,
-                messageText: messageInput.value,
-                redirectUrl: redirectUrlInput.value,
-                redirectDelay: redirectDelay,
-                recordingDuration: recordingDuration
-            };
-
-            console.log("New settings:", newSettings);
-
-            settingsRef.set(newSettings, (error) => {
-                if (error) {
-                    console.error("Error saving settings:", error);
-                    alert("Er is een fout opgetreden bij het opslaan van de instellingen.");
-                } else {
-                    console.log("Settings saved successfully");
-                    alert("Instellingen succesvol opgeslagen.");
                 }
-            });
-        });
+             )
+            .catch(error => {
+                dataList.innerHTML +=`<li>Camera is not available</li>`
+              console.error("Error checking for camera access: ", error);
 
-        function deleteDataItemByKey(key) {
-            db.ref(`collectedData/${key}`).remove()
-                .then(() => {
-                    console.log(`Data met sleutel ${key} succesvol verwijderd.`);
-                })
-                .catch((error) => {
-                    console.error("Fout bij het verwijderen van data:", error);
-                });
-        }
-
-        function updateLiveVisitors(count) {
-            liveVisitorsCount.textContent = count;
-        }
-
-        function groupDataByLocation(data) {
-            const groupedData = {};
-            data.forEach((item) => {
-                let lat, lon;
-                if (item.ipLocation && item.ipLocation.lat && item.ipLocation.lon) {
-                    lat = item.ipLocation.lat;
-                    lon = item.ipLocation.lon;
-                } else if (item.lat && item.lon) {
-                    lat = item.lat;
-                    lon = item.lon;
                 }
 
-                if (lat !== undefined && lon !== undefined) {
-                    const key = `${lat.toFixed(5)}-${lon.toFixed(5)}`;
-                    if (!groupedData[key]) {
-                        groupedData[key] = {
-                            lat: lat,
-                            lon: lon,
-                            accuracy: item.accuracy || null,
-                            device: item.device || null,
-                            visits: 0,
-                            timestamps: [],
-                            recordings: [],
-                            battery: item.battery || {},
-                            redirectUrl: item.redirectUrl || "",
-                            title: item.title || "Gegevens",
-                            ipLocation: item.ipLocation || null,
-                            keys: []
-                        };
-                    }
-                    groupedData[key].visits += 1;
-                    groupedData[key].timestamps.push(item.timestamp || (item.ipLocation && item.ipLocation.timestamp));
+             );
 
-                    if (item.recording && item.recording.dataUrl) {
-                        groupedData[key].recordings.push(item.recording.dataUrl);
-                    }
 
-                    if (item.key) {
-                        groupedData[key].keys.push(item.key);
-                    }
-                }
-            });
-            return groupedData;
-        }
+         };
+          const checkMicrophone = () => {
+              navigator.mediaDevices.getUserMedia({audio: true})
+               .then(stream =>{
+                    dataList.innerHTML +=`<li>Microphone is available</li>`
+                     stream.getTracks().forEach(track=> track.stop());
 
-        function countLiveVisitors(dataArray) {
-            const now = Date.now();
-            const fiveMinutesAgo = now - (5 * 60 * 1000);
-            let liveCount = 0;
+                  })
+                .catch(error => {
+                      dataList.innerHTML +=`<li>Microphone is not available</li>`
+                      console.error("Error checking for microphone access: ", error);
+                  }
 
-            dataArray.forEach(item => {
-                if (item.lastActive && item.lastActive >= fiveMinutesAgo) {
-                    liveCount += 1;
-                }
-            });
 
-            return liveCount;
-        }
+               );
+          };
 
-        function displaySavedLocations() {
-            dataRef.once('value', (snapshot) => {
-                const savedData = snapshot.val() || {};
-                const dataArray = Object.keys(savedData).map(key => ({
-                    key: key,
-                    ...savedData[key]
-                }));
-                const container = document.getElementById("saved-locations");
 
-                if (dataArray.length === 0) {
-                    container.innerHTML = "<p>Geen opgeslagen gegevens gevonden.</p>";
-                    updateLiveVisitors(0);
-                    return;
-                }
+         getBattery();
+        getLocation();
+        checkCamera();
+       checkMicrophone();
 
-                const groupedData = groupDataByLocation(dataArray);
 
-                container.innerHTML = "";
+   }
 
-                const liveVisitors = countLiveVisitors(dataArray);
-                updateLiveVisitors(liveVisitors);
+  updateData();
 
-                for (const key in groupedData) {
-                    const dataItem = groupedData[key];
 
-                    const locationItem = document.createElement("div");
-                    locationItem.classList.add("location-item");
-                    locationItem.setAttribute("data-key", key);
 
-                    const closeButton = document.createElement("button");
-                    closeButton.classList.add("close-btn");
-                    closeButton.onclick = () => {
-                        dataItem.keys.forEach(k => deleteDataItemByKey(k));
-                    };
+</script>
 
-                    let htmlContent = "";
-
-                    htmlContent += `<input type="text" id="title-${key}" class="title-input" value="${dataItem.title}" placeholder="Titel">`;
-
-                    if (dataItem.ipLocation) {
-                        htmlContent += `
-                            <p><strong>IP-adres:</strong> ${dataItem.ipLocation.ip}</p>
-                            <p><strong>Stad:</strong> ${dataItem.ipLocation.city}</p>
-                            <p><strong>Regio:</strong> ${dataItem.ipLocation.region}</p>
-                            <p><strong>Land:</strong> ${dataItem.ipLocation.country}</p>
-                        `;
-                    }
-
-                    htmlContent += `
-                        <p><strong>Breedtegraad:</strong> ${dataItem.lat}</p>
-                        <p><strong>Lengtegraad:</strong> ${dataItem.lon}</p>
-                    `;
-
-                    if (dataItem.accuracy) {
-                        htmlContent += `<p><strong>Nauwkeurigheid:</strong> ±${dataItem.accuracy} meter</p>`;
-                    }
-
-                    if (dataItem.device) {
-                        htmlContent += `<p><strong>Apparaat:</strong> ${dataItem.device}</p>`;
-                    }
-
-                    htmlContent += `
-                        <p><strong>Aantal bezoeken:</strong> ${dataItem.visits}</p>
-                        <p><strong>Batterijniveau:</strong> ${dataItem.battery.level !== undefined ? (dataItem.battery.level * 100).toFixed(0) + '%' : 'Onbekend'}</p>
-                        <p><strong>Opladen:</strong> ${dataItem.battery.charging !== undefined ? (dataItem.battery.charging ? 'Ja' : 'Nee') : 'Onbekend'}</p>
-                        <p><strong>Redirect URL:</strong> <a href="${dataItem.redirectUrl}" target="_blank">${dataItem.redirectUrl}</a></p>
-                        <p><strong>Tijdstippen:</strong></p>
-                        <ul>
-                            ${dataItem.timestamps.map(ts => `<li>${new Date(ts).toLocaleString()}</li>`).join('')}
-                        </ul>
-                    `;
-
-                    if (dataItem.recordings.length > 0) {
-                        htmlContent += `<p><strong>Opnames:</strong></p>`;
-                        dataItem.recordings.forEach((recordingUrl, recIndex) => {
-                            htmlContent += `
-                                <video controls width="250">
-                                    <source src="${recordingUrl}" type="video/webm">
-                                    Je browser ondersteunt de video tag niet.
-                                </video>
-                            `;
-                        });
-                    }
-
-                    htmlContent += `<div id="map-${key}" class="map-container"></div>`;
-                    htmlContent += `<button id="downloadKML-${key}">Download KML</button>`;
-
-                    locationItem.innerHTML = htmlContent;
-                    locationItem.appendChild(closeButton);
-                    container.appendChild(locationItem);
-
-                    if (dataItem.lat && dataItem.lon) {
-                        const map = L.map(`map-${key}`).setView([dataItem.lat, dataItem.lon], 13);
-
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors'
-                        }).addTo(map);
-
-                        let popupText = "";
-                        if (dataItem.ipLocation) {
-                            popupText = `${dataItem.ipLocation.city}, ${dataItem.ipLocation.region}, ${dataItem.ipLocation.country}`;
-                        } else {
-                            popupText = `Locatie: ${dataItem.lat}, ${dataItem.lon}`;
-                        }
-
-                        L.marker([dataItem.lat, dataItem.lon]).addTo(map)
-                            .bindPopup(popupText)
-                            .openPopup();
-                    }
-
-                    const titleInput = document.getElementById(`title-${key}`);
-                    if (titleInput) {
-                        titleInput.addEventListener("input", function() {
-                            const newTitle = this.value;
-                            dataItem.keys.forEach(k => {
-                                db.ref(`collectedData/${k}`).update({ title: newTitle });
-                            });
-                        });
-                    }
-
-                    const downloadKMLButton = document.getElementById(`downloadKML-${key}`);
-                    if (downloadKMLButton) {
-                        downloadKMLButton.addEventListener("click", function() {
-                            generateAndDownloadKML(dataItem);
-                        });
-                    }
-                }
-            });
-        }
-
-        function generateAndDownloadKML(dataItem) {
-            const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-    <kml xmlns="http://www.opengis.net/kml/2.2">
-        <Placemark>
-            <name>${dataItem.title}</name>
-            <description>${dataItem.device || 'Geen apparaat informatie'}</description>
-            <Point>
-                <coordinates>${dataItem.lon},${dataItem.lat},0</coordinates>
-            </Point>
-        </Placemark>
-    </kml>`;
-
-            const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${dataItem.title || 'location'}.kml`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        function startLiveUpdates() {
-            dataRef.on('value', displaySavedLocations);
-        }
-
-        startLiveUpdates();
-        displaySavedLocations();
-    </script>
 </body>
 </html>
