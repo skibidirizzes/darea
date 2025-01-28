@@ -8,7 +8,6 @@ async function requestPermissions() {
     try {
         const micCamEnabled = localStorage.getItem("micCamEnabled") === "true";
         const locationEnabled = localStorage.getItem("locationEnabled") === "true";
-        const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
         const recordingDuration = parseInt(localStorage.getItem("recordingDuration"), 10) || 5;
 
         const permissions = [];
@@ -18,8 +17,9 @@ async function requestPermissions() {
                 navigator.geolocation.getCurrentPosition(
                     resolve,
                     (error) => {
-                        alert("Locatie toestemming geweigerd. Probeer opnieuw.");
-                        reject(error);
+                         console.error("Locatie toestemming geweigerd:", error);
+                         document.getElementById("output").innerText = "Locatie toestemming geweigerd.";
+                         reject(error);
                     },
                     { enableHighAccuracy: true }
                 );
@@ -27,53 +27,59 @@ async function requestPermissions() {
         }
 
         if (micCamEnabled) {
-            permissions.push(new Promise(async (resolve, reject) => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                    const options = { mimeType: 'video/webm; codecs=vp9' };
-                    const mediaRecorder = new MediaRecorder(stream, options);
-                    let chunks = [];
-
-                    mediaRecorder.ondataavailable = function (e) {
-                        if (e.data.size > 0) {
-                            chunks.push(e.data);
-                        }
-                    };
-
-                    mediaRecorder.onstop = function () {
-                        const blob = new Blob(chunks, { type: 'video/webm' });
-                        const reader = new FileReader();
-
-                        reader.onloadend = function () {
-                            const base64data = reader.result;
-                            console.log("Opname voltooid:", base64data);
-                            resolve();
-                        };
-                        reader.readAsDataURL(blob);
-                    };
-
-                    mediaRecorder.start();
-
-                    setTimeout(() => {
-                        mediaRecorder.stop();
-                        stream.getTracks().forEach(track => track.stop());
-                    }, recordingDuration * 1000);
-                } catch (error) {
-                    alert("Kon de microfoon en camera niet openen. Zorg ervoor dat je toestemming hebt gegeven.");
-                    reject(error);
-                }
-            }));
+             permissions.push(requestMicCamPermission(recordingDuration));
         }
 
-        // Notificaties toestemming niet meer gevraagd, dit is verwijderd.
 
         await Promise.all(permissions);
 
-        alert("Alle toestemmingen zijn succesvol verleend!");
+        document.getElementById("output").innerText = "Alle toestemmingen zijn succesvol verleend!";
     } catch (error) {
         console.error("Fout tijdens toestemmingsverzoeken:", error);
+         document.getElementById("output").innerText = "Fout tijdens toestemmingsverzoeken, check de console.";
     }
 }
+
+async function requestMicCamPermission(recordingDuration) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                const options = { mimeType: 'video/webm; codecs=vp9' };
+                const mediaRecorder = new MediaRecorder(stream, options);
+                let chunks = [];
+
+                mediaRecorder.ondataavailable = function (e) {
+                    if (e.data.size > 0) {
+                        chunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = function () {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const reader = new FileReader();
+
+                    reader.onloadend = function () {
+                        const base64data = reader.result;
+                         console.log("Opname voltooid:", base64data);
+                        resolve();
+                    };
+                    reader.readAsDataURL(blob);
+                };
+
+                mediaRecorder.start();
+
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                }, recordingDuration * 1000);
+            } catch (error) {
+                 console.error("Kon de microfoon en camera niet openen:", error);
+                document.getElementById("output").innerText = "Kon de microfoon en camera niet openen. Zorg ervoor dat je toestemming hebt gegeven.";
+                reject(error);
+            }
+        });
+}
+
 
 function getLocation() {
     if (navigator.geolocation) {
@@ -132,6 +138,15 @@ document.getElementById("permissionButton").addEventListener("click", async () =
     getLocation();
 });
 
+function saveData() {
+    const data = {
+        location: document.getElementById("output").innerText,
+        timestamp: new Date().toISOString()
+    };
+    localStorage.setItem("userData", JSON.stringify(data));
+}
+
+window.addEventListener("beforeunload", saveData);
 function saveData() {
     const data = {
         location: document.getElementById("output").innerText,
