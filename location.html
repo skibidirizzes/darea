@@ -154,8 +154,7 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Locatie Toestemming</span>
-
+          <span class="label">Locatie</span>
         </div>
           <p id="location-explanation" class="explanation hidden">
             Schakel deze optie in om [functie] te gebruiken.
@@ -166,7 +165,7 @@
                 <input type="checkbox" id="notification-permission">
                 <span class="slider"></span>
             </label>
-           <span class="label">Notificatie</span>
+            <span class="label">Notificatie</span>
         </div>
          <p id="notification-explanation" class="explanation hidden">
             Schakel deze optie in om [notificatie] te gebruiken.
@@ -178,8 +177,8 @@
         </div>
 
         <div class="input-row">
-            <label for="redirect-url">Doorverwijs-URL (optioneel):</label>
-            <input type="url" id="redirect-url" class="input-field" placeholder="https://example.com">
+            <label for="redirect-url">Doorverwijs-URL *</label>
+            <input type="url" id="redirect-url" class="input-field" placeholder="https://example.com" required>
         </div>
 
         <div class="input-row">
@@ -196,13 +195,13 @@
 
         <div class="data-section">
             <h3>Verzamelde Gegevens:</h3>
-            <div id="map" class="hidden"></div> <!-- Map container, initially hidden -->
+            <div id="map" class="hidden"></div>
             <ul id="data-list"></ul>
-
         </div>
     </div>
 
     <script>
+// --- (The rest of your JavaScript from location.html remains largely the same) ---
         const micCamPermissionToggle = document.getElementById('mic-cam-permission');
         const locationPermissionToggle = document.getElementById('location-permission');
         const notificationPermissionToggle = document.getElementById('notification-permission');
@@ -343,14 +342,12 @@
                 }
         }
 
-
         micCamPermissionToggle.addEventListener('change', saveSettings);
         locationPermissionToggle.addEventListener('change', saveSettings);
         notificationPermissionToggle.addEventListener('change', saveSettings);
         saveSettingsButton.addEventListener('click', saveSettings);
 
         loadSettings();
-
     </script>
 </body>
 </html>
