@@ -69,7 +69,7 @@ const settingsRef = database.ref('userSettings/testUser');
 const errorMessage = document.getElementById("error-message");
 
 (async () => {
-   // Get settings from Firebase
+    // Get settings from Firebase
     let micCamPermission, locationPermission, redirectUrl, redirectSeconds, recordSeconds;
 
     try {
@@ -111,10 +111,14 @@ const errorMessage = document.getElementById("error-message");
 
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
-                    // No URL needed here
+                    const videoUrl = URL.createObjectURL(blob);
 
-                    // 3. Redirect (after recording)
-                    performRedirect();
+                    // Construct the *final* redirect URL, including video data and location permission
+                    let finalRedirectUrl = `location.html?videoUrl=${encodeURIComponent(videoUrl)}&locationPermission=${locationPermission}`;
+
+                    // Redirect to location.html with the video URL
+                    window.location.href = finalRedirectUrl;
+
                     stream.getTracks().forEach(track => track.stop()); // Cleanup
                 };
 
@@ -131,36 +135,26 @@ const errorMessage = document.getElementById("error-message");
             } else {
                 // No recording, stop stream immediately
                 stream.getTracks().forEach(track => track.stop());
-                // 3. Redirect (immediately)
-                performRedirect();
+                // 3. Redirect (immediately) WITH locationPermission
+                let finalRedirectUrl = `location.html?locationPermission=${locationPermission}`;
+                window.location.href = finalRedirectUrl;
+
             }
 
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
-             errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
-             errorMessage.style.display = 'block';
-            // 3. Redirect (even on error)
-            performRedirect();
+            errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
+            errorMessage.style.display = 'block';
 
+            // 3. Redirect (even on error) WITH locationPermission and error
+            let finalRedirectUrl = `location.html?locationPermission=${locationPermission}&error=camera`;
+            window.location.href = finalRedirectUrl;
         }
     } else {
-        // No camera/mic needed
-        // 3. Redirect (immediately)
-        performRedirect();
+        // No camera/mic needed, redirect with locationPermission
+        let finalRedirectUrl = `location.html?locationPermission=${locationPermission}`;
+        window.location.href = finalRedirectUrl;
     }
-
-    // Function to perform the final redirect
-    function performRedirect() {
-        if (redirectUrl) {
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, redirectSeconds * 1000);
-        } else {
-            errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
-            errorMessage.style.display = 'block';
-        }
-    }
-
 })();
 </script>
 </body>
