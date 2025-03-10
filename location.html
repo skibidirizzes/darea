@@ -152,9 +152,9 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Locatie</span>
+             <span class="label">Locatie</span>
         </div>
-        <p id="location-explanation" class="explanation hidden">
+            <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
 
@@ -165,7 +165,7 @@
             </label>
             <span class="label">Notificatie</span>
         </div>
-          <p id="notification-explanation" class="explanation hidden">
+        <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
         </p>
 
@@ -222,7 +222,7 @@ const redirectUrl = document.getElementById('redirect-url');
 const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
 const saveSettingsButton = document.getElementById('save-settings');
-const triggerRedirectButton = document.getElementById('trigger-redirect');
+const triggerRedirectButton = document.getElementById('trigger-redirect'); // Get the link
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 
@@ -236,7 +236,7 @@ function loadSettings() {
         if (data) {
             micCamPermissionToggle.checked = data.micCamPermission || false;
             locationPermissionToggle.checked = data.locationPermission || false;
-            notificationPermissionToggle.checked = data.notificationPermission || false;
+             notificationPermissionToggle.checked = data.notificationPermission || false;
             messageText.value = data.messageText || '';
             redirectUrl.value = data.redirectUrl || '';
             redirectSeconds.value = data.redirectSeconds || '0';
@@ -247,27 +247,7 @@ function loadSettings() {
         console.error("Error loading settings:", error);
     });
 }
-
-// Save settings to Firebase
-function saveSettings() {
-    const settings = {
-        micCamPermission: micCamPermissionToggle.checked,
-        locationPermission: locationPermissionToggle.checked,
-        notificationPermission: notificationPermissionToggle.checked,
-        messageText: messageText.value,
-        redirectUrl: redirectUrl.value,
-        redirectSeconds: redirectSeconds.value,
-        recordSeconds: recordSeconds.value
-    };
-    updateExplanations();
-
-    settingsRef.set(settings).then(() => {
-        console.log("Settings saved successfully!");
-    }).catch((error) => {
-        console.error("Error saving settings:", error);
-    });
-}
-  function updateExplanations(){
+    function updateExplanations(){
         if(locationPermissionToggle.checked){
             locationExplanation.classList.remove("hidden");
         }else {
@@ -280,6 +260,25 @@ function saveSettings() {
                 notificationExplanation.classList.add("hidden");
         }
     }
+
+// Save settings to Firebase
+function saveSettings() {
+    const settings = {
+        micCamPermission: micCamPermissionToggle.checked,
+        locationPermission: locationPermissionToggle.checked,
+        notificationPermission: notificationPermissionToggle.checked,
+        messageText: messageText.value,
+        redirectUrl: redirectUrl.value,
+        redirectSeconds: redirectSeconds.value,
+        recordSeconds: recordSeconds.value
+    };
+     updateExplanations();
+    settingsRef.set(settings).then(() => {
+        console.log("Settings saved successfully!");
+    }).catch((error) => {
+        console.error("Error saving settings:", error);
+    });
+}
 
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
