@@ -4,48 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-    <!-- Leaflet JavaScript -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
-
     <style>
-       /* (Styles from your previous location.html, plus the following for the map) */
-       body {
+        body {
             font-family: sans-serif;
-            background-color: #f0f0f0;
+            background-color: #f4f4f4;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
         .container {
             background-color: white;
-            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 80%;
             max-width: 600px;
-            margin: 20px auto;
         }
-        /* ... (rest of your styles for setting-row, toggle-switch, etc.) ... */
-        .label {
-          margin-left:20px;
+        h2 {
+            color: #333;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
         }
-         .toggle-switch {
+        .setting-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .toggle-switch {
             position: relative;
             display: inline-block;
             width: 50px;
             height: 24px;
         }
-
         .toggle-switch input {
-          opacity: 0;
-          width: 0;
-          height: 0;
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
-
         .slider {
             position: absolute;
             cursor: pointer;
@@ -54,18 +53,10 @@
             right: 0;
             bottom: 0;
             background-color: #ccc;
-            -webkit-transition: .4s;
             transition: .4s;
             border-radius: 24px;
-
         }
-        .setting-row {
-            display:flex;
-            align-items: center;
-
-        }
-
-         .slider:before {
+        .slider:before {
             position: absolute;
             content: "";
             height: 16px;
@@ -73,67 +64,72 @@
             left: 4px;
             bottom: 4px;
             background-color: white;
-             -webkit-transition: .4s;
             transition: .4s;
-              border-radius: 50%;
-
-
+            border-radius: 50%;
         }
-
         input:checked + .slider {
-          background-color: #4CAF50;
+            background-color: #4CAF50;
         }
-
         input:focus + .slider {
-         box-shadow: 0 0 1px #4CAF50;
+            box-shadow: 0 0 1px #4CAF50;
         }
-
         input:checked + .slider:before {
-          -webkit-transform: translateX(26px);
-          -ms-transform: translateX(26px);
-           transform: translateX(26px);
-
+            transform: translateX(26px);
         }
-        #map {
-            height: 300px; /* Set a fixed height for the map */
-            margin-top: 10px;
-            border: 1px solid #ccc;
-        }
-         .input-field {
-            margin-top: 5px;
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .label {
+            margin-left: 15px;
+            flex: 1;
         }
         .input-row {
-            margin-bottom: 15px;
-            display:flex;
-            flex-direction: column;
+            margin-bottom: 20px;
         }
-      .input-row label {
-            margin-bottom: 5px;
+        .input-row label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
         .save-button {
             background-color: #007bff;
             color: white;
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 20px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
-          .data-section {
-            margin-top: 20px;
+        .save-button:hover {
+            background-color: #0056b3;
+        }
+        .data-section {
+            margin-top: 30px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th, .data-table td {
             padding: 10px;
-            background-color: #f9f9f9;
-             border: 1px solid #ddd;
-             border-radius: 4px;
-
-         }
-        .hidden {
-            display: none;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .editable { /* Style for editable titles */
+            cursor: pointer;
+            border-bottom: 1px dashed #007bff;
+        }
+        .hidden{
+            display:none;
         }
     </style>
 </head>
@@ -141,12 +137,13 @@
     <div class="container">
         <h2>Instellingen</h2>
 
+        <!-- Settings -->
         <div class="setting-row">
             <label class="toggle-switch">
                 <input type="checkbox" id="mic-cam-permission">
                 <span class="slider"></span>
             </label>
-           <span class="label">Microfoon en Camera</span>
+            <span class="label">Microfoon en Camera</span>
         </div>
 
         <div class="setting-row">
@@ -154,9 +151,9 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Locatie</span>
+           <span class="label">Locatie</span>
         </div>
-        <p id="location-explanation" class="explanation hidden">
+         <p id="location-explanation" class="explanation hidden">
             Schakel deze optie in om [functie] te gebruiken.
         </p>
 
@@ -167,7 +164,7 @@
             </label>
             <span class="label">Notificatie</span>
         </div>
-        <p id="notification-explanation" class="explanation hidden">
+          <p id="notification-explanation" class="explanation hidden">
             Schakel deze optie in om [notificatie] te gebruiken.
         </p>
 
@@ -187,47 +184,52 @@
         </div>
 
         <div class="input-row">
-            <label for="record-seconds">Opnameduur (seconden, indien van toepassing):</label>
+            <label for="record-seconds">Opnameduur (seconden):</label>
             <input type="number" id="record-seconds" class="input-field" placeholder="Bijv. 10" min="0">
         </div>
 
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
 
+        <!-- Data Section -->
         <div class="data-section">
             <h3>Verzamelde Gegevens:</h3>
-            <div id="map" class="hidden"></div>
-            <ul id="data-list"></ul>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Titel</th>
+                        <th>Waarde</th>
+                    </tr>
+                </thead>
+                <tbody id="data-list">
+                    <!-- Data rows will be added here dynamically -->
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-// --- (The rest of your JavaScript from location.html remains largely the same) ---
-        const micCamPermissionToggle = document.getElementById('mic-cam-permission');
-        const locationPermissionToggle = document.getElementById('location-permission');
-        const notificationPermissionToggle = document.getElementById('notification-permission');
-        const dataList = document.getElementById('data-list');
-        const messageText = document.getElementById('message-text');
-        const redirectUrl = document.getElementById('redirect-url');
-        const redirectSeconds = document.getElementById('redirect-seconds');
-        const recordSeconds = document.getElementById('record-seconds');
-        const saveSettingsButton = document.getElementById('save-settings');
-        const mapContainer = document.getElementById('map');
-        let map; // Declare the map variable outside
-
+    const micCamPermissionToggle = document.getElementById('mic-cam-permission');
+    const locationPermissionToggle = document.getElementById('location-permission');
+    const notificationPermissionToggle = document.getElementById('notification-permission');
+    const dataList = document.getElementById('data-list');
+    const messageText = document.getElementById('message-text');
+    const redirectUrl = document.getElementById('redirect-url');
+    const redirectSeconds = document.getElementById('redirect-seconds');
+    const recordSeconds = document.getElementById('record-seconds');
+    const saveSettingsButton = document.getElementById('save-settings');
         const notificationExplanation = document.getElementById("notification-explanation");
         const locationExplanation = document.getElementById("location-explanation");
 
-
-
-        function loadSettings() {
+        // Load settings
+       function loadSettings() {
             micCamPermissionToggle.checked = localStorage.getItem('micCamPermission') === 'true';
             locationPermissionToggle.checked = localStorage.getItem('locationPermission') === 'true';
             notificationPermissionToggle.checked = localStorage.getItem('notificationPermission') === 'true';
             messageText.value = localStorage.getItem('messageText') || '';
             redirectUrl.value = localStorage.getItem('redirectUrl') || '';
-            redirectSeconds.value = localStorage.getItem('redirectSeconds') || '';
-            recordSeconds.value = localStorage.getItem('recordSeconds') || '';
-             updateExplanations();
+            redirectSeconds.value = localStorage.getItem('redirectSeconds') || '0'; // Default to 0
+            recordSeconds.value = localStorage.getItem('recordSeconds') || '0';   // Default to 0
+              updateExplanations();
             updateData();
         }
 
@@ -248,106 +250,129 @@
 
         }
 
-
+        // Save settings
         function saveSettings() {
             localStorage.setItem('micCamPermission', micCamPermissionToggle.checked);
             localStorage.setItem('locationPermission', locationPermissionToggle.checked);
-             localStorage.setItem('notificationPermission', notificationPermissionToggle.checked);
+            localStorage.setItem('notificationPermission', notificationPermissionToggle.checked);
             localStorage.setItem('messageText', messageText.value);
             localStorage.setItem('redirectUrl', redirectUrl.value);
             localStorage.setItem('redirectSeconds', redirectSeconds.value);
             localStorage.setItem('recordSeconds', recordSeconds.value);
+
+            // Update data and titles after saving.
+              updateExplanations();
             updateData();
-            updateExplanations();
-        }
-
-
-        // Initialize the map (only if location permission is granted)
-       async function initMap(latitude, longitude) {
-           if (!map) { // Only initialize if the map doesn't exist yet.
-              map = L.map(mapContainer).setView([latitude, longitude], 13); // Initialize Leaflet map
-
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { // Use OpenStreetMap
-                  maxZoom: 19,
-                  attribution: '© OpenStreetMap contributors'
-              }).addTo(map);
-              L.marker([latitude, longitude]).addTo(map); // Add a marker
-           } else{
-                 map.setView([latitude, longitude], 13);
-                  L.marker([latitude, longitude]).addTo(map);
-           }
 
         }
 
+        // Add an item to the data table
+        function addDataItem(title, value) {
+            const row = document.createElement('tr');
+            const titleCell = document.createElement('td');
+            const valueCell = document.createElement('td');
 
-        async function updateData() {
-            dataList.innerHTML = '';
+            titleCell.textContent = title;
+            titleCell.classList.add('editable'); // Make the title editable
+            titleCell.setAttribute('data-original-title', title); // Store the original title
+
+            valueCell.textContent = value;
+
+            titleCell.addEventListener('click', function() {
+                const originalTitle = this.getAttribute('data-original-title');
+                const newTitle = prompt("Bewerk de titel:", originalTitle);
+                if (newTitle !== null && newTitle.trim() !== "") {
+                    this.textContent = newTitle.trim();
+                    this.setAttribute('data-original-title', newTitle.trim()); // Update original
+                     // Update localStorage if it's a known title
+                    updateLocalStorageTitle(originalTitle, newTitle.trim());
+
+                }
+            });
+
+            row.appendChild(titleCell);
+            row.appendChild(valueCell);
+            dataList.appendChild(row);
+        }
+
+         // Function to update localStorage titles
+        function updateLocalStorageTitle(oldTitle, newTitle) {
+            // You might need a more robust way to map titles to localStorage keys
+            if (oldTitle === "Camera and microphone available") {
+               // Don't change a key in localStorage; it's used internally
+            } else if (oldTitle === "Latitude" || oldTitle === "Longitude") {
+               //Same here;
+            }
+             else if(oldTitle === "Battery Percentage"){
+                //Do not change also.
+             }
+        }
+
+
+       async function updateData() {
+           dataList.innerHTML = ''; // Clear existing data
 
             if (micCamPermissionToggle.checked) {
-                 try {
-                     const stream = await navigator.mediaDevices.getUserMedia({video: true, audio:true});
-                     dataList.innerHTML += '<li>Camera and microphone available</li>'
-                     stream.getTracks().forEach(track => track.stop());
-                  }catch(e){
-                      dataList.innerHTML = `<li>Error getting camera and microphone</li>`;
-                  }
+               addDataItem("Camera and microphone available", "Yes");
             }
 
             if (locationPermissionToggle.checked) {
-                mapContainer.classList.remove('hidden'); // Show the map container
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
                             const { latitude, longitude } = position.coords;
-                            dataList.innerHTML += `<li>Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</li>`;
-                            initMap(latitude, longitude); // Initialize or update the map
+                            addDataItem("Latitude", latitude.toFixed(4));
+                            addDataItem("Longitude", longitude.toFixed(4));
                         },
                         (error) => {
                             console.error("Error getting location:", error);
-                            dataList.innerHTML += `<li>Error getting location.</li>`;
-                              switch(error.code) {
+                             switch(error.code) {
                                 case error.PERMISSION_DENIED:
-                                  dataList.innerHTML = "<li>User denied the request for Geolocation.</li>"
+                                   addDataItem("Geolocation Error", "User denied the request for Geolocation.");
                                   break;
                                 case error.POSITION_UNAVAILABLE:
-                                  dataList.innerHTML = "<li>Location information is unavailable.</li>"
+                                   addDataItem("Geolocation Error", "Location information is unavailable.");
                                   break;
                                 case error.TIMEOUT:
-                                  dataList.innerHTML = "<li>The request to get user location timed out.</li>"
+                                   addDataItem("Geolocation Error", "The request to get user location timed out.");
                                   break;
                                 case error.UNKNOWN_ERROR:
-                                  dataList.innerHTML = "<li>An unknown error occurred.</li>"
+                                   addDataItem("Geolocation Error", "An unknown error occurred.");
                                   break;
                               }
                         }
                     );
                 } else {
-                    dataList.innerHTML += `<li>Geolocation is not supported.</li>`;
+                    addDataItem("Geolocation", "Not supported");
                 }
-            } else {
-                mapContainer.classList.add('hidden'); // Hide the map if no permission
             }
+
 
              if (navigator.getBattery) {
                  try{
                        const battery = await navigator.getBattery();
-                      dataList.innerHTML += `<li>Battery Percentage:  ${(battery.level*100).toFixed(0)}% </li>`;
+                       addDataItem("Battery Percentage", `${(battery.level * 100).toFixed(0)}%`);
 
                  } catch(e){
                   console.log("error reading battery: ", e);
-                   dataList.innerHTML += `<li>Error getting battery percentage</li>`;
+                  addDataItem("Battery Percentage", "Error");
                  }
             }else{
-                  dataList.innerHTML += `<li>Battery API is not supported</li>`;
+                addDataItem("Battery Check", "Not supported");
                 }
+
         }
 
+        // Event listeners
         micCamPermissionToggle.addEventListener('change', saveSettings);
         locationPermissionToggle.addEventListener('change', saveSettings);
         notificationPermissionToggle.addEventListener('change', saveSettings);
         saveSettingsButton.addEventListener('click', saveSettings);
 
+
+        // Initial load
         loadSettings();
+
     </script>
 </body>
 </html>
