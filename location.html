@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-        /* ... (Styles - unchanged) ... */
-        body {
+      /* ... (Styles - unchanged) ... */
+      body {
             font-family: sans-serif;
             background-color: #f4f4f4;
             margin: 0;
@@ -109,9 +109,6 @@
         .save-button:hover {
             background-color: #0056b3;
         }
-        .hidden{
-            display: none;
-        }
           .data-section { /* Add this */
             margin-top: 30px;
         }
@@ -133,6 +130,10 @@
             border-bottom: 1px dashed #007bff;
         }
 
+        .hidden{
+            display: none;
+        }
+
         /* Style the trigger link/button */
         #trigger-redirect {
             display: inline-block;
@@ -148,14 +149,14 @@
          #trigger-redirect:hover {
             background-color: #218838;
          }
-        .error-message{
+          .error-message{
             color:red;
         }
     </style>
 
-    <!-- Firebase SDK (Firestore, not Realtime Database) -->
+    <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>  <!-- FIRESTORE -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -175,9 +176,9 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Locatie</span>
+           <span class="label">Locatie</span>
         </div>
-         <p id="location-explanation" class="explanation hidden">
+        <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
 
@@ -186,7 +187,7 @@
                 <input type="checkbox" id="notification-permission">
                 <span class="slider"></span>
             </label>
-             <span class="label">Notificatie</span>
+           <span class="label">Notificatie</span>
         </div>
          <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
@@ -217,10 +218,10 @@
         <!-- Trigger for redirect (link or button) -->
          <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
 
-          <!-- Data Section -->
+        <!-- Data Section -->
         <div class="data-section">
             <h3>Verzamelde Gegevens:</h3>
-            <p id="error-message" class="error-message" style="display: none;"></p>
+             <p id="error-message" class="error-message" style="display: none;"></p>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -232,7 +233,6 @@
                     <!-- Data rows will be added here dynamically -->
                 </tbody>
             </table>
-        </div>
         </div>
     </div>
 
@@ -246,12 +246,12 @@ const firebaseConfig = {
     messagingSenderId: "34491549339",
     appId: "1:34491549339:web:c666c4f8f3271bab06e83e",
     measurementId: "G-65PYC8E9VR",
-    //  NO databaseURL needed for Firestore
+    // No databaseURL needed for Firestore
 };
 
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(); //  <--  FIRESTORE instance
+const db = firebase.firestore();
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -268,12 +268,13 @@ const notificationExplanation = document.getElementById("notification-explanatio
 const locationExplanation = document.getElementById("location-explanation");
 const errorMessage = document.getElementById("error-message");
 
-// --- Firestore Collection Reference (Choose a good path) ---
-const settingsRef = db.collection('userSettings').doc('testUser'); //  CHANGE 'testUser'
-const dataRef = db.collection('userData').doc('testUser'); //  CHANGE 'testUser'
+// --- Firestore References (USE A VARIABLE FOR THE USER ID!) ---
+const userId = "testUser"; //  <--  CHANGE THIS TO THE ACTUAL USER ID!
+const settingsRef = db.collection('userSettings').doc(userId);
+const dataRef = db.collection('userData').doc(userId);
 
 
-// Add an item to the data table
+// Add an item to the data table (SAME AS BEFORE)
 function addDataItem(title, value, isVideo = false) {
     const row = document.createElement('tr');
     const titleCell = document.createElement('td');
@@ -284,7 +285,7 @@ function addDataItem(title, value, isVideo = false) {
     titleCell.setAttribute('data-original-title', title);
 
     if (isVideo) {
-        valueCell.appendChild(value);
+        valueCell.appendChild(value); // Value is a video element
     } else {
         valueCell.textContent = value;
     }
@@ -304,30 +305,8 @@ function addDataItem(title, value, isVideo = false) {
     dataList.appendChild(row);
 }
 
- // Utility function to promisify Geolocation API
-    function getCurrentPositionPromise() {
-        return new Promise((resolve, reject) => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
-            } else {
-                reject(new Error("Geolocation is not supported"));
-            }
-        });
-    }
 
-     // Utility function to promisify Battery API
-    function getBatteryPromise() {
-        return new Promise((resolve, reject) => {
-            if(navigator.getBattery) {
-               resolve(navigator.getBattery());
-            }else{
-                reject(new Error("Battery API is not supported."));
-            }
-        });
-
-    }
-
-// Load settings and data from Firestore
+// Load settings AND data from Firestore
 async function loadSettingsAndData() {
     try {
         // Load settings
@@ -347,7 +326,7 @@ async function loadSettingsAndData() {
         // Load collected data
         const dataSnap = await dataRef.get();
         if (dataSnap.exists) {
-            displayData(dataSnap.data());
+            displayData(dataSnap.data()); //  <--  DISPLAY THE DATA
         }
 
     } catch (error) {
@@ -356,8 +335,8 @@ async function loadSettingsAndData() {
         errorMessage.style.display = 'block';
     }
 }
-// Update explanations
- function updateExplanations(){
+
+   function updateExplanations(){
         if(locationPermissionToggle.checked){
             locationExplanation.classList.remove("hidden");
         }else {
@@ -394,10 +373,11 @@ async function saveSettings() {
     }
 }
 
+
 // Display data in the table
-async function displayData(data) {
+function displayData(data) {
     dataList.innerHTML = ''; // Clear existing data
-    errorMessage.style.display = 'none';
+    errorMessage.style.display = 'none'; // Hide previous errors
 
     if (data.videoUrl) {
         const videoElement = document.createElement('video');
@@ -412,21 +392,23 @@ async function displayData(data) {
         addDataItem("Longitude", data.location.longitude.toFixed(4));
     }
 
-      if (data.batteryPercentage) {
+    if (data.batteryPercentage) {
         addDataItem("Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
     }
-
 
     if (data.locationError) {
         addDataItem("Locatie Fout", data.locationError);
     }
-      if(data.batteryError){
-         addDataItem("Batterij Fout", data.batteryError);
-      }
-       if (data.cameraError) {
-        addDataItem("Camera/Microfoon", data.cameraError);
+
+    if (data.batteryError) {
+        addDataItem("Batterij Fout", data.batteryError);
+    }
+
+    if (data.cameraError) {
+        addDataItem("Camera/Microfoon Fout", data.cameraError);
     }
 }
+
 
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
@@ -435,7 +417,7 @@ triggerRedirectButton.addEventListener('click', (event) => {
 });
 
 // Initial load
-loadSettingsAndData(); //  <--  Load BOTH settings and data
+loadSettingsAndData(); //  <--  Load BOTH on startup
     </script>
 </body>
 </html>
