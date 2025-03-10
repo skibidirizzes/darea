@@ -3,58 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirect</title>
+    <title>Toestemming Vereist</title>
     <style>
         body {
-            background-image: url('https://i.postimg.cc/sDTjTFrr/whatsapp-background.jpg');
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
+            font-family: sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
-            color: white; /* Set text color to white for readability on dark background*/
-            font-family: sans-serif;
+            background-color: #f0f0f0;
         }
-        .confirmation-box {
+        .container {
             text-align: center;
             padding: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 400px; /* Added max-width for better responsiveness */
         }
-        .loading-dots::after {
-            content: "";
-            animation: dots 1s steps(4) infinite;
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px; /* Added margin */
         }
-
-        @keyframes dots {
-             0%   {content: "";}
-             25%  {content: ".";}
-             50%  {content: "..";}
-             75%  {content: "...";}
+        .button:disabled { /* Style for disabled button */
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .explanation {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="confirmation-box">
-        <h1>Confirmation</h1>
-        <p>This is just to confirm if you are a human. Please wait while we continue <span class="loading-dots"></span></p>
+    <div class="container">
+        <h1>Toegang tot Camera en Microfoon</h1>
+        <p class="explanation">
+            Om deze website volledig te kunnen gebruiken, hebben we toegang nodig tot je camera en microfoon.
+            Dit is nodig om [leg *duidelijk* en *specifiek* uit waarom, bijv.: "videogesprekken mogelijk te maken", "je stem op te nemen voor spraakopdrachten", etc.].
+            We slaan geen beelden of audio op zonder jouw expliciete toestemming.
+        </p>
+        <button class="button" id="request-permission">Geef Toestemming</button>
+        <p id="error-message" class="error-message" style="display: none;"></p>
     </div>
 
     <script>
+        const requestPermissionButton = document.getElementById('request-permission');
+        const errorMessage = document.getElementById('error-message');
 
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-        .then(stream => {
-            console.log('Camera and microphone permission granted.');
-        })
-        .catch(error => {
-            console.error('Error getting media devices:', error);
+        requestPermissionButton.addEventListener('click', () => {
+            requestPermissionButton.disabled = true; // Disable the button while requesting
+            requestPermissionButton.textContent = 'Verwerken...'; // Provide feedback
+
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    console.log('Toestemming verleend!');
+                    // Stop the tracks immediately to release the camera/microphone.
+                    stream.getTracks().forEach(track => track.stop());
+
+                    // Redirect or proceed with the functionality.
+                    window.location.href = 'location.html'; // Redirect to location.html (or other page)
+                })
+                .catch(error => {
+                    console.error('Fout bij het verkrijgen van toestemming:', error);
+                    errorMessage.textContent = 'Toestemming geweigerd of fout bij toegang. Controleer je browserinstellingen.';
+                    errorMessage.style.display = 'block';
+                    requestPermissionButton.disabled = false; // Re-enable the button
+                    requestPermissionButton.textContent = 'Geef Toestemming';
+                });
         });
-
     </script>
-
 </body>
 </html>
