@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-        body {
+      /* ... (Styles - unchanged, same as before) ... */
+      body {
             font-family: sans-serif;
             background-color: #f4f4f4;
             margin: 0;
@@ -132,7 +133,7 @@
             display: none;
         }
         .error-message{
-            color: red;
+            color:red;
         }
     </style>
 </head>
@@ -154,10 +155,10 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Locatie</span>
+           <span class="label">Locatie</span>
         </div>
-        <p id="location-explanation" class="explanation hidden">
-            Locatie toestemming.
+         <p id="location-explanation" class="explanation hidden">
+           Locatie toestemming.
         </p>
 
         <div class="setting-row">
@@ -167,8 +168,8 @@
             </label>
             <span class="label">Notificatie</span>
         </div>
-           <p id="notification-explanation" class="explanation hidden">
-            Notificatie toestemming.
+         <p id="notification-explanation" class="explanation hidden">
+           Notificatie toestemming.
         </p>
 
         <div class="input-row">
@@ -193,10 +194,10 @@
 
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
 
-        <!-- Data Section -->
+        <!-- Data Section (Initially Empty) -->
         <div class="data-section">
             <h3>Verzamelde Gegevens:</h3>
-             <p id="error-message" class="error-message" style="display: none;"></p>
+            <p id="error-message" class="error-message" style="display: none;"></p>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -212,211 +213,201 @@
     </div>
 
     <script>
-        const micCamPermissionToggle = document.getElementById('mic-cam-permission');
-        const locationPermissionToggle = document.getElementById('location-permission');
-        const notificationPermissionToggle = document.getElementById('notification-permission');
-        const dataList = document.getElementById('data-list');
-        const messageText = document.getElementById('message-text');
-        const redirectUrl = document.getElementById('redirect-url');
-        const redirectSeconds = document.getElementById('redirect-seconds');
-        const recordSeconds = document.getElementById('record-seconds');
-        const saveSettingsButton = document.getElementById('save-settings');
-        const errorMessage = document.getElementById("error-message");
-        const notificationExplanation = document.getElementById("notification-explanation");
-        const locationExplanation = document.getElementById("location-explanation");
+const micCamPermissionToggle = document.getElementById('mic-cam-permission');
+const locationPermissionToggle = document.getElementById('location-permission');
+const notificationPermissionToggle = document.getElementById('notification-permission');
+const dataList = document.getElementById('data-list');
+const messageText = document.getElementById('message-text');
+const redirectUrl = document.getElementById('redirect-url');
+const redirectSeconds = document.getElementById('redirect-seconds');
+const recordSeconds = document.getElementById('record-seconds');
+const saveSettingsButton = document.getElementById('save-settings');
+const errorMessage = document.getElementById('error-message');
+const notificationExplanation = document.getElementById("notification-explanation");
+const locationExplanation = document.getElementById("location-explanation");
 
-        // Load settings (same as before)
-          function loadSettings() {
-            micCamPermissionToggle.checked = localStorage.getItem('micCamPermission') === 'true';
-            locationPermissionToggle.checked = localStorage.getItem('locationPermission') === 'true';
-            notificationPermissionToggle.checked = localStorage.getItem('notificationPermission') === 'true';
-            messageText.value = localStorage.getItem('messageText') || '';
-            redirectUrl.value = localStorage.getItem('redirectUrl') || '';
-            redirectSeconds.value = localStorage.getItem('redirectSeconds') || '0';
-            recordSeconds.value = localStorage.getItem('recordSeconds') || '0';
-              updateExplanations();
-            updateData(); // Initial data load
+// Utility function to promisify Geolocation API
+function getCurrentPositionPromise() {
+    return new Promise((resolve, reject) => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        } else {
+            reject(new Error("Geolocation is not supported"));
+        }
+    });
+}
+ // Utility function to promisify Battery API
+function getBatteryPromise() {
+    return new Promise((resolve, reject) => {
+        if(navigator.getBattery) {
+           resolve(navigator.getBattery());
+        }else{
+            reject(new Error("Battery API is not supported."));
+        }
+    });
+
+}
+
+// Load settings
+function loadSettings() {
+    micCamPermissionToggle.checked = localStorage.getItem('micCamPermission') === 'true';
+    locationPermissionToggle.checked = localStorage.getItem('locationPermission') === 'true';
+    notificationPermissionToggle.checked = localStorage.getItem('notificationPermission') === 'true';
+    messageText.value = localStorage.getItem('messageText') || '';
+    redirectUrl.value = localStorage.getItem('redirectUrl') || '';
+    redirectSeconds.value = localStorage.getItem('redirectSeconds') || '0';
+    recordSeconds.value = localStorage.getItem('recordSeconds') || '0';
+    updateExplanations();
+    displayDataFromUrl(); // Call displayDataFromUrl on load
+}
+  function updateExplanations(){
+        if(locationPermissionToggle.checked){
+            locationExplanation.classList.remove("hidden");
+        }else {
+            locationExplanation.classList.add("hidden");
         }
 
-         function updateExplanations(){
-
-
-             if(locationPermissionToggle.checked){
-                locationExplanation.classList.remove("hidden");
-             }else {
-                locationExplanation.classList.add("hidden");
-             }
-
-            if(notificationPermissionToggle.checked){
-                 notificationExplanation.classList.remove("hidden");
-            }else {
-                  notificationExplanation.classList.add("hidden");
-            }
-
+        if(notificationPermissionToggle.checked){
+            notificationExplanation.classList.remove("hidden");
+        }else {
+            notificationExplanation.classList.add("hidden");
         }
+    }
 
-        // Save settings (modified to trigger recording)
-       async function saveSettings() {
-            localStorage.setItem('micCamPermission', micCamPermissionToggle.checked);
-            localStorage.setItem('locationPermission', locationPermissionToggle.checked);
-            localStorage.setItem('notificationPermission', notificationPermissionToggle.checked);
-            localStorage.setItem('messageText', messageText.value);
-            localStorage.setItem('redirectUrl', redirectUrl.value);
-            localStorage.setItem('redirectSeconds', redirectSeconds.value);
-            localStorage.setItem('recordSeconds', recordSeconds.value);
-            updateExplanations();
-            // Update data *and* handle recording (if enabled)
-            await updateData(); // Await the updateData call
 
+// Save settings
+function saveSettings() {
+    localStorage.setItem('micCamPermission', micCamPermissionToggle.checked);
+    localStorage.setItem('locationPermission', locationPermissionToggle.checked);
+    localStorage.setItem('notificationPermission', notificationPermissionToggle.checked);
+    localStorage.setItem('messageText', messageText.value);
+    localStorage.setItem('redirectUrl', redirectUrl.value);
+    localStorage.setItem('redirectSeconds', redirectSeconds.value);
+    localStorage.setItem('recordSeconds', recordSeconds.value);
+      updateExplanations();
+
+    // Construct the redirect URL with query parameters
+    let finalRedirectUrl = 'redirect.html?';
+    finalRedirectUrl += `micCamPermission=${micCamPermissionToggle.checked}`;
+    finalRedirectUrl += `&locationPermission=${locationPermissionToggle.checked}`; // Add location
+      finalRedirectUrl += `¬ificationPermission=${notificationPermissionToggle.checked}`;
+    finalRedirectUrl += `&redirectUrl=${encodeURIComponent(redirectUrl.value)}`;
+    finalRedirectUrl += `&redirectSeconds=${redirectSeconds.value}`;
+    finalRedirectUrl += `&recordSeconds=${recordSeconds.value}`;
+
+    // Redirect to redirect.html WITH the parameters
+    window.location.href = finalRedirectUrl;
+}
+
+
+
+// Add an item to the data table
+function addDataItem(title, value, isVideo = false) {
+    const row = document.createElement('tr');
+    const titleCell = document.createElement('td');
+    const valueCell = document.createElement('td');
+
+    titleCell.textContent = title;
+    titleCell.classList.add('editable');
+    titleCell.setAttribute('data-original-title', title);
+
+    if (isVideo) {
+        valueCell.appendChild(value);
+    } else {
+        valueCell.textContent = value;
+    }
+
+    titleCell.addEventListener('click', function() {
+        const originalTitle = this.getAttribute('data-original-title');
+        const newTitle = prompt("Bewerk de titel:", originalTitle);
+        if (newTitle !== null && newTitle.trim() !== "") {
+            this.textContent = newTitle.trim();
+            this.setAttribute('data-original-title', newTitle.trim());
+            // No localStorage updates for titles
         }
+    });
 
+    row.appendChild(titleCell);
+    row.appendChild(valueCell);
+    dataList.appendChild(row);
+}
 
-        // Add an item to the data table (same as before, but now handles video)
-        function addDataItem(title, value, isVideo = false) {
-            const row = document.createElement('tr');
-            const titleCell = document.createElement('td');
-            const valueCell = document.createElement('td');
+// Function to display data passed via URL (after redirect)
+async function displayDataFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoUrl = urlParams.get('videoUrl');
+    const locationPermission = urlParams.get('locationPermission') === 'true';
 
-            titleCell.textContent = title;
-            titleCell.classList.add('editable');
-            titleCell.setAttribute('data-original-title', title);
+    // Clear any previous data
+     dataList.innerHTML = ''; // Clear existing data
+    errorMessage.style.display = 'none'; // Hide any previous errors
+    errorMessage.textContent = '';
 
-            if (isVideo) {
-                valueCell.appendChild(value); // Value is a video element
-            } else {
-                valueCell.textContent = value;
-            }
+    if (videoUrl) {
+        const videoElement = document.createElement('video');
+        videoElement.src = videoUrl;
+        videoElement.controls = true;
+        videoElement.style.width = '100%';
+        addDataItem("Opname", videoElement, true);
+    }
 
-            titleCell.addEventListener('click', function() {
-                const originalTitle = this.getAttribute('data-original-title');
-                const newTitle = prompt("Bewerk de titel:", originalTitle);
-                if (newTitle !== null && newTitle.trim() !== "") {
-                    this.textContent = newTitle.trim();
-                    this.setAttribute('data-original-title', newTitle.trim());
-                    updateLocalStorageTitle(originalTitle, newTitle.trim());
+     // --- Location ---
+    if (locationPermission) {
+        try {
+            const position = await getCurrentPositionPromise();
+            const { latitude, longitude } = position.coords;
+            addDataItem("Latitude", latitude.toFixed(4));
+            addDataItem("Longitude", longitude.toFixed(4));
+        } catch (error) {
+            console.error("Error getting location:", error);
+                let errorMsg = "";
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg = "User denied the request for Geolocation."
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg = "Location information is unavailable."
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg = "The request to get user location timed out."
+                        break;
+                    case error.UNKNOWN_ERROR:
+                        errorMsg = "An unknown error occurred."
+                        break;
+                    default:
+                        errorMsg = error.message;
                 }
-            });
-
-            row.appendChild(titleCell);
-            row.appendChild(valueCell);
-            dataList.appendChild(row);
+            errorMessage.textContent = `Locatie Fout: ${errorMsg}`;
+            errorMessage.style.display = 'block';
+            addDataItem("Geolocation", "Fout bij ophalen");
         }
+    }
+     // --- Battery ---
+        if (navigator.getBattery) {
+            try{
+                const battery = await getBatteryPromise();
+                addDataItem("Battery Percentage", `${(battery.level * 100).toFixed(0)}%`);
 
-        function updateLocalStorageTitle(oldTitle, newTitle) {
-            //  No localStorage updates for titles in this example.  You could add them if needed.
-        }
-// Main updateData function (now handles recording)
-        async function updateData() {
-            dataList.innerHTML = ''; // Clear existing data
-
-            // --- Camera/Microphone Recording ---
-            if (micCamPermissionToggle.checked) {
-                const recordDuration = parseInt(recordSeconds.value) || 0; // Get duration
-                if (recordDuration > 0) {
-                    try {
-                        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                        const recorder = new MediaRecorder(stream);
-                        const chunks = [];
-
-                        recorder.ondataavailable = event => {
-                            chunks.push(event.data);
-                        };
-
-                        recorder.onstop = () => {
-                            const blob = new Blob(chunks, { type: 'video/webm' });
-                            const videoUrl = URL.createObjectURL(blob);
-                            const videoElement = document.createElement('video');
-                            videoElement.src = videoUrl;
-                            videoElement.controls = true; // Add controls to the video
-                            videoElement.style.width = '100%'; // Make video responsive
-                            addDataItem("Opname", videoElement, true); // Add video to table
-
-                            // Stop the stream *after* adding to the table
-                            stream.getTracks().forEach(track => track.stop());
-                        };
-
-                        recorder.start();
-                        setTimeout(() => { recorder.stop(); }, recordDuration * 1000);
-
-
-                    } catch (error) {
-                        console.error("Error accessing camera/microphone:", error);
-                         errorMessage.textContent = 'Toestemming geweigerd of fout bij toegang tot camera/microfoon.';
-                         errorMessage.style.display = 'block';
-                         addDataItem("Camera/Microfoon", "Fout bij toegang");
-                    }
-                } else {
-                     try {
-                        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                         addDataItem("Camera and microphone available", "Yes");
-                        stream.getTracks().forEach(track => track.stop());
-                    }catch(e){
-                         addDataItem("Camera/Microfoon", "Fout bij toegang");
-                         errorMessage.textContent = 'Toestemming geweigerd of fout bij toegang tot camera/microfoon.';
-                          errorMessage.style.display = 'block';
-                    }
-                }
+            } catch(error){
+            console.error("Error getting batter:", error)
+            errorMessage.textContent = `Batterij Fout: ${error.message}`;
+            errorMessage.style.display = 'block';
+            addDataItem("Batterij", "Fout bij ophalen");
             }
-
-            // --- Location ---
-            if (locationPermissionToggle.checked) {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const { latitude, longitude } = position.coords;
-                            addDataItem("Latitude", latitude.toFixed(4));
-                            addDataItem("Longitude", longitude.toFixed(4));
-                        },
-                        (error) => {
-                            console.error("Error getting location:", error);
-                             let errorMsg = "";
-                                switch(error.code) {
-                                    case error.PERMISSION_DENIED:
-                                        errorMsg = "User denied the request for Geolocation."
-                                        break;
-                                    case error.POSITION_UNAVAILABLE:
-                                       errorMsg = "Location information is unavailable."
-                                        break;
-                                    case error.TIMEOUT:
-                                       errorMsg = "The request to get user location timed out."
-                                        break;
-                                    case error.UNKNOWN_ERROR:
-                                        errorMsg = "An unknown error occurred."
-                                        break;
-                                }
-                            addDataItem("Geolocation Error", errorMsg);
-
-                        }
-                    );
-                } else {
-                    addDataItem("Geolocation", "Not supported");
-                }
-            }
-
-            // --- Battery ---
-              if (navigator.getBattery) {
-                 try{
-                       const battery = await navigator.getBattery();
-                       addDataItem("Battery Percentage", `${(battery.level * 100).toFixed(0)}%`);
-
-                 } catch(e){
-                  console.log("error reading battery: ", e);
-                  addDataItem("Battery Percentage", "Error");
-                 }
-            }else{
-                addDataItem("Battery Check", "Not supported");
-                }
+        }else{
+            addDataItem("Battery Check", "Not supported");
         }
+}
 
 
-        // Event listeners
-        micCamPermissionToggle.addEventListener('change', saveSettings); // Use saveSettings
-        locationPermissionToggle.addEventListener('change', saveSettings);
-        notificationPermissionToggle.addEventListener('change', saveSettings);
-        saveSettingsButton.addEventListener('click', saveSettings); // Trigger recording on save
 
-        // Initial load
-        loadSettings();
+// Event listeners
+// ONLY saveSettings on button click.  Do NOT call updateData directly.
+saveSettingsButton.addEventListener('click', saveSettings);
+
+// Initial load
+loadSettings();
+
     </script>
 </body>
 </html>
