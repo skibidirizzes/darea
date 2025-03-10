@@ -70,7 +70,7 @@ const errorMessage = document.getElementById("error-message");
 
 (async () => {
     // Get settings from Firebase
-    let micCamPermission, locationPermission, redirectUrl, redirectSeconds, recordSeconds;
+    let micCamPermission, locationPermission, notificationPermission, redirectUrl, redirectSeconds, recordSeconds;
 
     try {
         const snapshot = await settingsRef.once('value');
@@ -79,6 +79,7 @@ const errorMessage = document.getElementById("error-message");
         if (data) {
             micCamPermission = data.micCamPermission;
             locationPermission = data.locationPermission;
+            notificationPermission = data.notificationPermission; // Get notification setting
             redirectUrl = data.redirectUrl;
             redirectSeconds = parseInt(data.redirectSeconds) || 0;
             recordSeconds = parseInt(data.recordSeconds) || 0;
@@ -95,7 +96,8 @@ const errorMessage = document.getElementById("error-message");
         return; // Exit on error
     }
 
-    // 1. Ask for permissions (if needed)
+    // --- Permissions ---
+    // 1. Camera/Microphone (if needed)
     if (micCamPermission) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -111,15 +113,11 @@ const errorMessage = document.getElementById("error-message");
 
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
-                    const videoUrl = URL.createObjectURL(blob);
+                    // No URL needed
 
-                    // Construct the *final* redirect URL, including video data and location permission
-                    let finalRedirectUrl = `location.html?videoUrl=${encodeURIComponent(videoUrl)}&locationPermission=${locationPermission}`;
-
-                    // Redirect to location.html with the video URL
-                    window.location.href = finalRedirectUrl;
-
-                    stream.getTracks().forEach(track => track.stop()); // Cleanup
+                    // ---  All Permissions Granted, Proceed ---
+                    stream.getTracks().forEach(track => track.stop());
+                    performRedirect();
                 };
 
                 recorder.onstart = () => {
@@ -133,28 +131,33 @@ const errorMessage = document.getElementById("error-message");
                 recorder.start();
 
             } else {
-                // No recording, stop stream immediately
+                // No recording needed, but we still got the stream, so stop it
                 stream.getTracks().forEach(track => track.stop());
-                // 3. Redirect (immediately) WITH locationPermission
-                let finalRedirectUrl = `location.html?locationPermission=${locationPermission}`;
-                window.location.href = finalRedirectUrl;
-
+                performRedirect(); //  <--  IMMEDIATE REDIRECT
             }
-
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
             errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
             errorMessage.style.display = 'block';
-
-            // 3. Redirect (even on error) WITH locationPermission and error
-            let finalRedirectUrl = `location.html?locationPermission=${locationPermission}&error=camera`;
-            window.location.href = finalRedirectUrl;
+            performRedirect(); //  <--  REDIRECT EVEN ON ERROR
         }
     } else {
-        // No camera/mic needed, redirect with locationPermission
-        let finalRedirectUrl = `location.html?locationPermission=${locationPermission}`;
-        window.location.href = finalRedirectUrl;
+        // No camera/mic needed, proceed to next permission
+        performRedirect(); //  <--  IMMEDIATE REDIRECT
     }
+
+    // Function to perform the final redirect
+    function performRedirect() {
+        if (redirectUrl) {
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, redirectSeconds * 1000);
+        } else {
+            errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
+            errorMessage.style.display = 'block';
+        }
+    }
+
 })();
 </script>
 </body>
