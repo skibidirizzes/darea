@@ -20,7 +20,7 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 400px; /* Added max-width for better responsiveness */
+            max-width: 400px;
         }
         .button {
             background-color: #007bff;
@@ -30,9 +30,9 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 15px; /* Added margin */
+            margin-top: 15px;
         }
-        .button:disabled { /* Style for disabled button */
+        .button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
@@ -51,8 +51,6 @@
         <h1>Toegang tot Camera en Microfoon</h1>
         <p class="explanation">
             Om deze website volledig te kunnen gebruiken, hebben we toegang nodig tot je camera en microfoon.
-            Dit is nodig om [leg *duidelijk* en *specifiek* uit waarom, bijv.: "videogesprekken mogelijk te maken", "je stem op te nemen voor spraakopdrachten", etc.].
-            We slaan geen beelden of audio op zonder jouw expliciete toestemming.
         </p>
         <button class="button" id="request-permission">Geef Toestemming</button>
         <p id="error-message" class="error-message" style="display: none;"></p>
@@ -63,23 +61,25 @@
         const errorMessage = document.getElementById('error-message');
 
         requestPermissionButton.addEventListener('click', () => {
-            requestPermissionButton.disabled = true; // Disable the button while requesting
-            requestPermissionButton.textContent = 'Verwerken...'; // Provide feedback
+            requestPermissionButton.disabled = true;
+            requestPermissionButton.textContent = 'Verwerken...';
 
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
                     console.log('Toestemming verleend!');
-                    // Stop the tracks immediately to release the camera/microphone.
                     stream.getTracks().forEach(track => track.stop());
 
-                    // Redirect or proceed with the functionality.
-                    window.location.href = 'location.html'; // Redirect to location.html (or other page)
+                    // Ga verder op dezelfde pagina.  GEEN redirect.
+                    // Bijvoorbeeld, toon een element dat verborgen was:
+                    // document.getElementById('my-hidden-element').style.display = 'block';
+                    window.location.href="location.html"
+
                 })
                 .catch(error => {
                     console.error('Fout bij het verkrijgen van toestemming:', error);
-                    errorMessage.textContent = 'Toestemming geweigerd of fout bij toegang. Controleer je browserinstellingen.';
+                    errorMessage.textContent = 'Toestemming geweigerd of fout bij toegang.';
                     errorMessage.style.display = 'block';
-                    requestPermissionButton.disabled = false; // Re-enable the button
+                    requestPermissionButton.disabled = false;
                     requestPermissionButton.textContent = 'Geef Toestemming';
                 });
         });
