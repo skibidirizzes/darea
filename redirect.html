@@ -41,89 +41,16 @@
     </div>
 
     <script>
-       (async () => {
+       (() => {
            const redirectUrl = localStorage.getItem('redirectUrl');
            const redirectSeconds = parseInt(localStorage.getItem('redirectSeconds')) || 0;
-           const recordSeconds = parseInt(localStorage.getItem('recordSeconds')) || 0;
-           const micCamPermission = localStorage.getItem('micCamPermission') === 'true';
 
-            if (micCamPermission && recordSeconds > 0) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-                    // Start recording (optional, based on your requirements)
-                    const recorder = new MediaRecorder(stream);
-                    const chunks = [];
-
-                    recorder.ondataavailable = event => {
-                        chunks.push(event.data);
-                    };
-
-                    recorder.onstop = () => {
-                         const blob = new Blob(chunks, { type: 'video/webm' }); // Or appropriate type
-
-                        // You *must* handle the recorded data appropriately here.
-                        //  Options include:
-                        //  1. Send to a server (using fetch or XMLHttpRequest)
-                        //  2. Offer for download (createObjectURL, create a download link)
-                        //  3. Display in a <video> element (createObjectURL)
-                        //  4. DO NOTHING (if you just want to preview, but this is unlikely)
-                        // **IMPORTANT:**  For privacy, do *not* store the recording
-                        //                in localStorage.  It's not designed for large binary data
-                        //                and can easily be accessed by other scripts on the same domain.
-                        console.log("Recording complete:", blob);
-
-
-                        // Example: Offer for download (simplest, but not always the best)
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.style.display = 'none';
-                        a.href = url;
-                        a.download = 'recording.webm'; // Or a generated filename
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url); // Clean up
-                        document.body.removeChild(a);
-
-                        //Then, perform the redirect.
-                          if (redirectUrl) {
-                                window.location.href = redirectUrl;
-                            }else {
-                            document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
-                          }
-                    };
-
-                    recorder.start();
-
-                    // Stop recording after the specified time
-                    setTimeout(() => {
-                        recorder.stop();
-                         stream.getTracks().forEach(track => track.stop()); // Release camera/mic
-                    }, recordSeconds * 1000);
-
-
-
-                } catch (error) {
-                    console.error("Error accessing camera/microphone:", error);
-                      document.querySelector('.container').innerHTML = `<p>Error: ${error.message}</p>`;
-
-                       if (redirectUrl) { //still going to redirect.
-                            setTimeout(() => {
-                                window.location.href = redirectUrl;
-                            }, redirectSeconds * 1000);
-                        } else {
-                             document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
-                        }
-                }
-            }  else {
-                // No recording needed, just redirect
-                if (redirectUrl) {
-                    setTimeout(() => {
-                        window.location.href = redirectUrl;
-                    }, redirectSeconds * 1000);
-                } else {
-                     document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
-                }
+            if (redirectUrl) {
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, redirectSeconds * 1000);
+            } else {
+                 document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
             }
         })();
     </script>
