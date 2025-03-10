@@ -94,6 +94,7 @@ const errorMessage = document.getElementById("error-message");
         errorMessage.style.display = 'block';
         return; // Exit on error
     }
+
     // 1. Ask for permissions (if needed)
     if (micCamPermission) {
         try {
@@ -136,11 +137,11 @@ const errorMessage = document.getElementById("error-message");
 
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
-            errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
-            errorMessage.style.display = 'block';
-
+             errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
+             errorMessage.style.display = 'block';
             // 3. Redirect (even on error)
             performRedirect();
+
         }
     } else {
         // No camera/mic needed
