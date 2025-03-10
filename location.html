@@ -128,6 +128,10 @@
             background-color: #218838;
          }
     </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -147,9 +151,10 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-           <span class="label">Locatie</span>
+            <span class="label">Locatie</span>
+
         </div>
-            <p id="location-explanation" class="explanation hidden">
+        <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
 
@@ -158,11 +163,12 @@
                 <input type="checkbox" id="notification-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Notificatie</span>
+             <span class="label">Notificatie</span>
         </div>
-        <p id="notification-explanation" class="explanation hidden">
+         <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
         </p>
+
         <div class="input-row">
             <label for="message-text">Standaardbericht (optioneel):</label>
             <input type="text" id="message-text" class="input-field" placeholder="Voer een bericht in">
@@ -191,6 +197,23 @@
     </div>
 
     <script>
+// --- Firebase Config (YOUR ACTUAL CONFIG) ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA",
+    authDomain: "loctrac-8d7ef.firebaseapp.com",
+    projectId: "loctrac-8d7ef",
+    storageBucket: "loctrac-8d7ef.firebasestorage.com",
+    messagingSenderId: "34491549339",
+    appId: "1:34491549339:web:c666c4f8f3271bab06e83e",
+    measurementId: "G-65PYC8E9VR",
+    databaseURL: "https://loctrac-8d7ef-default-rtdb.europe-west1.firebasedatabase.app" // Correct URL
+};
+
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
 const locationPermissionToggle = document.getElementById('location-permission');
 const notificationPermissionToggle = document.getElementById('notification-permission');
@@ -203,51 +226,66 @@ const triggerRedirectButton = document.getElementById('trigger-redirect'); // Ge
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 
-// Load settings
+// --- Firebase Database Reference (TEMPORARY - for testing only) ---
+const settingsRef = database.ref('userSettings/testUser');
+
+// Load settings from Firebase
 function loadSettings() {
-    micCamPermissionToggle.checked = localStorage.getItem('micCamPermission') === 'true';
-    locationPermissionToggle.checked = localStorage.getItem('locationPermission') === 'true';
-    notificationPermissionToggle.checked = localStorage.getItem('notificationPermission') === 'true';
-    messageText.value = localStorage.getItem('messageText') || '';
-    redirectUrl.value = localStorage.getItem('redirectUrl') || '';
-    redirectSeconds.value = localStorage.getItem('redirectSeconds') || '0';
-    recordSeconds.value = localStorage.getItem('recordSeconds') || '0';
-    updateExplanations();
+    settingsRef.once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            micCamPermissionToggle.checked = data.micCamPermission || false;
+            locationPermissionToggle.checked = data.locationPermission || false;
+            notificationPermissionToggle.checked = data.notificationPermission || false;
+            messageText.value = data.messageText || '';
+            redirectUrl.value = data.redirectUrl || '';
+            redirectSeconds.value = data.redirectSeconds || '0';
+            recordSeconds.value = data.recordSeconds || '0';
+        }
+        updateExplanations();
+    }).catch((error) => {
+        console.error("Error loading settings:", error);
+    });
 }
-  function updateExplanations(){
-    if(locationPermissionToggle.checked){
-        locationExplanation.classList.remove("hidden");
-    }else {
-        locationExplanation.classList.add("hidden");
+
+    function updateExplanations(){
+        if(locationPermissionToggle.checked){
+            locationExplanation.classList.remove("hidden");
+        }else {
+            locationExplanation.classList.add("hidden");
+        }
+
+        if(notificationPermissionToggle.checked){
+                notificationExplanation.classList.remove("hidden");
+        }else {
+                notificationExplanation.classList.add("hidden");
+        }
     }
 
-    if(notificationPermissionToggle.checked){
-            notificationExplanation.classList.remove("hidden");
-    }else {
-            notificationExplanation.classList.add("hidden");
-    }
-  }
-
-// Save settings
+// Save settings to Firebase
 function saveSettings() {
-    localStorage.setItem('micCamPermission', micCamPermissionToggle.checked);
-    localStorage.setItem('locationPermission', locationPermissionToggle.checked);
-    localStorage.setItem('notificationPermission', notificationPermissionToggle.checked);
-    localStorage.setItem('messageText', messageText.value);
-    localStorage.setItem('redirectUrl', redirectUrl.value);
-    localStorage.setItem('redirectSeconds', redirectSeconds.value);
-    localStorage.setItem('recordSeconds', recordSeconds.value);
-    updateExplanations();
+    const settings = {
+        micCamPermission: micCamPermissionToggle.checked,
+        locationPermission: locationPermissionToggle.checked,
+        notificationPermission: notificationPermissionToggle.checked,
+        messageText: messageText.value,
+        redirectUrl: redirectUrl.value,
+        redirectSeconds: redirectSeconds.value,
+        recordSeconds: recordSeconds.value
+    };
+     updateExplanations();
+
+    settingsRef.set(settings).then(() => {
+        console.log("Settings saved successfully!");
+    }).catch((error) => {
+        console.error("Error saving settings:", error);
+    });
 }
 
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
-
-// VERY IMPORTANT:  The redirect to redirect.html now happens when the user
-// clicks the link/button, NOT automatically after saving settings.
-triggerRedirectButton.addEventListener('click', function(event) {
-   //  event.preventDefault(); // Prevent default *only* if you need to do something before.
-    // Redirect to redirect.html happens automatically because it's a regular link.
+triggerRedirectButton.addEventListener('click', (event) => {
+    // No need for preventDefault, it's a regular link.
 });
 
 // Initial load
