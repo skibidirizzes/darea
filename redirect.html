@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
     <style>
-     /* ... (Styles - unchanged, same as before) ... */
-     body {
+        body {
             font-family: sans-serif;
             display: flex;
             justify-content: center;
@@ -42,72 +41,88 @@
     <div class="container">
         <h1>Redirecting...</h1>
         <p>You will be redirected shortly <span class="loading-dots"></span></p>
-          <p id="error-message" class="error-message" style="display: none;"></p>
+        <p id="error-message" class="error-message" style="display:none;"></p>
     </div>
 
-    <script>
+<script>
 (async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const micCamPermission = urlParams.get('micCamPermission') === 'true';
-    const locationPermission = urlParams.get('locationPermission') === 'true'; // Get loc
-    const redirectUrl = decodeURIComponent(urlParams.get('redirectUrl'));
-    const redirectSeconds = parseInt(urlParams.get('redirectSeconds')) || 0;
-    const recordSeconds = parseInt(urlParams.get('recordSeconds')) || 0;
+    // Get settings from localStorage
+    const micCamPermission = localStorage.getItem('micCamPermission') === 'true';
+    const locationPermission = localStorage.getItem('locationPermission') === 'true';
+    const redirectUrl = localStorage.getItem('redirectUrl');
+    const redirectSeconds = parseInt(localStorage.getItem('redirectSeconds')) || 0;
+    const recordSeconds = parseInt(localStorage.getItem('recordSeconds')) || 0;
     const errorMessage = document.getElementById("error-message");
 
-    if (micCamPermission && recordSeconds > 0) {
+    // 1. Ask for permissions (if needed)
+    if (micCamPermission) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            const recorder = new MediaRecorder(stream);
-            const chunks = [];
 
-            recorder.ondataavailable = event => {
-                chunks.push(event.data);
-            };
+            // 2. Start recording (if needed)
+            if (recordSeconds > 0) {
+                const recorder = new MediaRecorder(stream);
+                const chunks = [];
 
-            recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                const videoUrl = URL.createObjectURL(blob);
+                recorder.ondataavailable = event => {
+                    chunks.push(event.data);
+                };
 
-                // Construct the *final* redirect URL, including video data
-                let finalRedirectUrl = 'location.html?';
-                finalRedirectUrl += `videoUrl=${encodeURIComponent(videoUrl)}`;
-                finalRedirectUrl += `&locationPermission=${locationPermission}`; // Pass through
-                // Redirect to location.html with the video URL
-                window.location.href = finalRedirectUrl;
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    // You *could* create a URL for the blob here, BUT it's not needed
+                    // for the final redirect.
 
+                    // 3. Redirect (after recording)
+                    performRedirect();
+
+                    // Clean up the stream *after* redirecting.
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                recorder.onstart = () => {
+                    setTimeout(() => {
+                        if (recorder.state !== "inactive") {
+                            recorder.stop();
+                        }
+                    }, recordSeconds * 1000);
+                };
+
+                recorder.start();
+
+            } else {
+                // No recording needed, but we still got the stream, so stop it
                 stream.getTracks().forEach(track => track.stop());
-            };
-
-            // Start timer *after* recorder starts
-            recorder.onstart = () => {
-                setTimeout(() => {
-                    if (recorder.state !== "inactive") {
-                        recorder.stop();
-                    }
-                }, recordSeconds * 1000);
-            };
-
-            recorder.start();
+                // 3. Redirect (immediately)
+                performRedirect();
+            }
 
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
              errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
              errorMessage.style.display = 'block';
-
-            // Redirect to location.html even on error, but without video data
-            let finalRedirectUrl = 'location.html?';
-            finalRedirectUrl += `locationPermission=${locationPermission}`;  //pass through
-            finalRedirectUrl += '&error=camera';  // Indicate error
-            window.location.href = finalRedirectUrl;
+            // 3. Redirect (even if there's an error)
+            performRedirect();
         }
-    } else { // No camera/mic needed, just build the URL and redirect
-          let finalRedirectUrl = 'location.html?';
-           finalRedirectUrl += `locationPermission=${locationPermission}`;  //pass through
-            window.location.href = finalRedirectUrl;
+    } else {
+        // No camera/mic needed
+        // 3. Redirect (immediately)
+        performRedirect();
+    }
+
+     // Function to perform the final redirect
+    function performRedirect() {
+        if (redirectUrl) {
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, redirectSeconds * 1000);
+        } else {
+            document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
+        }
     }
 
 })();
-    </script>
+
+</script>
 </body>
 </html>
