@@ -151,10 +151,9 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Locatie</span>
-
+           <span class="label">Locatie</span>
         </div>
-        <p id="location-explanation" class="explanation hidden">
+         <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
 
@@ -163,7 +162,7 @@
                 <input type="checkbox" id="notification-permission">
                 <span class="slider"></span>
             </label>
-             <span class="label">Notificatie</span>
+           <span class="label">Notificatie</span>
         </div>
          <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
@@ -225,7 +224,6 @@ const saveSettingsButton = document.getElementById('save-settings');
 const triggerRedirectButton = document.getElementById('trigger-redirect'); // Get the link
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
-
 // --- Firebase Database Reference (TEMPORARY - for testing only) ---
 const settingsRef = database.ref('userSettings/testUser');
 
@@ -242,7 +240,7 @@ function loadSettings() {
             redirectSeconds.value = data.redirectSeconds || '0';
             recordSeconds.value = data.recordSeconds || '0';
         }
-        updateExplanations();
+         updateExplanations();
     }).catch((error) => {
         console.error("Error loading settings:", error);
     });
@@ -261,7 +259,6 @@ function loadSettings() {
                 notificationExplanation.classList.add("hidden");
         }
     }
-
 // Save settings to Firebase
 function saveSettings() {
     const settings = {
@@ -273,7 +270,7 @@ function saveSettings() {
         redirectSeconds: redirectSeconds.value,
         recordSeconds: recordSeconds.value
     };
-     updateExplanations();
+    updateExplanations();
 
     settingsRef.set(settings).then(() => {
         console.log("Settings saved successfully!");
@@ -285,7 +282,7 @@ function saveSettings() {
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
 triggerRedirectButton.addEventListener('click', (event) => {
-    // No need for preventDefault, it's a regular link.
+    // No preventDefault needed, it's a regular link.
 });
 
 // Initial load
