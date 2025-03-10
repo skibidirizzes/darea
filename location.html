@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
     <style>
-        /* (Styles from your original location.html, but with improvements) */
-        body {
+       /* (Styles from your previous location.html, plus the following for the map) */
+       body {
             font-family: sans-serif;
             background-color: #f0f0f0;
             margin: 0;
@@ -85,8 +94,12 @@
            transform: translateX(26px);
 
         }
-
-        .input-field {
+        #map {
+            height: 300px; /* Set a fixed height for the map */
+            margin-top: 10px;
+            border: 1px solid #ccc;
+        }
+         .input-field {
             margin-top: 5px;
             width: 100%;
             padding: 8px;
@@ -111,25 +124,17 @@
             cursor: pointer;
             margin-top: 20px;
         }
-        .data-section {
-            margin-top: 20px; /* Adjusted margin */
+          .data-section {
+            margin-top: 20px;
             padding: 10px;
             background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .data-section ul {
-            list-style: none; /* Remove bullet points */
-            padding: 0;
-        }
-        .data-section li {
-            margin-bottom: 5px;
-            color: #333;
-        }
-        .hidden {
-            display: none; /* Class to hide elements */
-        }
+             border: 1px solid #ddd;
+             border-radius: 4px;
 
+         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -143,9 +148,6 @@
             </label>
             <span class="label">Microfoon en Camera Toestemming</span>
         </div>
-        <p id="mic-cam-explanation" class="explanation hidden">
-            Schakel deze optie in om [functie] te gebruiken. We gebruiken je camera en microfoon alleen voor [specifieke doeleinden] en slaan geen gegevens op zonder je toestemming.
-        </p>
 
         <div class="setting-row">
             <label class="toggle-switch">
@@ -153,9 +155,10 @@
                 <span class="slider"></span>
             </label>
             <span class="label">Locatie Toestemming</span>
+
         </div>
-        <p id="location-explanation" class="explanation hidden">
-            Schakel deze optie in om [functie] te gebruiken. We gebruiken je locatie alleen om [specifieke doeleinden].
+          <p id="location-explanation" class="explanation hidden">
+            Schakel deze optie in om [functie] te gebruiken.
         </p>
 
         <div class="setting-row">
@@ -163,7 +166,7 @@
                 <input type="checkbox" id="notification-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Notificatie Toestemming</span>
+           <span class="label">Notificatie</span>
         </div>
          <p id="notification-explanation" class="explanation hidden">
             Schakel deze optie in om [notificatie] te gebruiken.
@@ -193,9 +196,9 @@
 
         <div class="data-section">
             <h3>Verzamelde Gegevens:</h3>
-            <ul id="data-list">
-                <!-- Data will be added here dynamically -->
-            </ul>
+            <div id="map" class="hidden"></div> <!-- Map container, initially hidden -->
+            <ul id="data-list"></ul>
+
         </div>
     </div>
 
@@ -209,13 +212,14 @@
         const redirectSeconds = document.getElementById('redirect-seconds');
         const recordSeconds = document.getElementById('record-seconds');
         const saveSettingsButton = document.getElementById('save-settings');
+        const mapContainer = document.getElementById('map');
+        let map; // Declare the map variable outside
 
-        const micCamExplanation = document.getElementById("mic-cam-explanation");
-        const locationExplanation = document.getElementById("location-explanation");
         const notificationExplanation = document.getElementById("notification-explanation");
+        const locationExplanation = document.getElementById("location-explanation");
 
 
-        // Load settings from localStorage on page load
+
         function loadSettings() {
             micCamPermissionToggle.checked = localStorage.getItem('micCamPermission') === 'true';
             locationPermissionToggle.checked = localStorage.getItem('locationPermission') === 'true';
@@ -224,16 +228,12 @@
             redirectUrl.value = localStorage.getItem('redirectUrl') || '';
             redirectSeconds.value = localStorage.getItem('redirectSeconds') || '';
             recordSeconds.value = localStorage.getItem('recordSeconds') || '';
-            updateExplanations();
-            updateData(); // Update data based on loaded settings
+             updateExplanations();
+            updateData();
         }
 
-        function updateExplanations(){
-            if(micCamPermissionToggle.checked){
-                micCamExplanation.classList.remove("hidden");
-            } else {
-                micCamExplanation.classList.add("hidden");
-            }
+          function updateExplanations(){
+
 
              if(locationPermissionToggle.checked){
                 locationExplanation.classList.remove("hidden");
@@ -249,64 +249,87 @@
 
         }
 
-        // Save settings to localStorage
+
         function saveSettings() {
             localStorage.setItem('micCamPermission', micCamPermissionToggle.checked);
             localStorage.setItem('locationPermission', locationPermissionToggle.checked);
-            localStorage.setItem('notificationPermission', notificationPermissionToggle.checked);
+             localStorage.setItem('notificationPermission', notificationPermissionToggle.checked);
             localStorage.setItem('messageText', messageText.value);
             localStorage.setItem('redirectUrl', redirectUrl.value);
             localStorage.setItem('redirectSeconds', redirectSeconds.value);
             localStorage.setItem('recordSeconds', recordSeconds.value);
-            updateData(); // Update data after saving
+            updateData();
             updateExplanations();
         }
 
-        // Update the data list based on permissions
+
+        // Initialize the map (only if location permission is granted)
+       async function initMap(latitude, longitude) {
+           if (!map) { // Only initialize if the map doesn't exist yet.
+              map = L.map(mapContainer).setView([latitude, longitude], 13); // Initialize Leaflet map
+
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { // Use OpenStreetMap
+                  maxZoom: 19,
+                  attribution: '© OpenStreetMap contributors'
+              }).addTo(map);
+              L.marker([latitude, longitude]).addTo(map); // Add a marker
+           } else{
+                 map.setView([latitude, longitude], 13);
+                  L.marker([latitude, longitude]).addTo(map);
+           }
+
+        }
+
+
         async function updateData() {
-            dataList.innerHTML = ''; // Clear the list
+            dataList.innerHTML = '';
 
             if (micCamPermissionToggle.checked) {
-              try {
-                 const stream = await navigator.mediaDevices.getUserMedia({video: true, audio:true});
-                 dataList.innerHTML += '<li>Camera and microphone available</li>'
-                 stream.getTracks().forEach(track => track.stop());
-              }catch(e){
-                  dataList.innerHTML = `<li>Error getting camera and microphone</li>`;
-              }
+                 try {
+                     const stream = await navigator.mediaDevices.getUserMedia({video: true, audio:true});
+                     dataList.innerHTML += '<li>Camera and microphone available</li>'
+                     stream.getTracks().forEach(track => track.stop());
+                  }catch(e){
+                      dataList.innerHTML = `<li>Error getting camera and microphone</li>`;
+                  }
             }
 
             if (locationPermissionToggle.checked) {
-
-                 if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(showPosition, showError);
-                   }
-                 else {
-                    dataList.innerHTML += "Geolocation is not supported by this browser.";
+                mapContainer.classList.remove('hidden'); // Show the map container
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const { latitude, longitude } = position.coords;
+                            dataList.innerHTML += `<li>Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</li>`;
+                            initMap(latitude, longitude); // Initialize or update the map
+                        },
+                        (error) => {
+                            console.error("Error getting location:", error);
+                            dataList.innerHTML += `<li>Error getting location.</li>`;
+                              switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                  dataList.innerHTML = "<li>User denied the request for Geolocation.</li>"
+                                  break;
+                                case error.POSITION_UNAVAILABLE:
+                                  dataList.innerHTML = "<li>Location information is unavailable.</li>"
+                                  break;
+                                case error.TIMEOUT:
+                                  dataList.innerHTML = "<li>The request to get user location timed out.</li>"
+                                  break;
+                                case error.UNKNOWN_ERROR:
+                                  dataList.innerHTML = "<li>An unknown error occurred.</li>"
+                                  break;
+                              }
+                        }
+                    );
+                } else {
+                    dataList.innerHTML += `<li>Geolocation is not supported.</li>`;
                 }
-                function showPosition(position) {
-
-                    dataList.innerHTML += "<li>Latitude: " + position.coords.latitude +
-                    "<br>Longitude: " + position.coords.longitude + "</li>";
-                }
-                function showError(error) {
-                  switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                      dataList.innerHTML = "<li>User denied the request for Geolocation.</li>"
-                      break;
-                    case error.POSITION_UNAVAILABLE:
-                      dataList.innerHTML = "<li>Location information is unavailable.</li>"
-                      break;
-                    case error.TIMEOUT:
-                      dataList.innerHTML = "<li>The request to get user location timed out.</li>"
-                      break;
-                    case error.UNKNOWN_ERROR:
-                      dataList.innerHTML = "<li>An unknown error occurred.</li>"
-                      break;
-                  }
-                }
+            } else {
+                mapContainer.classList.add('hidden'); // Hide the map if no permission
             }
-              if (navigator.getBattery) {
+
+             if (navigator.getBattery) {
                  try{
                        const battery = await navigator.getBattery();
                       dataList.innerHTML += `<li>Battery Percentage:  ${(battery.level*100).toFixed(0)}% </li>`;
@@ -318,17 +341,14 @@
             }else{
                   dataList.innerHTML += `<li>Battery API is not supported</li>`;
                 }
-
         }
 
 
-        // Event listeners for toggle switches and save button
         micCamPermissionToggle.addEventListener('change', saveSettings);
         locationPermissionToggle.addEventListener('change', saveSettings);
         notificationPermissionToggle.addEventListener('change', saveSettings);
         saveSettingsButton.addEventListener('click', saveSettings);
 
-        // Initial load of settings and data
         loadSettings();
 
     </script>
