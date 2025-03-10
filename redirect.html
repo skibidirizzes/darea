@@ -41,31 +41,18 @@
     </div>
 
     <script>
-       (async () => { // Use an IIFE (Immediately Invoked Function Expression)
-
-            // Get permissions first (important for privacy!)
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                 stream.getTracks().forEach(track => track.stop()); // Immediately release
-            } catch (error) {
-                console.error("Error getting permissions (but continuing anyway):", error);
-                //  Continue with the redirect even if permissions are denied/fail.
-            }
-
-
+       (() => {
            const redirectUrl = localStorage.getItem('redirectUrl');
-           const redirectSeconds = parseInt(localStorage.getItem('redirectSeconds')) || 0; // Default to 0 if not set
-
+           const redirectSeconds = parseInt(localStorage.getItem('redirectSeconds')) || 0;
 
             if (redirectUrl) {
                 setTimeout(() => {
                     window.location.href = redirectUrl;
-                }, redirectSeconds * 1000); // Convert seconds to milliseconds
+                }, redirectSeconds * 1000);
             } else {
-                 document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>'; //best practice om niet innerHTML the gebruiken, maar het kan wel hier
+                 document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>';
             }
-        })(); // Execute the IIFE
-
+        })();
     </script>
 </body>
 </html>
