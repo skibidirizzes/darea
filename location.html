@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
+        /*  ... (STYLES - Alles hetzelfde als voorheen) ... */
         body {
             font-family: sans-serif;
             background-color: #f4f4f4;
@@ -151,20 +152,19 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-           <span class="label">Locatie</span>
+            <span class="label">Locatie</span>
         </div>
          <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
-
         <div class="setting-row">
             <label class="toggle-switch">
                 <input type="checkbox" id="notification-permission">
                 <span class="slider"></span>
             </label>
-           <span class="label">Notificatie</span>
+             <span class="label">Notificatie</span>
         </div>
-         <p id="notification-explanation" class="explanation hidden">
+          <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
         </p>
 
@@ -221,13 +221,14 @@ const redirectUrl = document.getElementById('redirect-url');
 const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
 const saveSettingsButton = document.getElementById('save-settings');
-const triggerRedirectButton = document.getElementById('trigger-redirect'); // Get the link
+const triggerRedirectButton = document.getElementById('trigger-redirect');
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
+
 // --- Firebase Database Reference (TEMPORARY - for testing only) ---
 const settingsRef = database.ref('userSettings/testUser');
 
-// Load settings from Firebase
+// Load settings from Firebase (Not really needed for this debugging, but keep it)
 function loadSettings() {
     settingsRef.once('value').then((snapshot) => {
         const data = snapshot.val();
@@ -240,13 +241,13 @@ function loadSettings() {
             redirectSeconds.value = data.redirectSeconds || '0';
             recordSeconds.value = data.recordSeconds || '0';
         }
-         updateExplanations();
+          updateExplanations();
     }).catch((error) => {
-        console.error("Error loading settings:", error);
+        console.error("Error loading settings:", error); // Keep this
     });
 }
-
-    function updateExplanations(){
+// Update explanations
+function updateExplanations(){
         if(locationPermissionToggle.checked){
             locationExplanation.classList.remove("hidden");
         }else {
@@ -258,7 +259,8 @@ function loadSettings() {
         }else {
                 notificationExplanation.classList.add("hidden");
         }
-    }
+}
+
 // Save settings to Firebase
 function saveSettings() {
     const settings = {
@@ -272,21 +274,23 @@ function saveSettings() {
     };
     updateExplanations();
 
-    settingsRef.set(settings).then(() => {
-        console.log("Settings saved successfully!");
-    }).catch((error) => {
-        console.error("Error saving settings:", error);
-    });
+    console.log("Settings to be saved:", settings); //  <--  BELANGRIJK: Controleer dit
+
+    settingsRef.set(settings)
+        .then(() => {
+            console.log("Settings saved successfully!"); //  <--  Zie je dit?
+        })
+        .catch((error) => {
+            console.error("Error saving settings:", error); //  <--  OF DIT?
+        });
 }
 
 // Event listeners
-saveSettingsButton.addEventListener('click', saveSettings);
-triggerRedirectButton.addEventListener('click', (event) => {
-    // No preventDefault needed, it's a regular link.
-});
+saveSettingsButton.addEventListener('click', saveSettings);  //  <--  CORRECT
+triggerRedirectButton.addEventListener('click', (event) => { /* ... */ });
 
 // Initial load
-loadSettings();
+loadSettings(); //  <--  CORRECT
     </script>
 </body>
 </html>
