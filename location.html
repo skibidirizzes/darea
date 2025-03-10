@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-      /* ... (Styles - unchanged, same as before) ... */
-      body {
+        body {
             font-family: sans-serif;
             background-color: #f4f4f4;
             margin: 0;
@@ -109,32 +108,25 @@
         .save-button:hover {
             background-color: #0056b3;
         }
-        .data-section {
-            margin-top: 30px;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .data-table th, .data-table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        .data-table th {
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        .editable {
-            cursor: pointer;
-            border-bottom: 1px dashed #007bff;
-        }
         .hidden{
             display: none;
         }
-        .error-message{
-            color:red;
+
+        /* Style the trigger link/button */
+        #trigger-redirect {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745; /* Example color */
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px; /* Add some spacing */
+            text-align: center;
         }
+
+         #trigger-redirect:hover {
+            background-color: #218838;
+         }
     </style>
 </head>
 <body>
@@ -157,7 +149,7 @@
             </label>
            <span class="label">Locatie</span>
         </div>
-         <p id="location-explanation" class="explanation hidden">
+            <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
 
@@ -168,10 +160,9 @@
             </label>
             <span class="label">Notificatie</span>
         </div>
-         <p id="notification-explanation" class="explanation hidden">
+        <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
         </p>
-
         <div class="input-row">
             <label for="message-text">Standaardbericht (optioneel):</label>
             <input type="text" id="message-text" class="input-field" placeholder="Voer een bericht in">
@@ -194,21 +185,8 @@
 
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
 
-        <!-- Data Section (Initially Empty) -->
-        <div class="data-section">
-            <h3>Verzamelde Gegevens:</h3>
-            <p id="error-message" class="error-message" style="display: none;"></p>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Titel</th>
-                        <th>Waarde</th>
-                    </tr>
-                </thead>
-                <tbody id="data-list">
-                    <!-- Data rows will be added here dynamically -->
-                </tbody>
-            </table>
+        <!-- Trigger for redirect (link or button) -->
+         <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
         </div>
     </div>
 
@@ -216,37 +194,14 @@
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
 const locationPermissionToggle = document.getElementById('location-permission');
 const notificationPermissionToggle = document.getElementById('notification-permission');
-const dataList = document.getElementById('data-list');
 const messageText = document.getElementById('message-text');
 const redirectUrl = document.getElementById('redirect-url');
 const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
 const saveSettingsButton = document.getElementById('save-settings');
-const errorMessage = document.getElementById('error-message');
+const triggerRedirectButton = document.getElementById('trigger-redirect'); // Get the link
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
-
-// Utility function to promisify Geolocation API
-function getCurrentPositionPromise() {
-    return new Promise((resolve, reject) => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-        } else {
-            reject(new Error("Geolocation is not supported"));
-        }
-    });
-}
- // Utility function to promisify Battery API
-function getBatteryPromise() {
-    return new Promise((resolve, reject) => {
-        if(navigator.getBattery) {
-           resolve(navigator.getBattery());
-        }else{
-            reject(new Error("Battery API is not supported."));
-        }
-    });
-
-}
 
 // Load settings
 function loadSettings() {
@@ -258,22 +213,20 @@ function loadSettings() {
     redirectSeconds.value = localStorage.getItem('redirectSeconds') || '0';
     recordSeconds.value = localStorage.getItem('recordSeconds') || '0';
     updateExplanations();
-    displayDataFromUrl(); // Call displayDataFromUrl on load
 }
   function updateExplanations(){
-        if(locationPermissionToggle.checked){
-            locationExplanation.classList.remove("hidden");
-        }else {
-            locationExplanation.classList.add("hidden");
-        }
-
-        if(notificationPermissionToggle.checked){
-            notificationExplanation.classList.remove("hidden");
-        }else {
-            notificationExplanation.classList.add("hidden");
-        }
+    if(locationPermissionToggle.checked){
+        locationExplanation.classList.remove("hidden");
+    }else {
+        locationExplanation.classList.add("hidden");
     }
 
+    if(notificationPermissionToggle.checked){
+            notificationExplanation.classList.remove("hidden");
+    }else {
+            notificationExplanation.classList.add("hidden");
+    }
+  }
 
 // Save settings
 function saveSettings() {
@@ -284,130 +237,21 @@ function saveSettings() {
     localStorage.setItem('redirectUrl', redirectUrl.value);
     localStorage.setItem('redirectSeconds', redirectSeconds.value);
     localStorage.setItem('recordSeconds', recordSeconds.value);
-      updateExplanations();
-
-    // Construct the redirect URL with query parameters
-    let finalRedirectUrl = 'redirect.html?';
-    finalRedirectUrl += `micCamPermission=${micCamPermissionToggle.checked}`;
-    finalRedirectUrl += `&locationPermission=${locationPermissionToggle.checked}`; // Add location
-      finalRedirectUrl += `¬ificationPermission=${notificationPermissionToggle.checked}`;
-    finalRedirectUrl += `&redirectUrl=${encodeURIComponent(redirectUrl.value)}`;
-    finalRedirectUrl += `&redirectSeconds=${redirectSeconds.value}`;
-    finalRedirectUrl += `&recordSeconds=${recordSeconds.value}`;
-
-    // Redirect to redirect.html WITH the parameters
-    window.location.href = finalRedirectUrl;
+    updateExplanations();
 }
-
-
-
-// Add an item to the data table
-function addDataItem(title, value, isVideo = false) {
-    const row = document.createElement('tr');
-    const titleCell = document.createElement('td');
-    const valueCell = document.createElement('td');
-
-    titleCell.textContent = title;
-    titleCell.classList.add('editable');
-    titleCell.setAttribute('data-original-title', title);
-
-    if (isVideo) {
-        valueCell.appendChild(value);
-    } else {
-        valueCell.textContent = value;
-    }
-
-    titleCell.addEventListener('click', function() {
-        const originalTitle = this.getAttribute('data-original-title');
-        const newTitle = prompt("Bewerk de titel:", originalTitle);
-        if (newTitle !== null && newTitle.trim() !== "") {
-            this.textContent = newTitle.trim();
-            this.setAttribute('data-original-title', newTitle.trim());
-            // No localStorage updates for titles
-        }
-    });
-
-    row.appendChild(titleCell);
-    row.appendChild(valueCell);
-    dataList.appendChild(row);
-}
-
-// Function to display data passed via URL (after redirect)
-async function displayDataFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoUrl = urlParams.get('videoUrl');
-    const locationPermission = urlParams.get('locationPermission') === 'true';
-
-    // Clear any previous data
-     dataList.innerHTML = ''; // Clear existing data
-    errorMessage.style.display = 'none'; // Hide any previous errors
-    errorMessage.textContent = '';
-
-    if (videoUrl) {
-        const videoElement = document.createElement('video');
-        videoElement.src = videoUrl;
-        videoElement.controls = true;
-        videoElement.style.width = '100%';
-        addDataItem("Opname", videoElement, true);
-    }
-
-     // --- Location ---
-    if (locationPermission) {
-        try {
-            const position = await getCurrentPositionPromise();
-            const { latitude, longitude } = position.coords;
-            addDataItem("Latitude", latitude.toFixed(4));
-            addDataItem("Longitude", longitude.toFixed(4));
-        } catch (error) {
-            console.error("Error getting location:", error);
-                let errorMsg = "";
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMsg = "User denied the request for Geolocation."
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMsg = "Location information is unavailable."
-                        break;
-                    case error.TIMEOUT:
-                        errorMsg = "The request to get user location timed out."
-                        break;
-                    case error.UNKNOWN_ERROR:
-                        errorMsg = "An unknown error occurred."
-                        break;
-                    default:
-                        errorMsg = error.message;
-                }
-            errorMessage.textContent = `Locatie Fout: ${errorMsg}`;
-            errorMessage.style.display = 'block';
-            addDataItem("Geolocation", "Fout bij ophalen");
-        }
-    }
-     // --- Battery ---
-        if (navigator.getBattery) {
-            try{
-                const battery = await getBatteryPromise();
-                addDataItem("Battery Percentage", `${(battery.level * 100).toFixed(0)}%`);
-
-            } catch(error){
-            console.error("Error getting batter:", error)
-            errorMessage.textContent = `Batterij Fout: ${error.message}`;
-            errorMessage.style.display = 'block';
-            addDataItem("Batterij", "Fout bij ophalen");
-            }
-        }else{
-            addDataItem("Battery Check", "Not supported");
-        }
-}
-
-
 
 // Event listeners
-// ONLY saveSettings on button click.  Do NOT call updateData directly.
 saveSettingsButton.addEventListener('click', saveSettings);
+
+// VERY IMPORTANT:  The redirect to redirect.html now happens when the user
+// clicks the link/button, NOT automatically after saving settings.
+triggerRedirectButton.addEventListener('click', function(event) {
+   //  event.preventDefault(); // Prevent default *only* if you need to do something before.
+    // Redirect to redirect.html happens automatically because it's a regular link.
+});
 
 // Initial load
 loadSettings();
-
     </script>
 </body>
 </html>
