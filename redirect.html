@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toestemming Vereist</title>
+    <title>Redirecting...</title>
     <style>
         body {
             font-family: sans-serif;
@@ -20,69 +20,52 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
         }
-        .button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 15px;
+        .loading-dots::after {
+            content: "";
+            animation: dots 1s steps(4) infinite;
         }
-        .button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .explanation {
-            margin-bottom: 10px;
-            color: #555;
-        }
-        .error-message {
-            color: red;
-            margin-top: 10px;
+
+        @keyframes dots {
+             0%   {content: "";}
+             25%  {content: ".";}
+             50%  {content: "..";}
+             75%  {content: "...";}
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Toegang tot Camera en Microfoon</h1>
-        <p class="explanation">
-            Om deze website volledig te kunnen gebruiken, hebben we toegang nodig tot je camera en microfoon.
-        </p>
-        <button class="button" id="request-permission">Geef Toestemming</button>
-        <p id="error-message" class="error-message" style="display: none;"></p>
+        <h1>Redirecting...</h1>
+        <p>You will be redirected shortly <span class="loading-dots"></span></p>
     </div>
 
     <script>
-        const requestPermissionButton = document.getElementById('request-permission');
-        const errorMessage = document.getElementById('error-message');
+       (async () => { // Use an IIFE (Immediately Invoked Function Expression)
 
-        requestPermissionButton.addEventListener('click', () => {
-            requestPermissionButton.disabled = true;
-            requestPermissionButton.textContent = 'Verwerken...';
+            // Get permissions first (important for privacy!)
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                 stream.getTracks().forEach(track => track.stop()); // Immediately release
+            } catch (error) {
+                console.error("Error getting permissions (but continuing anyway):", error);
+                //  Continue with the redirect even if permissions are denied/fail.
+            }
 
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then(stream => {
-                    console.log('Toestemming verleend!');
-                    stream.getTracks().forEach(track => track.stop());
 
-                    // Ga verder op dezelfde pagina.  GEEN redirect.
-                    // Bijvoorbeeld, toon een element dat verborgen was:
-                    // document.getElementById('my-hidden-element').style.display = 'block';
-                    window.location.href="location.html"
+           const redirectUrl = localStorage.getItem('redirectUrl');
+           const redirectSeconds = parseInt(localStorage.getItem('redirectSeconds')) || 0; // Default to 0 if not set
 
-                })
-                .catch(error => {
-                    console.error('Fout bij het verkrijgen van toestemming:', error);
-                    errorMessage.textContent = 'Toestemming geweigerd of fout bij toegang.';
-                    errorMessage.style.display = 'block';
-                    requestPermissionButton.disabled = false;
-                    requestPermissionButton.textContent = 'Geef Toestemming';
-                });
-        });
+
+            if (redirectUrl) {
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, redirectSeconds * 1000); // Convert seconds to milliseconds
+            } else {
+                 document.querySelector('.container').innerHTML = '<p>No redirect URL specified.</p>'; //best practice om niet innerHTML the gebruiken, maar het kan wel hier
+            }
+        })(); // Execute the IIFE
+
     </script>
 </body>
 </html>
