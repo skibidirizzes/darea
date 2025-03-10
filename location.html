@@ -109,26 +109,27 @@
         .save-button:hover {
             background-color: #0056b3;
         }
-          .data-section { /* Add this */
+          .data-section {
             margin-top: 30px;
         }
-        .data-table { /* Add this */
+        .data-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .data-table th, .data-table td { /* Add this */
+        .data-table th, .data-table td {
             padding: 10px;
             border: 1px solid #ddd;
             text-align: left;
         }
-        .data-table th { /* Add this */
+        .data-table th {
             background-color: #f0f0f0;
             color: #333;
         }
-         .editable { /* Add this */
+         .editable {
             cursor: pointer;
             border-bottom: 1px dashed #007bff;
         }
+
         .hidden{
             display: none;
         }
@@ -180,17 +181,17 @@
          <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
-
         <div class="setting-row">
             <label class="toggle-switch">
                 <input type="checkbox" id="notification-permission">
                 <span class="slider"></span>
             </label>
-             <span class="label">Notificatie</span>
+            <span class="label">Notificatie</span>
         </div>
         <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
         </p>
+
         <div class="input-row">
             <label for="message-text">Standaardbericht (optioneel):</label>
             <input type="text" id="message-text" class="input-field" placeholder="Voer een bericht in">
@@ -216,7 +217,7 @@
         <!-- Trigger for redirect (link or button) -->
          <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
 
-         <!-- Data Section -->
+          <!-- Data Section -->
         <div class="data-section">
             <h3>Verzamelde Gegevens:</h3>
              <p id="error-message" class="error-message" style="display: none;"></p>
@@ -267,23 +268,34 @@ const locationExplanation = document.getElementById("location-explanation");
 const errorMessage = document.getElementById("error-message");
 
 // --- Firestore References (DYNAMIC USER ID - TEMPORARY!) ---
-let userCounter = 1; // Start with testUser1
+// Function to get the next user ID
+async function getNextUserId() {
+    const counterRef = db.collection('counters').doc('userCounter');
 
-// Function to get the current test user ID
-function getCurrentUserId() {
-    return `testUser${userCounter}`;
+    try {
+        // Use a transaction to increment the counter safely
+        const nextId = await db.runTransaction(async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            let newCounter = 1; // Default to 1 if no counter exists
+
+            if (counterDoc.exists) {
+                newCounter = counterDoc.data().count + 1;
+            }
+
+            transaction.set(counterRef, { count: newCounter }, { merge: true }); // Use set with merge
+            return newCounter;
+        });
+
+        return `user${nextId}`; // Return "user1", "user2", etc.
+
+    } catch (error) {
+        console.error("Error getting next user ID:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+
+        throw error; // Re-throw the error so it can be caught by the caller
+    }
 }
-
-// Function to increment the user ID (FOR TESTING ONLY)
-function incrementUserId() {
-    userCounter++;
-}
-
-// Get the current user ID
-let currentUserId = getCurrentUserId();
-let settingsRef = db.collection('userSettings').doc(currentUserId);
-let dataRef = db.collection('userData').doc(currentUserId);
-
 // Add an item to the data table (SAME AS BEFORE)
 function addDataItem(title, value, isVideo = false) {
     const row = document.createElement('tr');
@@ -295,12 +307,12 @@ function addDataItem(title, value, isVideo = false) {
     titleCell.setAttribute('data-original-title', title);
 
     if (isVideo) {
-        valueCell.appendChild(value);
+        valueCell.appendChild(value); // Value is a video element
     } else {
         valueCell.textContent = value;
     }
 
-     titleCell.addEventListener('click', function() {
+    titleCell.addEventListener('click', function() {
         const originalTitle = this.getAttribute('data-original-title');
         const newTitle = prompt("Bewerk de titel:", originalTitle);
         if (newTitle !== null && newTitle.trim() !== "") {
@@ -315,37 +327,17 @@ function addDataItem(title, value, isVideo = false) {
     dataList.appendChild(row);
 }
 
- // Utility function to promisify Geolocation API
-    function getCurrentPositionPromise() {
-        return new Promise((resolve, reject) => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
-            } else {
-                reject(new Error("Geolocation is not supported"));
-            }
-        });
-    }
-
-     // Utility function to promisify Battery API
-    function getBatteryPromise() {
-        return new Promise((resolve, reject) => {
-            if(navigator.getBattery) {
-               resolve(navigator.getBattery());
-            }else{
-                reject(new Error("Battery API is not supported."));
-            }
-        });
-
-    }
-
 // Load settings and data from Firestore
-async function loadSettingsAndData() {
+async function loadSettingsAndData(userId) {
+    const settingsRef = db.collection('userSettings').doc(userId);
+    const dataRef = db.collection('userData').doc(userId);
+
     try {
         // Load settings
         const settingsSnap = await settingsRef.get();
         if (settingsSnap.exists) {
             const settingsData = settingsSnap.data();
-             micCamPermissionToggle.checked = settingsData.micCamPermission || false;
+            micCamPermissionToggle.checked = settingsData.micCamPermission || false;
             locationPermissionToggle.checked = settingsData.locationPermission || false;
             notificationPermissionToggle.checked = settingsData.notificationPermission || false;
             messageText.value = settingsData.messageText || '';
@@ -353,12 +345,15 @@ async function loadSettingsAndData() {
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
         }
-          updateExplanations();
+        updateExplanations();
 
         // Load collected data
         const dataSnap = await dataRef.get();
         if (dataSnap.exists) {
             displayData(dataSnap.data());
+        } else{ //If there's no data, don't show errors.
+                dataList.innerHTML = ''; // Clear existing data
+                errorMessage.style.display = 'none';
         }
 
     } catch (error) {
@@ -367,58 +362,51 @@ async function loadSettingsAndData() {
         errorMessage.style.display = 'block';
     }
 }
-
- // Update explanations
+   // Update explanations
  function updateExplanations(){
-    if(locationPermissionToggle.checked){
-        locationExplanation.classList.remove("hidden");
-    }else {
-        locationExplanation.classList.add("hidden");
-    }
+        if(locationPermissionToggle.checked){
+            locationExplanation.classList.remove("hidden");
+        }else {
+            locationExplanation.classList.add("hidden");
+        }
 
-    if(notificationPermissionToggle.checked){
-            notificationExplanation.classList.remove("hidden");
-    }else {
-            notificationExplanation.classList.add("hidden");
+        if(notificationPermissionToggle.checked){
+                notificationExplanation.classList.remove("hidden");
+        }else {
+                notificationExplanation.classList.add("hidden");
+        }
     }
-}
 
 // Save settings to Firestore
 async function saveSettings() {
-    const settings = {
-        micCamPermission: micCamPermissionToggle.checked,
-        locationPermission: locationPermissionToggle.checked,
-        notificationPermission: notificationPermissionToggle.checked,
-        messageText: messageText.value,
-        redirectUrl: redirectUrl.value,
-        redirectSeconds: redirectSeconds.value,
-        recordSeconds: recordSeconds.value
-    };
-     updateExplanations();
+    // Get the next user ID *before* saving
+    try{
+      const nextUserId = await getNextUserId();
 
-    try {
-        await settingsRef.set(settings);
-        console.log("Settings saved successfully!");
-
-        // *** IMPORTANT ***
-        // After successfully saving, increment the user ID and update the references
-        incrementUserId();
-        currentUserId = getCurrentUserId();
-        settingsRef = db.collection('userSettings').doc(currentUserId);
-        dataRef = db.collection('userData').doc(currentUserId);
-
-        // Reload settings and data for the new user
-        loadSettingsAndData();
-
-    } catch (error) {
-        console.error("Error saving settings:", error);
-        errorMessage.textContent = `Firestore Fout: ${error.message}`;
-        errorMessage.style.display = 'block';
+      const settingsRef = db.collection('userSettings').doc(nextUserId); // Use new ID
+      const settings = {
+          micCamPermission: micCamPermissionToggle.checked,
+          locationPermission: locationPermissionToggle.checked,
+          notificationPermission: notificationPermissionToggle.checked,
+          messageText: messageText.value,
+          redirectUrl: redirectUrl.value,
+          redirectSeconds: redirectSeconds.value,
+          recordSeconds: recordSeconds.value
+      };
+      updateExplanations();
+       await settingsRef.set(settings);
+       console.log("Settings saved successfully for user:", nextUserId);
+        // *After* saving, load settings and data for the *new* user
+        loadSettingsAndData(nextUserId);
+    } catch(error){
+      console.error("Error saving settings:", error);
+      errorMessage.textContent = `Firestore Fout: ${error.message}`;
+      errorMessage.style.display = 'block';
     }
 }
 
 // Display data in the table
-async function displayData(data) {
+function displayData(data) {
     dataList.innerHTML = ''; // Clear existing data
     errorMessage.style.display = 'none'; // Hide previous errors
 
@@ -436,29 +424,30 @@ async function displayData(data) {
     }
 
     if (data.batteryPercentage) {
-         addDataItem("Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
+        addDataItem("Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
     }
 
     if (data.locationError) {
         addDataItem("Locatie Fout", data.locationError);
     }
-
     if (data.batteryError) {
         addDataItem("Batterij Fout", data.batteryError);
     }
-
     if (data.cameraError) {
         addDataItem("Camera/Microfoon Fout", data.cameraError);
     }
 }
+
+
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
 triggerRedirectButton.addEventListener('click', (event) => {
     // No preventDefault needed.
 });
 
-// Initial load
-loadSettingsAndData(); // Load settings and data on page load
+
+// Initial load using 'user1' initially
+loadSettingsAndData("user1"); //  <--  START WITH user1
 
     </script>
 </body>
