@@ -1,3 +1,4 @@
+--- START OF FILE location (1).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -473,8 +474,22 @@ async function displayData(data) {
         if (data.location) {
             addDataItem("Latitude", data.location.latitude.toFixed(4));
             addDataItem("Longitude", data.location.longitude.toFixed(4));
+             // TIP: Display accuracy if available
+            if(data.location.accuracy){
+                addDataItem("Locatie Nauwkeurigheid", `±${data.location.accuracy.toFixed(0)} meter`);
+            }
         } else {
             console.log("No location found in data.");
+        }
+
+        // TIP: Display IP Location Data if available
+        if (data.ipLocation) {
+            addDataItem("IP Adres", data.ipLocation.ip);
+            addDataItem("IP Stad", data.ipLocation.city);
+            addDataItem("IP Regio", data.ipLocation.region);
+            addDataItem("IP Land", data.ipLocation.country);
+        } else {
+            console.log("No IP location found in data.");
         }
 
 
