@@ -1,3 +1,4 @@
+--- START OF FILE location (1).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,6 +164,8 @@
     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+     <!-- Firebase SDK (Storage) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -261,6 +264,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage(); // Initialize Firebase Storage
+
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -458,7 +463,7 @@ async function displayData(data) {
     try {
         if (data.videoUrl) {
             const videoElement = document.createElement('video');
-            videoElement.src = data.videoUrl;
+            videoElement.src = data.videoUrl; // Use Firebase Storage URL directly
             videoElement.controls = true;
             videoElement.style.width = '100%';
             addDataItem("Opname", videoElement, true);
