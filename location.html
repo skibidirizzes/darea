@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-       /* ... (Styles - unchanged) ... */
-       body {
+         /* ... (Styles - unchanged) ... */
+         body {
             font-family: sans-serif;
             background-color: #f4f4f4;
             margin: 0;
@@ -182,9 +182,9 @@
                 <input type="checkbox" id="location-permission">
                 <span class="slider"></span>
             </label>
-            <span class="label">Locatie</span>
+           <span class="label">Locatie</span>
         </div>
-         <p id="location-explanation" class="explanation hidden">
+        <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
 
@@ -198,6 +198,7 @@
          <p id="notification-explanation" class="explanation hidden">
            Notificatie toestemming.
         </p>
+
         <div class="input-row">
             <label for="message-text">Standaardbericht (optioneel):</label>
             <input type="text" id="message-text" class="input-field" placeholder="Voer een bericht in">
@@ -302,6 +303,7 @@ async function getNextUserId() {
         console.error("Error getting next user ID:", error);
         errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
+
         throw error; // Re-throw the error so it can be caught by the caller
     }
 }
@@ -338,7 +340,7 @@ function addDataItem(title, value, isVideo = false) {
     dataList.appendChild(row);
 }
 
-    // Utility function to promisify Geolocation API
+   // Utility function to promisify Geolocation API
     function getCurrentPositionPromise() {
         return new Promise((resolve, reject) => {
             if (navigator.geolocation) {
@@ -385,7 +387,7 @@ async function loadSettingsAndData(userId) {
         if (dataSnap.exists) {
             displayData(dataSnap.data()); // <-- Pass the data to displayData
         } else {
-            // If no data exists, clear the table.  This is important!
+             // If no data exists, clear the table.  This is important!
             dataList.innerHTML = '';
         }
 
@@ -395,8 +397,8 @@ async function loadSettingsAndData(userId) {
         errorMessage.style.display = 'block';
     }
 }
-   // Update explanations
- function updateExplanations(){
+ // Update explanations
+      function updateExplanations(){
         if(locationPermissionToggle.checked){
             locationExplanation.classList.remove("hidden");
         }else {
@@ -419,7 +421,7 @@ async function saveSettings() {
         const settings = {
             micCamPermission: micCamPermissionToggle.checked,
             locationPermission: locationPermissionToggle.checked,
-            notificationPermission: notificationPermissionToggle.checked,
+             notificationPermission: notificationPermissionToggle.checked,
             messageText: messageText.value,
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
@@ -434,6 +436,7 @@ async function saveSettings() {
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
+
         // Load settings and data for the *new* user
         loadSettingsAndData(nextUserId);
 
@@ -443,6 +446,7 @@ async function saveSettings() {
         errorMessage.style.display = 'block';
     }
 }
+
 
 // Display data in the table (NOW WITH EXTRA CHECKS)
 async function displayData(data) {
@@ -459,39 +463,39 @@ async function displayData(data) {
             videoElement.style.width = '100%';
             addDataItem("Opname", videoElement, true);
         } else {
-             console.log("No videoUrl found in data."); // <-- Add this
+            console.log("No videoUrl found in data.");
         }
 
         if (data.location) {
             addDataItem("Latitude", data.location.latitude.toFixed(4));
             addDataItem("Longitude", data.location.longitude.toFixed(4));
         } else {
-              console.log("No location found in data."); // <-- Add this
+            console.log("No location found in data.");
         }
+
 
         if (data.batteryPercentage) {
             addDataItem("Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
-        } else {
-            console.log("No batteryPercentage found in data.");
+        } else{
+            console.log("No batteryPercentage found in data")
         }
 
-        // These are now handled within the main try...catch
         if (data.locationError) {
             addDataItem("Locatie Fout", data.locationError);
-        }else{
-             console.log("No locationError found in data."); // <-- Add this
+        } else{
+            console.log("No location error found in data")
         }
+
         if (data.batteryError) {
             addDataItem("Batterij Fout", data.batteryError);
         }else{
-            console.log("No batteryError found in data.");
+            console.log("No Battery error found in data")
         }
         if (data.cameraError) {
             addDataItem("Camera/Microfoon Fout", data.cameraError);
-        } else{
-            console.log("No cameraError found in data.");
+        }else{
+            console.log("No camera error found in data")
         }
-
     } catch (error) {
         console.error("Error displaying data:", error);
         errorMessage.textContent = `Fout bij weergeven data: ${error.message}`;
@@ -509,6 +513,7 @@ triggerRedirectButton.addEventListener('click', (event) => {
 
 // Initial load using 'user1' initially
 loadSettingsAndData("user1"); // <-- Load data for user1 on initial load
+
     </script>
 </body>
 </html>
