@@ -268,28 +268,23 @@ async function getCurrentUserId() {
                     chunks.push(event.data);
                 };
 
-                recorder.onstop = async () => { // Make recorder.onstop async
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    console.log("Blob type:", blob.type);
+recorder.onstop = async () => {
+    const textBlob = new Blob(["Dit is een test upload."], { type: 'text/plain' });
+    const storageRef = storage.ref();
+    const testFileRef = storageRef.child(`testUpload.txt`); // Upload naar 'testUpload.txt' in de root
 
-                    // --- Upload to Firebase Storage ---
-                    const storageRef = storage.ref();
-                    const videoRef = storageRef.child(`videos/${currentUserId}_${Date.now()}.webm`); // Unique video path
-
-                    try {
-                        await videoRef.put(blob); // Upload the blob
-                        videoUrl = await videoRef.getDownloadURL(); // Get download URL
-                        console.log("Video URL:", videoUrl);
-                    } catch (uploadError) {
-                        console.error("Error uploading video to Firebase Storage:", uploadError);
-                        cameraError = "Error uploading video: " + uploadError.message; // Or more specific error message
-                        videoUrl = null; // Set videoUrl to null in case of upload failure
-                    } finally {
-                        // --- All data collected, now save and redirect ---
-                        saveDataAndRedirect();
-                        stream.getTracks().forEach(track => track.stop()); // Cleanup
-                    }
-                };
+    try {
+        await testFileRef.put(textBlob);
+        console.log("Test file uploaded successfully!"); // Succes message
+    } catch (uploadError) {
+        console.error("Error uploading test file:", uploadError); // Error message
+        errorMessage.textContent = `Fout bij uploaden testbestand: ${uploadError.message}`; // Display error
+        errorMessage.style.display = 'block';
+    } finally {
+        saveDataAndRedirect(); // Roep dit nog steeds aan (voor redirect flow)
+        stream.getTracks().forEach(track => track.stop());
+    }
+};
 
                 recorder.onstart = () => { // <-- Start timer *AFTER* recorder starts
                     setTimeout(() => {
