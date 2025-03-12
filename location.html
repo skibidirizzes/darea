@@ -507,7 +507,9 @@ async function saveSettings() {
         console.log("Settings saved successfully for user:", nextUserId);
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-        loadSettingsAndData(currentUserId);
+
+        currentUserId = nextUserId; // <-- **ADD THIS LINE: Update currentUserId**
+        loadSettingsAndData(currentUserId); // Now reload settings for the *new* current user
 
     } catch (error) {
         console.error("Error saving settings:", error);
