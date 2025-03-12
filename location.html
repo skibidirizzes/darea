@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f3f7fa;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
+            transition: background-color 0.5s, color 0.5s; /* Theme transition */
         }
         .container {
             background-color: white;
@@ -22,14 +22,16 @@
             padding: 30px;
             width: 100%;
             max-width: 700px;
+             transition: background-color 0.5s, box-shadow 0.5s; /* Theme transition */
         }
         h2 {
             color: #333;
             margin-bottom: 25px;
             border-bottom: 2px solid #007bff;
             padding-bottom: 10px;
+             transition: border-bottom-color 0.5s, color 0.5s; /* Theme transition */
         }
-        .setting-row, .input-row, .theme-row { /* Added theme-row style */
+        .setting-row, .input-row {
             display: flex;
             align-items: center;
             margin-bottom: 20px;
@@ -81,7 +83,13 @@
             flex: 1;
             font-size: 1rem;
         }
-        .input-field, .theme-dropdown { /* Added theme-dropdown style */
+        .input-row label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: bold;
+        }
+        .input-field {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
@@ -89,7 +97,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-button {
+        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector {
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -104,21 +112,30 @@
             text-align: center;
             margin-right: 10px;
         }
-        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-button:hover {
+        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover {
             background-color: #0056b3;
         }
         #delete-all-data, .delete-user-button {
-            background-color: #dc3545;
+            background-color: #dc3545; /* Red color for delete buttons */
         }
+
         #delete-all-data:hover, .delete-user-button:hover {
-            background-color: #c82333;
+            background-color: #c82333; /* Darker red on hover */
         }
-         #theme-button {
-            background-color: #00a86b; /* Green theme button */
-        }
-         #theme-button:hover {
+
+        #theme-selector {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+             background-color: #00a86b; /* Green theme button */
+             padding: 14px 24px;
+             height: auto; /* Override default height */
+         }
+         #theme-selector:hover {
             background-color: #007a55; /* Darker green on hover */
         }
+
+
         .data-section {
             margin-top: 40px;
             border-top: 1px solid #eee;
@@ -177,7 +194,7 @@
 
         /* Style for the map container */
         #location-map {
-            height: 300px;
+            height: 300px; /* Adjust map height as needed */
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -186,58 +203,24 @@
         /* Vertical Table Styling */
         .data-table th, .data-table td {
             display: block; /* Make table cells stack vertically */
-            width: auto;
-            box-sizing: border-box;
+            width: auto;     /* Adjust width as needed */
+            box-sizing: border-box; /* Include padding and border in cell width */
         }
 
         .data-table tr {
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
+            margin-bottom: 20px; /* Spacing between user rows */
+            border: 1px solid #ddd; /* Example border around each user's data */
             border-radius: 8px;
             padding: 15px;
-            background-color: #f9f9f9;
+            background-color: #f9f9f9; /* Light background for each user section */
         }
 
         .data-table th {
             font-size: 1.1rem;
             margin-bottom: 10px;
-            border-bottom: 2px solid #bbb;
-            background-color: transparent;
+            border-bottom: 2px solid #bbb; /* Separator for the title */
+            background-color: transparent; /* No background for title */
             color: #555;
-        }
-
-        /* Theme Manager Styles */
-        #theme-manager-popup {
-            display: none; /* Hidden by default */
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
-        #theme-manager-popup.show {
-            display: block; /* Show when 'show' class is added */
-        }
-        #theme-manager-popup h3 {
-            margin-top: 0;
-        }
-        #theme-manager-popup .input-row {
-            margin-bottom: 15px;
-        }
-        #theme-manager-popup .input-row label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        #theme-manager-popup .input-field {
-            width: 100%;
-        }
-        #theme-manager-popup .theme-actions {
-            text-align: right;
-            margin-top: 15px;
         }
 
 
@@ -308,10 +291,18 @@
             <input type="number" id="record-seconds" class="input-field" placeholder="Bijv. 10" min="0">
         </div>
 
+        <div class="input-row">
+            <label for="theme-selector">Kies Thema:</label>
+            <select id="theme-selector" class="input-field"> <!-- Theme Dropdown -->
+                <option value="default">Standaard Thema</option>
+                <option value="dark">Donker Thema</option>
+                <option value="green">Groen Thema</option>
+            </select>
+        </div>
+
+
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
         <button class="save-button" id="delete-all-data">Verwijder Alle Data</button>
-        <button class="save-button" id="theme-button">Thema Manager</button>
-
         <!-- Trigger for redirect -->
          <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
 
@@ -330,24 +321,6 @@
             </table>
         </div>
     </div>
-
-    <!-- Theme Manager Popup -->
-    <div id="theme-manager-popup">
-        <h3>Thema Manager</h3>
-        <div class="input-row">
-            <label for="theme-dropdown">Kies Thema:</label>
-            <select id="theme-dropdown" class="theme-dropdown">
-                <option value="default">Standaard Thema</option>
-                <option value="dark">Donker Thema</option>
-                <option value="green">Groen Thema</option>
-                <!-- Themes will be loaded here -->
-            </select>
-        </div>
-        <div class="theme-actions">
-            <button class="save-button" onclick="closeThemeManager()">Sluiten</button>
-        </div>
-    </div>
-
 
     <script>
 // --- Firebase Config (YOUR ACTUAL CONFIG) ---
@@ -370,9 +343,7 @@ const storage = firebase.storage();
 const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
 const deleteAllDataButton = document.getElementById('delete-all-data');
-const themeButton = document.getElementById('theme-button');
-const themeManagerPopup = document.getElementById('theme-manager-popup'); // Theme Popup
-const themeDropdown = document.getElementById('theme-dropdown'); // Theme Dropdown
+const themeSelector = document.getElementById('theme-selector');
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -391,8 +362,51 @@ const dataTableTitleElement = document.getElementById("data-table-title");
 
 let currentUserId = "user1";
 
-// --- Firestore References and Utility Functions (getNextUserId, getCurrentPositionPromise, getBatteryPromise) ---
-// ... (Firestore references and utility functions - same as before) ...
+// --- Theme Definitions ---
+const themes = {
+    default: {
+        bodyBackgroundColor: '#f3f7fa',
+        containerBackgroundColor: 'white',
+        containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+        headingColor: '#007bff',
+        textColor: '#333',
+        buttonBackgroundColor: '#007bff',
+        buttonHoverBackgroundColor: '#0056b3',
+        tableHeaderBackgroundColor: '#f9f9f9',
+        tableHeaderColor: '#333',
+        tableBorderColor: '#eee',
+        tableTitleBorderColor: '#007bff',
+    },
+    dark: {
+        bodyBackgroundColor: '#121212',
+        containerBackgroundColor: '#1e1e1e',
+        containerBoxShadow: '0 8px 16px rgba(255, 255, 255, 0.1)',
+        headingColor: '#00a86b',
+        textColor: '#f8f8f8',
+        buttonBackgroundColor: '#00a86b',
+        buttonHoverBackgroundColor: '#007a55',
+        tableHeaderBackgroundColor: '#333',
+        tableHeaderColor: '#f8f8f8',
+        tableBorderColor: '#555',
+        tableTitleBorderColor: '#00a86b',
+    },
+    green: {
+        bodyBackgroundColor: '#e8f5e9',
+        containerBackgroundColor: '#ffffff',
+        containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+        headingColor: '#4caf50',
+        textColor: '#333',
+        buttonBackgroundColor: '#4caf50',
+        buttonHoverBackgroundColor: '#43a047',
+        tableHeaderBackgroundColor: '#f1f8e9',
+        tableHeaderColor: '#333',
+        tableBorderColor: '#c8e6c9',
+        tableTitleBorderColor: '#4caf50',
+    },
+};
+
+
+// Utility functions
 async function getNextUserId() {
     const counterRef = db.collection('counters').doc('userCounter');
 
@@ -403,7 +417,7 @@ async function getNextUserId() {
             if (counterDoc.exists) {
                 newCounter = counterDoc.data().count + 1;
             } else {
-                newCounter = 1;
+                newCounter = counterDoc.data().count + 1;
             }
             transaction.set(counterRef, { count: newCounter }, { merge: true });
             return newCounter;
@@ -441,6 +455,38 @@ async function getNextUserId() {
 
     }
 
+// Function to apply theme
+function applyTheme(themeName) {
+    const theme = themes[themeName] || themes.default;
+    document.body.style.backgroundColor = theme.bodyBackgroundColor;
+    document.body.style.color = theme.textColor;
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.backgroundColor = theme.containerBackgroundColor;
+        container.style.boxShadow = theme.containerBoxShadow;
+    }
+    const h2 = document.querySelector('h2');
+    if (h2) {
+        h2.style.color = theme.headingColor;
+        h2.style.borderBottomColor = theme.tableTitleBorderColor;
+    }
+    const buttons = document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector');
+    buttons.forEach(button => {
+        button.style.backgroundColor = theme.buttonBackgroundColor;
+    });
+    const tableHeaders = document.querySelectorAll('.data-table th');
+    tableHeaders.forEach(th => {
+        th.style.backgroundColor = theme.tableHeaderBackgroundColor;
+        th.style.color = theme.tableHeaderColor;
+        th.style.borderColor = theme.tableBorderColor;
+    });
+     const dataTable = document.querySelector('.data-table');
+        if(dataTable){
+            dataTable.style.borderColor = theme.tableBorderColor;
+        }
+}
+
+
 // Load settings AND data from Firestore
 async function loadSettingsAndData(userId) {
     const settingsRef = db.collection('userSettings').doc(userId);
@@ -456,10 +502,13 @@ async function loadSettingsAndData(userId) {
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
-            themeDropdown.value = settingsData.selectedTheme || 'default'; // Load selected theme
+            themeSelector.value = settingsData.theme || 'default';
+            applyTheme(themeSelector.value);
+        } else {
+            applyTheme('default');
         }
          updateExplanations();
-         loadAllUserData(); // Load all user data after settings
+         loadAllUserData();
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -498,7 +547,7 @@ async function saveSettings() {
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
             recordSeconds: recordSeconds.value,
-            selectedTheme: themeDropdown.value // Save selected theme
+            theme: themeSelector.value
         };
          updateExplanations();
 
@@ -568,7 +617,7 @@ async function displayData(userId, userData) {
 
 // Function to load all user data and display the table (ONE ROW PER USER - VERTICAL LAYOUT)
 async function loadAllUserData() {
-    dataList.innerHTML = ''; // Clear the table body
+    dataList.innerHTML = '';
 
     const userDataCollection = db.collection('userData');
 
@@ -578,7 +627,7 @@ async function loadAllUserData() {
             snapshot.forEach(doc => {
                 const userId = doc.id;
                 const userData = doc.data();
-                displayData(userId, userData); // Display data for each user
+                displayData(userId, userData);
             });
         } else {
             dataList.innerHTML = '<tr><td colspan="2" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
@@ -587,7 +636,7 @@ async function loadAllUserData() {
 
     } catch (error) {
         console.error("Error fetching all user data:", error);
-        errorMessage.textContent = `Fout bij laden gebruikersdata: ${error.message}`;
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 }
@@ -646,14 +695,14 @@ async function deleteAllData() {
             await batch.commit();
 
             // Reset user counter to 0 or 1 (decide initial state)
-            await counterRef.set({ count: 0 }); // Reset counter to 0
+            await counterRef.set({ count: 0 });
 
             console.log("All user data deleted successfully!");
             successMessage.textContent = "Alle gebruikersdata succesvol verwijderd!";
             successMessage.style.display = 'block';
             setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
-            loadAllUserData(); // Reload empty table
+            loadAllUserData();
 
         } catch (error) {
             console.error("Error deleting all user data:", error);
@@ -677,7 +726,7 @@ async function deleteUserData(targetUserId) {
             successMessage.style.display = 'block';
             setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
-            loadAllUserData(); // Reload user data table
+            loadAllUserData();
 
         } catch (error) {
             console.error("Error deleting user data:", error);
@@ -689,14 +738,25 @@ async function deleteUserData(targetUserId) {
     }
 }
 
-// --- Function to open theme manager popup ---
-function openThemeManager() {
-    themeManagerPopup.classList.add('show');
-}
+// Function to apply theme on redirect page
+function applyThemeRedirect(themeName) {
+    const theme = themes[themeName] || themes.default;
+    document.body.style.backgroundColor = theme.bodyBackgroundColor;
+    document.body.style.color = theme.textColor;
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.backgroundColor = theme.containerBackgroundColor;
+        container.style.boxShadow = theme.containerBoxShadow;
+    }
+    const h1 = document.querySelector('h1');
+    if (h1) {
+        h1.style.color = theme.headingColor;
+    }
+     const p = document.querySelectorAll('p');
+    p.forEach(pElement => {
+        pElement.style.color = theme.textColor;
+    });
 
-// --- Function to close theme manager popup ---
-function closeThemeManager() {
-    themeManagerPopup.classList.remove('show');
 }
 
 
@@ -712,7 +772,9 @@ dataTableTitleElement.addEventListener('click', function() {
     }
 });
 deleteAllDataButton.addEventListener('click', deleteAllData);
-themeButton.addEventListener('click', openThemeManager); // Theme Button event listener
+themeSelector.addEventListener('change', () => {
+    applyTheme(themeSelector.value);
+});
 
 
 // Initial load
@@ -721,3 +783,4 @@ loadSettingsAndData(currentUserId);
     </script>
 </body>
 </html>
+--- ENDOF FILE location (3).html ---
