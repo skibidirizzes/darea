@@ -9,10 +9,10 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f3f7fa;
             margin: 0;
-            padding: 20px; /* Add some padding around the body */
+            padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Align items to the start at the top */
+            align-items: flex-start;
             min-height: 100vh;
         }
         .container {
@@ -20,8 +20,8 @@
             border-radius: 12px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            width: 100%; /* Take full width of parent */
-            max-width: 700px; /* Increased max-width */
+            width: 100%;
+            max-width: 700px;
         }
         h2 {
             color: #333;
@@ -29,16 +29,16 @@
             border-bottom: 2px solid #007bff;
             padding-bottom: 10px;
         }
-        .setting-row, .input-row { /* Combined styles for setting and input rows */
+        .setting-row, .input-row {
             display: flex;
             align-items: center;
-            margin-bottom: 20px; /* Increased spacing */
+            margin-bottom: 20px;
         }
         .toggle-switch {
             position: relative;
             display: inline-block;
-            width: 60px; /* Slightly wider toggle */
-            height: 30px; /* Slightly taller toggle */
+            width: 60px;
+            height: 30px;
         }
         .toggle-switch input {
             opacity: 0;
@@ -54,13 +54,13 @@
             bottom: 0;
             background-color: #ccc;
             transition: .4s;
-            border-radius: 30px; /* Rounded ends */
+            border-radius: 30px;
         }
         .slider:before {
             position: absolute;
             content: "";
-            height: 22px; /* Adjusted to fit taller toggle */
-            width: 22px;  /* Adjusted to fit taller toggle */
+            height: 22px;
+            width: 22px;
             left: 4px;
             bottom: 4px;
             background-color: white;
@@ -68,54 +68,54 @@
             border-radius: 50%;
         }
         input:checked + .slider {
-            background-color: #00a86b; /* Green when toggled on */
+            background-color: #00a86b;
         }
         input:focus + .slider {
             box-shadow: 0 0 2px #00a86b;
         }
         input:checked + .slider:before {
-            transform: translateX(30px); /* Adjusted for wider toggle */
+            transform: translateX(30px);
         }
         .label {
-            margin-left: 20px; /* Increased label margin */
+            margin-left: 20px;
             flex: 1;
-            font-size: 1rem; /* Slightly larger label font */
+            font-size: 1rem;
         }
         .input-row label {
             display: block;
-            margin-bottom: 10px; /* Increased spacing below label */
+            margin-bottom: 10px;
             color: #555;
-            font-weight: bold; /* Make labels bold */
+            font-weight: bold;
         }
         .input-field {
             width: 100%;
-            padding: 12px; /* Increased padding in input fields */
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 6px; /* Slightly more rounded input fields */
+            border-radius: 6px;
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect { /* Styles for both buttons */
+        .save-button, #trigger-redirect {
             background-color: #007bff;
             color: white;
-            padding: 14px 24px; /* Increased button padding */
+            padding: 14px 24px;
             border: none;
-            border-radius: 6px; /* Rounded buttons */
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 1.1rem; /* Larger button font */
+            font-size: 1.1rem;
             transition: background-color 0.3s ease;
-            margin-top: 20px; /* Spacing above buttons */
-            display: inline-block; /* Ensure inline-block for link */
-            text-decoration: none; /* Remove underline from link */
-            text-align: center; /* Center text in link */
+            margin-top: 20px;
+            display: inline-block;
+            text-decoration: none;
+            text-align: center;
         }
         .save-button:hover, #trigger-redirect:hover {
             background-color: #0056b3;
         }
         .data-section {
-            margin-top: 40px; /* Increased spacing before data section */
-            border-top: 1px solid #eee; /* Separator line */
-            padding-top: 30px; /* Spacing above data table */
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 30px;
         }
         .data-section h3 {
             color: #333;
@@ -124,27 +124,27 @@
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            border-radius: 8px; /* Rounded table corners */
-            overflow: hidden; /* Ensures rounded corners are visible */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle table shadow */
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
         .data-table th, .data-table td {
-            padding: 12px 15px; /* Padding in table cells */
-            border-bottom: 1px solid #eee; /* Lighter table border */
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
             text-align: left;
         }
         .data-table th {
-            background-color: #f9f9f9; /* Light background for header */
+            background-color: #f9f9f9;
             color: #333;
             font-weight: bold;
         }
         .data-table tbody tr:last-child td {
-            border-bottom: none; /* No border for last row */
+            border-bottom: none;
         }
         .editable {
             cursor: pointer;
             border-bottom: 1px dashed #007bff;
-            color: #007bff; /* Highlight editable titles */
+            color: #007bff;
         }
         .hidden {
             display: none;
@@ -162,18 +162,32 @@
             font-weight: bold;
         }
         #success-message {
-            color: #00a86b; /* Green success color */
+            color: #00a86b;
             margin-top: 20px;
             display: none;
             font-weight: bold;
         }
+
+        /* Style for the map container */
+        #location-map {
+            height: 300px; /* Adjust map height as needed */
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
      <!-- Firebase SDK (Storage) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
     <div class="container">
@@ -321,7 +335,7 @@ async function getNextUserId() {
 
 
 // Add an item to the data table
-function addDataItem(title, value, isVideo = false) {
+function addDataItem(title, value, isVideo = false, isMap = false) { // Added isMap parameter
     const row = document.createElement('tr');
     const titleCell = document.createElement('td');
     const valueCell = document.createElement('td');
@@ -332,7 +346,10 @@ function addDataItem(title, value, isVideo = false) {
 
     if (isVideo) {
         valueCell.appendChild(value); // Value is a video element
-    } else {
+    } else if (isMap) { // Handle map container
+        valueCell.appendChild(value); // Value is the map container div
+    }
+    else {
         valueCell.textContent = value;
     }
 
@@ -483,6 +500,23 @@ async function displayData(data) {
              // TIP: Display accuracy if available
             if(data.location.accuracy){
                 addDataItem("Locatie Nauwkeurigheid", `±${data.location.accuracy.toFixed(0)} meter`);
+            }
+
+            // --- OpenStreetMap Integration ---
+            if (data.location.latitude && data.location.longitude) {
+                const mapContainer = document.createElement('div');
+                mapContainer.id = 'location-map'; // Set ID for Leaflet to target
+                addDataItem("Locatie op Kaart", mapContainer, false, true); // Add map container to table, isMap=true
+
+                // Initialize Leaflet map AFTER the map container is added to the DOM
+                const map = L.map('location-map').setView([data.location.latitude, data.location.longitude], 15); // Zoom level 15
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                L.marker([data.location.latitude, data.location.longitude]).addTo(map)
+                    .bindPopup('<b>Huidige Locatie</b>').openPopup();
             }
         } else {
             console.log("No location found in data.");
