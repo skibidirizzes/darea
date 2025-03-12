@@ -97,7 +97,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector { /* Added theme-selector */
+        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button { /* Added create-theme-button */
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -112,7 +112,7 @@
             text-align: center;
             margin-right: 10px;
         }
-        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover { /* Added #theme-selector:hover */
+        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover, #create-theme-button:hover { /* Added #create-theme-button:hover */
             background-color: #0056b3;
         }
         #delete-all-data, .delete-user-button {
@@ -223,6 +223,69 @@
             color: #555;
         }
 
+        /* Theme Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 12px;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 600px;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-input-row {
+            margin-bottom: 15px;
+        }
+
+        .modal-input-row label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .modal-input-field {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modal-buttons {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            margin-left: 10px;
+        }
+
 
     </style>
 
@@ -300,7 +363,7 @@
             </select>
         </div>
 
-
+        <button class="save-button" id="create-theme-button">Maak Thema</button>  <!-- New button to open modal -->
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
         <button class="save-button" id="delete-all-data">Verwijder Alle Data</button>
         <!-- Trigger for redirect -->
@@ -319,6 +382,38 @@
                     <!-- User data rows will be added here -->
                 </tbody>
             </table>
+        </div>
+
+         <!-- Theme Modal -->
+        <div id="themeModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-modal-button">×</span>
+                <h2>Maak Nieuw Redirect Thema</h2>
+                <div class="modal-input-row">
+                    <label for="theme-name">Thema Naam:</label>
+                    <input type="text" id="theme-name" class="modal-input-field" placeholder="Naam van het thema">
+                </div>
+                <div class="modal-input-row">
+                    <label for="background-image">Achtergrond Afbeelding URL:</label>
+                    <input type="url" id="background-image" class="modal-input-field" placeholder="URL van de achtergrond afbeelding">
+                    <!-- OR file upload -->
+                    <!-- <input type="file" id="background-image-file" class="modal-input-field" accept="image/*"> -->
+                </div>
+                <div class="modal-input-row">
+                    <label for="icon-image">Icoon Afbeelding URL:</label>
+                    <input type="url" id="icon-image" class="modal-input-field" placeholder="URL van de icoon afbeelding">
+                     <!-- OR file upload -->
+                     <!-- <input type="file" id="icon-image-file" class="modal-input-field" accept="image/*"> -->
+                </div>
+                <div class="modal-input-row">
+                    <label for="custom-text">Aangepaste Tekst:</label>
+                    <textarea id="custom-text" class="modal-input-field" rows="4" placeholder="Tekst voor de redirect pagina"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button class="save-button" id="save-custom-theme">Thema Opslaan</button>
+                    <button class="save-button" id="cancel-custom-theme">Annuleren</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -344,6 +439,11 @@ const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
 const deleteAllDataButton = document.getElementById('delete-all-data');
 const themeSelector = document.getElementById('theme-selector');
+const createThemeButton = document.getElementById('create-theme-button'); // New button
+const themeModal = document.getElementById('themeModal'); // Modal element
+const closeModalButton = document.getElementById('close-modal-button');
+const saveCustomThemeButton = document.getElementById('save-custom-theme');
+const cancelCustomThemeButton = document.getElementById('cancel-custom-theme');
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -359,6 +459,13 @@ const triggerRedirectButton = document.getElementById('trigger-redirect');
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 const dataTableTitleElement = document.getElementById("data-table-title");
+
+// --- Modal Form Elements ---
+const themeNameInput = document.getElementById('theme-name');
+const backgroundImageInput = document.getElementById('background-image');
+const iconImageInput = document.getElementById('icon-image');
+const customTextInput = document.getElementById('custom-text');
+
 
 let currentUserId = "user1";
 
@@ -470,7 +577,7 @@ function applyTheme(themeName) {
         h2.style.color = theme.headingColor;
         h2.style.borderBottomColor = theme.tableTitleBorderColor;
     }
-    const buttons = document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector');
+    const buttons = document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme'); // Include modal buttons
     buttons.forEach(button => {
         button.style.backgroundColor = theme.buttonBackgroundColor;
     });
@@ -509,6 +616,7 @@ async function loadSettingsAndData(userId) {
         }
          updateExplanations();
          loadAllUserData();
+         loadCustomThemes(); // Load custom themes for selector
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -759,6 +867,71 @@ function applyThemeRedirect(themeName) {
 
 }
 
+// --- Function to load custom themes from Firestore and populate the theme selector ---
+async function loadCustomThemes() {
+    const customThemesRef = db.collection('redirectThemes');
+    try {
+        const snapshot = await customThemesRef.get();
+        snapshot.forEach(doc => {
+            const themeName = doc.id;
+            if (!themes[themeName]) { // Prevent duplicates if theme name clashes with default
+                const option = document.createElement('option');
+                option.value = themeName;
+                option.textContent = themeName;
+                themeSelector.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error("Error loading custom themes:", error);
+        errorMessage.textContent = `Fout bij laden aangepaste thema's: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+
+// --- Function to save a new custom theme to Firestore ---
+async function saveCustomTheme() {
+    const themeName = themeNameInput.value.trim();
+    const backgroundImage = backgroundImageInput.value.trim();
+    const iconImage = iconImageInput.value.trim();
+    const customText = customTextInput.value.trim();
+
+    if (!themeName) {
+        errorMessage.textContent = "Thema naam mag niet leeg zijn.";
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    const themeData = {
+        backgroundImageUrl: backgroundImage || null,
+        iconImageUrl: iconImage || null,
+        customText: customText || null
+    };
+
+    const customThemeRef = db.collection('redirectThemes').doc(themeName);
+
+    try {
+        await customThemeRef.set(themeData);
+        console.log(`Custom theme "${themeName}" saved to Firestore.`);
+        successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+        themeModal.style.display = "none"; // Close modal
+        themeNameInput.value = ''; // Clear form
+        backgroundImageInput.value = '';
+        iconImageInput.value = '';
+        customTextInput.value = '';
+
+        loadCustomThemes(); // Reload theme list in selector
+
+    } catch (error) {
+        console.error("Error saving custom theme:", error);
+        errorMessage.textContent = `Fout bij opslaan aangepast thema: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
 
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
@@ -775,6 +948,16 @@ deleteAllDataButton.addEventListener('click', deleteAllData);
 themeSelector.addEventListener('change', () => {
     applyTheme(themeSelector.value);
 });
+createThemeButton.addEventListener('click', () => {
+    themeModal.style.display = "block"; // Open modal
+});
+closeModalButton.addEventListener('click', () => {
+    themeModal.style.display = "none"; // Close modal
+});
+cancelCustomThemeButton.addEventListener('click', () => {
+    themeModal.style.display = "none"; // Close modal
+});
+saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Save custom theme
 
 
 // Initial load
