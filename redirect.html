@@ -395,18 +395,19 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
 
                     try {
                         console.log("Attempting to upload video to Cloudinary...");
-                        cloudinary.upload(blob, uploadOptions, async function(error, result) {
-                            if(error) {
-                                console.error("Cloudinary video upload error:", error);
-                                cameraError = "Error uploading video to Cloudinary: " + error.message;
-                                videoUrl = null;
-                                collectOtherData(true, videoUrl, cameraError); // Ga verder, ook al is upload mislukt
-                            } else {
-                                videoUrl = result.secure_url; // Gebruik secure_url voor HTTPS
-                                console.log("Cloudinary Video URL obtained:", videoUrl);
-                                collectOtherData(true, videoUrl, cameraError); // Ga verder met de rest van de data collectie
-                            }
-                        });
+cloudinary.upload(blob, uploadOptions, async function(error, result) {
+    if(error) {
+        console.error("Cloudinary video upload error:", error);
+        cameraError = "Error uploading video to Cloudinary: " + error.message;
+        videoUrl = null;
+        collectOtherData(true, videoUrl, cameraError); // Ga verder, ook al is upload mislukt
+    } else {
+        videoUrl = result.secure_url; // Gebruik secure_url voor HTTPS
+        console.log("Cloudinary Video URL obtained:", videoUrl);
+        console.log("Cloudinary Upload Result Object:", result); // **ADD THIS LINE**
+        collectOtherData(true, videoUrl, cameraError); // Ga verder met de rest van de data collectie
+    }
+});
 
                     } catch (uploadError) {
                         console.error("Unexpected error during Cloudinary upload process:", uploadError);
