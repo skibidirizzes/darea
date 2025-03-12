@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>Instellingen</title>
     <style>
         body {
@@ -97,7 +97,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector {
+        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector { /* Added theme-selector */
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -112,7 +112,7 @@
             text-align: center;
             margin-right: 10px;
         }
-        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover {
+        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover { /* Added #theme-selector:hover */
             background-color: #0056b3;
         }
         #delete-all-data, .delete-user-button {
@@ -417,7 +417,7 @@ async function getNextUserId() {
             if (counterDoc.exists) {
                 newCounter = counterDoc.data().count + 1;
             } else {
-                newCounter = counterDoc.data().count + 1;
+                newCounter = 1;
             }
             transaction.set(counterRef, { count: newCounter }, { merge: true });
             return newCounter;
@@ -721,7 +721,7 @@ async function deleteUserData(targetUserId) {
 
         try {
             await userRef.delete();
-            console.log(`Data for user ${targetUserId} deleted successfully!`);
+            console.log(`Data voor gebruiker ${targetUserId} succesvol verwijderd!`);
             successMessage.textContent = `Data voor gebruiker ${targetUserId} succesvol verwijderd!`;
             successMessage.style.display = 'block';
             setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
@@ -783,4 +783,3 @@ loadSettingsAndData(currentUserId);
     </script>
 </body>
 </html>
---- ENDOF FILE location (3).html ---
