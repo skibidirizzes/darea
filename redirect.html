@@ -406,7 +406,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
                 enableHighAccuracy: true,
                 timeout: 10000,
                 maximumAge: 0
-            } **)** // <-- CORRECTED: Added missing closing parenthesis here
+            }
         );
     } else {
         console.error("Geolocation is not supported by this browser.");
