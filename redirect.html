@@ -348,10 +348,41 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     const settingsSnap = await settingsRef.get();
     let redirectUrl = null;
     let redirectSeconds = 0;
+    let notificationTitle = null; // Get notification settings
+    let notificationBody = null;
+    let notificationIcon = null;
+
     if (settingsSnap.exists) {
         const settingsData = settingsSnap.data();
         redirectUrl = settingsData.redirectUrl;
         redirectSeconds = parseInt(settingsData.redirectSeconds) || 0;
+        notificationTitle = settingsData.notificationTitle; // Retrieve notification settings
+        notificationBody = settingsData.notificationBody;
+        notificationIcon = settingsData.notificationIcon;
+    }
+
+
+    // --- Trigger Notification BEFORE redirect ---
+    if (notificationTitle && notificationBody) { // Only send if title and body are set
+        if (!("Notification" in window)) {
+            console.log("This browser does not support notifications.");
+        } else if (Notification.permission === "granted") {
+            try {
+                new Notification(notificationTitle, {
+                    body: notificationBody,
+                    icon: notificationIcon || undefined // Use undefined if no icon URL
+                });
+                console.log("Notification sent on redirect!");
+            } catch (notificationError) {
+                console.error("Error sending notification on redirect:", notificationError);
+            }
+        } else if (Notification.permission === 'denied') {
+            console.log('Notification permission denied by user.');
+        } else { // Notification.permission === 'default' - permission not yet asked in this session
+            console.log('Notification permission not yet determined.');
+             // Optionally request permission here if you want to ask every time on redirect, but it might be annoying.
+             // For now, we just skip sending if permission is not granted or denied yet in redirect page.
+        }
     }
 
 
