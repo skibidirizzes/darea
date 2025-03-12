@@ -384,6 +384,9 @@
             </table>
         </div>
 
+--- START OF FILE location (4).html ---
+... (zelfde HTML tot aan de modal sectie)
+
          <!-- Theme Modal -->
         <div id="themeModal" class="modal">
             <div class="modal-content">
@@ -394,16 +397,14 @@
                     <input type="text" id="theme-name" class="modal-input-field" placeholder="Naam van het thema">
                 </div>
                 <div class="modal-input-row">
-                    <label for="background-image">Achtergrond Afbeelding URL:</label>
-                    <input type="url" id="background-image" class="modal-input-field" placeholder="URL van de achtergrond afbeelding">
-                    <!-- OR file upload -->
-                    <!-- <input type="file" id="background-image-file" class="modal-input-field" accept="image/*"> -->
+                    <label for="background-image-file">Achtergrond Afbeelding:</label>
+                    <input type="file" id="background-image-file" class="modal-input-field" accept="image/*">
+                    <input type="hidden" id="background-image-url" > <!-- Hidden field to store URL after upload -->
                 </div>
                 <div class="modal-input-row">
-                    <label for="icon-image">Icoon Afbeelding URL:</label>
-                    <input type="url" id="icon-image" class="modal-input-field" placeholder="URL van de icoon afbeelding">
-                     <!-- OR file upload -->
-                     <!-- <input type="file" id="icon-image-file" class="modal-input-field" accept="image/*"> -->
+                    <label for="icon-image-file">Icoon Afbeelding:</label>
+                    <input type="file" id="icon-image-file" class="modal-input-field" accept="image/*">
+                    <input type="hidden" id="icon-image-url" > <!-- Hidden field to store URL after upload -->
                 </div>
                 <div class="modal-input-row">
                     <label for="custom-text">Aangepaste Tekst:</label>
@@ -462,8 +463,10 @@ const dataTableTitleElement = document.getElementById("data-table-title");
 
 // --- Modal Form Elements ---
 const themeNameInput = document.getElementById('theme-name');
-const backgroundImageInput = document.getElementById('background-image');
-const iconImageInput = document.getElementById('icon-image');
+const backgroundImageFile = document.getElementById('background-image-file'); // File input
+const iconImageFile = document.getElementById('icon-image-file'); // File input
+const backgroundImageURLInput = document.getElementById('background-image-url'); // Hidden URL input
+const iconImageURLInput = document.getElementById('icon-image-url'); // Hidden URL input
 const customTextInput = document.getElementById('custom-text');
 
 
@@ -892,8 +895,8 @@ async function loadCustomThemes() {
 // --- Function to save a new custom theme to Firestore ---
 async function saveCustomTheme() {
     const themeName = themeNameInput.value.trim();
-    const backgroundImage = backgroundImageInput.value.trim();
-    const iconImage = iconImageInput.value.trim();
+    const backgroundImgFile = backgroundImageFile.files[0];
+    const iconImgFile = iconImageFile.files[0];
     const customText = customTextInput.value.trim();
 
     if (!themeName) {
@@ -902,15 +905,32 @@ async function saveCustomTheme() {
         return;
     }
 
-    const themeData = {
-        backgroundImageUrl: backgroundImage || null,
-        iconImageUrl: iconImage || null,
-        customText: customText || null
-    };
-
-    const customThemeRef = db.collection('redirectThemes').doc(themeName);
+    let backgroundImageUrl = null;
+    let iconImageUrl = null;
 
     try {
+        if (backgroundImgFile) {
+            const backgroundStorageRef = storage.ref(`theme_backgrounds/${themeName}_${backgroundImgFile.name}`);
+            const snapshot = await backgroundStorageRef.put(backgroundImgFile);
+            backgroundImageUrl = await snapshot.ref.getDownloadURL();
+             backgroundImageURLInput.value = backgroundImageUrl; // Store URL in hidden field
+        }
+        if (iconImgFile) {
+            const iconStorageRef = storage.ref(`theme_icons/${themeName}_${iconImgFile.name}`);
+            const snapshot = await iconStorageRef.put(iconImgFile);
+            iconImageUrl = await snapshot.ref.getDownloadURL();
+            iconImageURLInput.value = iconImageUrl; // Store URL in hidden field
+        }
+
+
+        const themeData = {
+            backgroundImageUrl: backgroundImageUrl || null,
+            iconImageUrl: iconImageUrl || null,
+            customText: customText || null
+        };
+
+        const customThemeRef = db.collection('redirectThemes').doc(themeName);
+
         await customThemeRef.set(themeData);
         console.log(`Custom theme "${themeName}" saved to Firestore.`);
         successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
@@ -919,11 +939,14 @@ async function saveCustomTheme() {
 
         themeModal.style.display = "none"; // Close modal
         themeNameInput.value = ''; // Clear form
-        backgroundImageInput.value = '';
-        iconImageInput.value = '';
+        backgroundImageFile.value = ''; // Clear file input
+        iconImageFile.value = ''; // Clear file input
+        backgroundImageURLInput.value = ''; // Clear hidden URL input
+        iconImageURLInput.value = ''; // Clear hidden URL input
         customTextInput.value = '';
 
         loadCustomThemes(); // Reload theme list in selector
+
 
     } catch (error) {
         console.error("Error saving custom theme:", error);
