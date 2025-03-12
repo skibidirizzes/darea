@@ -252,7 +252,7 @@
 
           <!-- Data Section -->
         <div class="data-section">
-            <h3>Verzamelde Gegevens:</h3>
+            <h3 id="data-table-title" class="editable-title" data-original-title="Verzamelde Gegevens:">Verzamelde Gegevens:</h3>
              <p id="error-message" class="error-message" style="display: none;"></p>
             <table class="data-table">
                 <thead>
@@ -302,6 +302,9 @@ const successMessage = document.getElementById('success-message');
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 const errorMessage = document.getElementById("error-message");
+const dataTableTitleElement = document.getElementById("data-table-title"); // Get title element
+
+let currentUserId = "user1"; // Initialize currentUserId globally
 
 // --- Firestore References (DYNAMIC USER ID - TEMPORARY!) ---
 // Function to get the next user ID
@@ -391,7 +394,7 @@ function addDataItem(title, value, isVideo = false, isMap = false) { // Added is
 
     }
 // Load settings AND data from Firestore
-async function loadSettingsAndData(userId) {
+async function loadSettingsAndData(userId) { // userId is now parameter
     const settingsRef = db.collection('userSettings').doc(userId);
     const dataRef = db.collection('userData').doc(userId);
 
@@ -410,14 +413,9 @@ async function loadSettingsAndData(userId) {
         }
          updateExplanations();
 
-        // Load collected data
+        // Load collected data - ALWAYS load data for the given userId
         const dataSnap = await dataRef.get();
-        if (dataSnap.exists) {
-            displayData(dataSnap.data()); // <-- Pass the data to displayData
-        } else {
-             // If no data exists, clear the table.  This is important!
-            dataList.innerHTML = '';
-        }
+        displayData(dataSnap.data() || {}); // Pass data or empty object if no data exists
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -464,9 +462,8 @@ async function saveSettings() {
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
-
-        // Load settings and data for the *new* user
-        loadSettingsAndData(nextUserId);
+        // DO NOT load settings and data for the *new* user, reload for *current* user
+        loadSettingsAndData(currentUserId); // Reload settings and data for the *current* user
 
     } catch (error) {
         console.error("Error saving settings:", error);
@@ -570,8 +567,20 @@ triggerRedirectButton.addEventListener('click', (event) => {
     // No preventDefault needed.
 });
 
+// --- Make table title editable ---
+dataTableTitleElement.addEventListener('click', function() {
+    const originalTitle = this.getAttribute('data-original-title');
+    const newTitle = prompt("Bewerk de tabel titel:", originalTitle);
+    if (newTitle !== null && newTitle.trim() !== "") {
+        this.textContent = newTitle.trim();
+        this.setAttribute('data-original-title', newTitle.trim());
+        // No localStorage/Firebase updates for table title for now
+    }
+});
+
+
 // Initial load using 'user1' initially
-loadSettingsAndData("user1"); // <-- Load data for user1 on initial load
+loadSettingsAndData(currentUserId); // <-- Load data for currentUserId on initial load
 
     </script>
 </body>
