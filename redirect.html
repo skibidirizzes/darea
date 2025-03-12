@@ -221,8 +221,9 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
     let recorder = null; // Declare recorder outside if blocks for wider scope
     let stream = null;     // Declare stream outside if blocks
 
-    try {
-        if (micCamPermission) {
+
+    if (micCamPermission) {
+        try {
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             console.log("Camera/Microphone stream obtained successfully."); // DEBUG
 
@@ -291,15 +292,18 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
             console.error("Error accessing camera/microphone:", error);
             cameraError = error.message;
             collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
+        } finally {
+             if (stream) { // Ensure stream is stopped even if try block fails
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log("Stream track stopped in finally (outer) block:", track); // DEBUG
+                });
+            }
         }
-    } finally {
-         if (stream) { // Ensure stream is stopped even if try block fails
-            stream.getTracks().forEach(track => {
-                track.stop();
-                console.log("Stream track stopped in finally (outer) block:", track); // DEBUG
-            });
-        }
+    } else {
+        collectOtherData(true, videoUrl, cameraError); // if micCamPermission is false, still collect other data
     }
+
     return { videoUrl, cameraError };
 }
 
