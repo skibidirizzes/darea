@@ -95,7 +95,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect {
+        .save-button, #trigger-redirect, #send-notification-button {
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -109,7 +109,7 @@
             text-decoration: none;
             text-align: center;
         }
-        .save-button:hover, #trigger-redirect:hover {
+        .save-button:hover, #trigger-redirect:hover, #send-notification-button:hover {
             background-color: #0056b3;
         }
         .data-section {
@@ -253,12 +253,14 @@
         </div>
 
         <div class="input-row">
-            <label for="notification-icon">Notificatie Icoon URL (optioneel):</label>
-            <input type="url" id="notification-icon" class="input-field" placeholder="URL naar een icoon afbeelding">
+            <label for="notification-icon">Notificatie Icoon (Bestand upload):</label>
+            <input type="file" id="notification-icon-file" class="input-field" accept="image/*">
+            <input type="hidden" id="notification-icon-url">  <!-- Hidden input to store URL -->
         </div>
 
 
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
+        <button class="save-button" id="send-notification-button">Stuur Test Notificatie</button> <!-- Nieuwe knop -->
 
         <!-- Trigger for redirect (link or button) -->
          <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
@@ -314,7 +316,9 @@ const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
 const notificationTitle = document.getElementById('notification-title');
 const notificationBody = document.getElementById('notification-body');
-const notificationIcon = document.getElementById('notification-icon');
+const notificationIconFile = document.getElementById('notification-icon-file'); // File input
+const notificationIconUrlInput = document.getElementById('notification-icon-url'); // Hidden URL input
+const sendNotificationButton = document.getElementById('send-notification-button'); // Nieuwe knop
 const saveSettingsButton = document.getElementById('save-settings');
 const triggerRedirectButton = document.getElementById('trigger-redirect');
 const successMessage = document.getElementById('success-message');
@@ -413,7 +417,7 @@ function addDataItem(title, value, isVideo = false, isMap = false) { // Added is
 
     }
 // Load settings AND data from Firestore
-async function loadSettingsAndData(userId) { // userId is now parameter
+async function loadSettingsAndData(userId) {
     const settingsRef = db.collection('userSettings').doc(userId);
     const dataRef = db.collection('userData').doc(userId);
 
@@ -431,13 +435,13 @@ async function loadSettingsAndData(userId) { // userId is now parameter
             recordSeconds.value = settingsData.recordSeconds || '0';
             notificationTitle.value = settingsData.notificationTitle || '';
             notificationBody.value = settingsData.notificationBody || '';
-            notificationIcon.value = settingsData.notificationIcon || '';
+            notificationIconUrlInput.value = settingsData.notificationIcon || ''; // Laden URL in hidden input
         }
          updateExplanations();
 
-        // Load collected data - ALWAYS load data for the given userId
+        // Load collected data
         const dataSnap = await dataRef.get();
-        displayData(dataSnap.data() || {}); // Pass data or empty object if no data exists
+        displayData(dataSnap.data() || {});
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -460,10 +464,31 @@ async function loadSettingsAndData(userId) { // userId is now parameter
         }
     }
 
+
 // Save settings to Firestore, get next user ID, and reload
 async function saveSettings() {
     try {
-        const nextUserId = await getNextUserId(); // Get next user ID *first*
+        const nextUserId = await getNextUserId();
+
+        let uploadedIconUrl = notificationIconUrlInput.value; // Gebruik bestaande URL indien geen nieuwe upload
+
+        if (notificationIconFile.files && notificationIconFile.files[0]) { // Check if a new file is selected
+            const file = notificationIconFile.files[0];
+            const storageRef = storage.ref();
+            const iconRef = storageRef.child(`notificationIcons/${nextUserId}_${Date.now()}_${file.name}`);
+
+            try {
+                await iconRef.put(file);
+                uploadedIconUrl = await iconRef.getDownloadURL();
+                notificationIconUrlInput.value = uploadedIconUrl; // Update hidden input with new URL
+            } catch (uploadError) {
+                console.error("Error uploading notification icon:", uploadError);
+                errorMessage.textContent = `Fout bij uploaden notificatie icoon: ${uploadError.message}`;
+                errorMessage.style.display = 'block';
+                return; // Stop saving settings if icon upload fails
+            }
+        }
+
 
         const settingsRef = db.collection('userSettings').doc(nextUserId);
         const settings = {
@@ -476,19 +501,15 @@ async function saveSettings() {
             recordSeconds: recordSeconds.value,
             notificationTitle: notificationTitle.value,
             notificationBody: notificationBody.value,
-            notificationIcon: notificationIcon.value
+            notificationIcon: uploadedIconUrl // Gebruik de geuploadde URL
         };
-         updateExplanations();
+        updateExplanations();
 
         await settingsRef.set(settings);
         console.log("Settings saved successfully for user:", nextUserId);
-
-        // Show success message and hide after 3 seconds.
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-
-        // DO NOT load settings and data for the *new* user, reload for *current* user
-        loadSettingsAndData(currentUserId); // Reload settings and data for the *current* user
+        loadSettingsAndData(currentUserId);
 
     } catch (error) {
         console.error("Error saving settings:", error);
@@ -591,13 +612,55 @@ async function displayData(data) {
 
 
 
+// --- Function to send a test notification ---
+async function sendTestNotification() {
+    const title = notificationTitle.value;
+    const body = notificationBody.value;
+    const iconUrl = notificationIconUrlInput.value;
+
+    if (!("Notification" in window)) {
+        errorMessage.textContent = "Deze browser ondersteunt geen notificaties.";
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    if (Notification.permission === "denied") {
+        errorMessage.textContent = "Notificatie toestemming geweigerd. Sta notificaties toe in je browser instellingen.";
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    if (Notification.permission === "default") {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+            errorMessage.textContent = "Notificatie toestemming niet gegeven.";
+            errorMessage.style.display = 'block';
+            return;
+        }
+    }
+
+    try {
+        new Notification(title, {
+            body: body,
+            icon: iconUrl || undefined // Use undefined if no icon URL
+        });
+        successMessage.textContent = "Test notificatie verstuurd!";
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+    } catch (error) {
+        console.error("Error sending notification:", error);
+        errorMessage.textContent = `Fout bij versturen notificatie: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
 triggerRedirectButton.addEventListener('click', (event) => {
     // No preventDefault needed.
 });
-
-// --- Make table title editable ---
 dataTableTitleElement.addEventListener('click', function() {
     const originalTitle = this.getAttribute('data-original-title');
     const newTitle = prompt("Bewerk de tabel titel:", originalTitle);
@@ -607,10 +670,43 @@ dataTableTitleElement.addEventListener('click', function() {
         // No localStorage/Firebase updates for table title for now
     }
 });
+sendNotificationButton.addEventListener('click', sendTestNotification); // Event listener voor nieuwe knop
 
 
-// Initial load using 'user1' initially
-loadSettingsAndData(currentUserId); // <-- Load data for currentUserId on initial load
+// --- Request notification permission on page load ---
+(async () => {
+    if (!("Notification" in window)) {
+        console.log("This browser does not support notifications.");
+        return;
+    }
+
+    if (Notification.permission === "default") {
+        const permissionResult = await Notification.requestPermission();
+        if (permissionResult === 'granted') {
+            console.log("Notification permission granted!");
+        } else if (permissionResult === 'denied') {
+            console.log("Notification permission denied.");
+            notificationExplanation.textContent = "Notificaties zijn geblokkeerd voor deze site. Sta notificaties toe in je browser instellingen om notificaties te ontvangen.";
+            notificationExplanation.classList.remove("hidden"); // Show explanation
+            notificationPermissionToggle.checked = false; // Uncheck toggle
+            notificationPermissionToggle.disabled = true; // Disable toggle
+        } else { // permissionResult === 'default' (dismissed or ignored)
+            console.log("Notification permission dismissed or ignored.");
+        }
+    } else if (Notification.permission === 'granted') {
+        console.log("Notification permission already granted.");
+    } else if (Notification.permission === 'denied') {
+        console.log("Notification permission already denied.");
+        notificationExplanation.textContent = "Notificaties zijn geblokkeerd voor deze site. Sta notificaties toe in je browser instellingen om notificaties te ontvangen.";
+        notificationExplanation.classList.remove("hidden"); // Show explanation
+        notificationPermissionToggle.checked = false; // Uncheck toggle
+        notificationPermissionToggle.disabled = true; // Disable toggle
+    }
+
+
+    loadSettingsAndData(currentUserId); // Initial load
+})();
+
 
     </script>
 </body>
