@@ -401,12 +401,12 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
                 const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
                 const { videoUrl, cameraError } = cameraMicData;
                 collectOtherData(false, videoUrl, cameraError); // Pass false for location denied
-            }, // <-- CORRECTED: Added missing closing brace here
+            },
             {
                 enableHighAccuracy: true,
                 timeout: 10000,
                 maximumAge: 0
-            }
+            } **)** // <-- CORRECTED: Added missing closing parenthesis here
         );
     } else {
         console.error("Geolocation is not supported by this browser.");
