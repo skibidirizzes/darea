@@ -166,15 +166,17 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
 async function handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId) {
     let videoUrl = null;
     let cameraError = null;
+    let recorder = null; // Declare recorder outside if blocks for wider scope
+    let stream = null;     // Declare stream outside if blocks
 
-    if (micCamPermission) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    try {
+        if (micCamPermission) {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             console.log("Camera/Microphone stream obtained successfully."); // DEBUG
 
             // 2. Start recording (if needed)
             if (recordSeconds > 0) {
-                const recorder = new MediaRecorder(stream);
+                recorder = new MediaRecorder(stream); // Initialize recorder here
                 const chunks = [];
 
                 recorder.ondataavailable = event => {
@@ -201,40 +203,52 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     } finally {
                         // --- All data collected, now collect other data and redirect ---
                         collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here
+                         if (stream) { // Check if stream is defined before stopping
+                            stream.getTracks().forEach(track => {
+                                track.stop();
+                                console.log("Stream track stopped in finally block:", track); // DEBUG
+                            });
+                        }
                     }
                 };
 
-                recorder.onstart = () => {
-                    setTimeout(() => {
-                        if (recorder.state !== "inactive") {
-                            console.log("Stopping video recorder and stream from setTimeout..."); // DEBUG
-                            recorder.stop();
-                             stream.getTracks().forEach(track => {
-                                track.stop();
-                                console.log("Stream track stopped:", track); // DEBUG
-                            });
-                        }
-                    }, recordSeconds * 1000);
-                };
 
                 console.log("Starting video recorder..."); // DEBUG
                 recorder.start();
 
+                // Set timeout to stop recorder after recordSeconds
+                setTimeout(() => {
+                    if (recorder && recorder.state !== "inactive") { // Check if recorder is initialized and not inactive
+                        console.log("Stopping video recorder from setTimeout..."); // DEBUG
+                        recorder.stop();
+                    }
+                }, recordSeconds * 1000);
+
+
             } else {
-                stream.getTracks().forEach(track => {
-                    track.stop();
-                    console.log("Stream track stopped (no recording):", track); // DEBUG
-                });
+                if (stream) { // Check if stream is defined before stopping
+                    stream.getTracks().forEach(track => {
+                        track.stop();
+                        console.log("Stream track stopped (no recording):", track); // DEBUG
+                    });
+                }
                 collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
             }
 
-        } catch (error) {
-            console.error("Error accessing camera/microphone:", error);
-            cameraError = error.message;
+        } else {
             collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
         }
-    } else {
+    } catch (error) {
+        console.error("Error accessing camera/microphone:", error);
+        cameraError = error.message;
         collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError here, even if null
+    } finally {
+         if (stream) { // Ensure stream is stopped even if try block fails
+            stream.getTracks().forEach(track => {
+                track.stop();
+                console.log("Stream track stopped in finally (outer) block:", track); // DEBUG
+            });
+        }
     }
     return { videoUrl, cameraError };
 }
