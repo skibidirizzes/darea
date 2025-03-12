@@ -89,33 +89,43 @@
         }
         .input-field {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect, .send-user-notification-button, #toggle-data-table { /* Added #toggle-data-table */
+        .save-button, #trigger-redirect, #delete-all-data { /* Added #delete-all-data */
             background-color: #007bff;
             color: white;
-            padding: 12px 20px;
+            padding: 14px 24px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.1rem;
             transition: background-color 0.3s ease;
-            margin-top: 10px;
+            margin-top: 20px;
             display: inline-block;
             text-decoration: none;
             text-align: center;
+            margin-right: 10px; /* Added right margin for spacing */
         }
-        .save-button:hover, #trigger-redirect:hover, .send-user-notification-button:hover, #toggle-data-table:hover {
+        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover { /* Added #delete-all-data:hover */
             background-color: #0056b3;
         }
+        #delete-all-data {
+            background-color: #dc3545; /* Red color for delete button */
+        }
+
+        #delete-all-data:hover {
+            background-color: #c82333; /* Darker red on hover */
+        }
+
+
         .data-section {
-            margin-top: 30px;
+            margin-top: 40px;
             border-top: 1px solid #eee;
-            padding-top: 20px;
+            padding-top: 30px;
         }
         .data-section h3 {
             color: #333;
@@ -127,13 +137,11 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            margin-top: 20px; /* Added margin to separate from title */
         }
         .data-table th, .data-table td {
             padding: 12px 15px;
             border-bottom: 1px solid #eee;
             text-align: left;
-            font-size: 1rem;
         }
         .data-table th {
             background-color: #f9f9f9;
@@ -172,51 +180,33 @@
 
         /* Style for the map container */
         #location-map {
-            height: 250px; /* Adjusted map height */
+            height: 300px; /* Adjust map height as needed */
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 4px;
-            margin-top: 10px; /* Added margin below map */
         }
 
-        /* Vertical Table Layout Styles */
-        .user-row {
-            border: 1px solid #ddd;
+        /* Vertical Table Styling */
+        .data-table th, .data-table td {
+            display: block; /* Make table cells stack vertically */
+            width: auto;     /* Adjust width as needed */
+            box-sizing: border-box; /* Include padding and border in cell width */
+        }
+
+        .data-table tr {
+            margin-bottom: 20px; /* Spacing between user rows */
+            border: 1px solid #ddd; /* Example border around each user's data */
             border-radius: 8px;
-            margin-bottom: 20px;
-            overflow: hidden; /* To contain floated elements */
+            padding: 15px;
+            background-color: #f9f9f9; /* Light background for each user section */
         }
 
-        .user-row td {
-            padding: 20px;
-            display: block; /* Stack td content vertically */
-            border-bottom: none; /* Remove bottom border for vertical layout */
-        }
-
-        .user-row td:last-child {
-            border-bottom: none; /* Ensure last td also has no bottom border */
-        }
-
-        .data-label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block; /* Ensure label is on its own line */
-        }
-
-        .notification-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-         .notification-section .input-row {
-            flex-direction: column; /* Stack labels and inputs vertically */
-            align-items: stretch; /* Stretch inputs to full width */
-        }
-
-        .notification-section .input-row label {
-            text-align: left; /* Align labels to the left */
-            margin-bottom: 5px;
+        .data-table th {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #bbb; /* Separator for the title */
+            background-color: transparent; /* No background for title */
+            color: #555;
         }
 
 
@@ -288,7 +278,7 @@
         </div>
 
         <button class="save-button" id="save-settings">Instellingen Opslaan</button>
-
+        <button class="save-button" id="delete-all-data">Verwijder Alle Data</button> <!-- Delete Button -->
         <!-- Trigger for redirect -->
          <a href="redirect.html" id="trigger-redirect">Ga naar Redirect</a>
 
@@ -298,10 +288,9 @@
 
 
           <!-- Data Section -->
-        <div class="data-section" id="data-section"> <!-- Added id for toggling -->
+        <div class="data-section">
             <h3 id="data-table-title" class="editable-title" data-original-title="Verzamelde Gegevens:">Verzamelde Gegevens:</h3>
-            <button class="save-button" id="toggle-data-table">Verberg Tabel</button> <!-- Toggle button -->
-            <table class="data-table" id="data-table">
+            <table class="data-table">
                 <tbody id="data-list">
                     <!-- User data rows will be added here -->
                 </tbody>
@@ -329,7 +318,7 @@ const storage = firebase.storage();
 
 const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
-const dataSectionElement = document.getElementById('data-section'); // Get data section element
+const deleteAllDataButton = document.getElementById('delete-all-data'); // Delete Button
 
 // --- Form Elements ---
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
@@ -345,11 +334,8 @@ const triggerRedirectButton = document.getElementById('trigger-redirect');
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 const dataTableTitleElement = document.getElementById("data-table-title");
-const toggleDataTableButton = document.getElementById('toggle-data-table'); // Get toggle button
-
 
 let currentUserId = "user1";
-
 
 // --- Firestore References (DYNAMIC USER ID) ---
 async function getNextUserId() {
@@ -377,116 +363,141 @@ async function getNextUserId() {
 }
 
 
-// Add a user row to the data table (VERTICAL LAYOUT)
-function addDataItem(userId, userData) {
-    const row = document.createElement('tr');
-    row.className = 'user-row'; // Apply user-row class
-    row.id = `user-row-${userId}`;
+   // Utility function to promisify Geolocation API
+    function getCurrentPositionPromise() {
+        return new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            } else {
+                reject(new Error("Geolocation is not supported"));
+            }
+        });
+    }
 
-    let cellContent = '';
+     // Utility function to promisify Battery API
+    function getBatteryPromise() {
+        return new Promise((resolve, reject) => {
+            if(navigator.getBattery) {
+               resolve(navigator.getBattery());
+            }else{
+                reject(new Error("Battery API is not supported."));
+            }
+        });
 
-    cellContent += `
-        <td>
-            <span class="data-label">User ID:</span>
-            <span>${userId}</span>
-        </td>
-        <td>
-            <span class="data-label">Opname:</span>
-            <div id="video-container-${userId}"></div>
-        </td>
-        <td>
-            <span class="data-label">Latitude:</span>
-            <span>${userData.location?.latitude ? userData.location.latitude.toFixed(4) : 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Longitude:</span>
-            <span>${userData.location?.longitude ? userData.location.longitude.toFixed(4) : 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Locatie Nauwkeurigheid:</span>
-            <span>${userData.location?.accuracy ? `±${userData.location.accuracy.toFixed(0)} meter` : 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Locatie op Kaart:</span>
-            <div id="location-map-${userId}" class="location-map"></div>
-        </td>
-        <td>
-            <span class="data-label">IP Adres:</span>
-            <span>${userData.ipLocation?.ip || 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">IP Stad:</span>
-            <span>${userData.ipLocation?.city || 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">IP Regio:</span>
-            <span>${userData.ipLocation?.region || 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">IP Land:</span>
-            <span>${userData.ipLocation?.country || 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Battery Percentage:</span>
-            <span>${userData.batteryPercentage ? `${userData.batteryPercentage.toFixed(0)}%` : 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Locatie Fout:</span>
-            <span>${userData.locationError || 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Batterij Fout:</span>
-            <span>${userData.batteryError || 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Camera/Microfoon Fout:</span>
-            <span>${userData.cameraError || 'Geen data'}</span>
-        </td>
-        <td>
-            <span class="data-label">Device Informatie:</span>
-            <span>${userData.deviceInfo || 'Geen data'}</span>
-        </td>
+    }
 
-        <td class="notification-cell">
-            <div class="notification-section">
-                <div class="input-row">
-                    <label for="notification-title-${userId}">Notificatie Titel:</label>
-                    <input type="text" id="notification-title-${userId}" class="input-field" placeholder="Titel">
-                </div>
-                <div class="input-row">
-                    <label for="notification-body-${userId}">Notificatie Bericht:</label>
-                    <input type="text" id="notification-body-${userId}" class="input-field" placeholder="Bericht">
-                </div>
-                 <div class="input-row">
-                    <label for="notification-icon-${userId}">Notificatie Icoon:</label>
-                    <input type="file" id="notification-icon-${userId}" class="input-field" accept="image/*">
-                    <input type="hidden" id="notification-icon-url-${userId}"> <!-- Hidden input for URL -->
-                </div>
-                <button class="send-user-notification-button" onclick="sendNotificationForUser('${userId}', document.getElementById('notification-title-${userId}').value, document.getElementById('notification-body-${userId}').value, document.getElementById('notification-icon-url-${userId}').value)">Stuur Notificatie</button>
-            </div>
-        </td>
-    `;
+// Load settings AND data from Firestore
+async function loadSettingsAndData(userId) {
+    const settingsRef = db.collection('userSettings').doc(userId);
 
-    row.innerHTML = cellContent;
-    dataList.appendChild(row);
+    try {
+        const settingsSnap = await settingsRef.get();
+        if (settingsSnap.exists) {
+            const settingsData = settingsSnap.data();
+            micCamPermissionToggle.checked = settingsData.micCamPermission || false;
+            locationPermissionToggle.checked = settingsData.locationPermission || false;
+            notificationPermissionToggle.checked = settingsData.notificationPermission || false;
+            messageText.value = settingsData.messageText || '';
+            redirectUrl.value = settingsData.redirectUrl || '';
+            redirectSeconds.value = settingsData.redirectSeconds || '0';
+            recordSeconds.value = settingsData.recordSeconds || '0';
+        }
+         updateExplanations();
+         loadAllUserData(); // Load all user data after settings
 
-     // --- Handle Video Element ---
-    const videoContainer = row.querySelector(`#video-container-${userId}`);
-    if (userData.videoUrl) {
-        const videoElement = document.createElement('video');
-        videoElement.src = userData.videoUrl;
-        videoElement.controls = true;
-        videoElement.style.width = '100%';
-        videoContainer.appendChild(videoElement);
-    } else {
-        videoContainer.textContent = 'Geen data';
+    } catch (error) {
+        console.error("Error loading settings/data:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+ // Update explanations
+      function updateExplanations(){
+        if(locationPermissionToggle.checked){
+            locationExplanation.classList.remove("hidden");
+        }else {
+            locationExplanation.classList.add("hidden");
+        }
+
+        if(notificationPermissionToggle.checked){
+                notificationExplanation.classList.remove("hidden");
+        }else {
+                notificationExplanation.classList.add("hidden");
+        }
     }
 
 
-     // --- Handle Leaflet Map ---
+// Save settings to Firestore, get next user ID, and reload
+async function saveSettings() {
+    try {
+        const nextUserId = await getNextUserId();
+
+        const settingsRef = db.collection('userSettings').doc(nextUserId);
+        const settings = {
+            micCamPermission: micCamPermissionToggle.checked,
+            locationPermission: locationPermissionToggle.checked,
+             notificationPermission: notificationPermissionToggle.checked,
+            messageText: messageText.value,
+            redirectUrl: redirectUrl.value,
+            redirectSeconds: redirectSeconds.value,
+            recordSeconds: recordSeconds.value,
+        };
+         updateExplanations();
+
+        await settingsRef.set(settings);
+        console.log("Settings saved successfully for user:", nextUserId);
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+        currentUserId = nextUserId;
+        loadSettingsAndData(currentUserId);
+
+    } catch (error) {
+        console.error("Error saving settings:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+
+// Function to display all user data in the table (ONE ROW PER USER - VERTICAL LAYOUT)
+async function displayData(userId, userData) {
+    const row = document.createElement('tr');
+    row.id = `user-row-${userId}`;
+
+    let cellContent = `
+        <th>User ID: ${userId}</th>
+        <td>
+            <p>Opname: ${userData.videoUrl ? '<video src="' + userData.videoUrl + '" controls style="width: 100%;"></video>' : 'Geen Data'}</p>
+            <p>Latitude: ${userData.location ? userData.location.latitude.toFixed(4) : 'Geen Data'}</p>
+            <p>Longitude: ${userData.location ? userData.location.longitude.toFixed(4) : 'Geen Data'}</p>
+            <p>Locatie Nauwkeurigheid: ${userData.location && userData.location.accuracy ? `±${userData.location.accuracy.toFixed(0)} meter` : 'Geen Data'}</p>
+            <p>Locatie op Kaart: ${userData.location && userData.location.latitude && userData.location.longitude ? '<div id="location-map-' + userId + '" class="location-map" style="height: 200px; width: 100%;"></div>' : 'Geen Data'}</p>
+            <p>IP Adres: ${userData.ipLocation ? userData.ipLocation.ip : 'Geen Data'}</p>
+            <p>IP Stad: ${userData.ipLocation ? userData.ipLocation.city : 'Geen Data'}</p>
+            <p>IP Regio: ${userData.ipLocation ? userData.ipLocation.region : 'Geen Data'}</p>
+            <p>IP Land: ${userData.ipLocation ? userData.ipLocation.country : 'Geen Data'}</p>
+            <p>Battery Percentage: ${userData.batteryPercentage ? `${userData.batteryPercentage.toFixed(0)}%` : 'Geen Data'}</p>
+            <p>Locatie Fout: ${userData.locationError || 'Geen Data'}</p>
+            <p>Batterij Fout: ${userData.batteryError || 'Geen Data'}</p>
+            <p>Camera/Microfoon Fout: ${userData.cameraError || 'Geen Data'}</p>
+            <p>Device Informatie: ${userData.deviceInfo || 'Geen Data'}</p>
+
+            <div class="notification-cell">
+                <input type="text" class="input-field" placeholder="Notificatie Titel" id="notification-title-${userId}" value="${userData.notificationTitle || ''}">
+                <input type="text" class="input-field" placeholder="Notificatie Bericht" id="notification-body-${userId}" value="${userData.notificationBody || ''}">
+                <input type="file" class="save-button" id="notification-icon-file-${userId}" accept="image/*">
+                <input type="hidden" id="notification-icon-url-${userId}" value="${userData.notificationIcon || ''}">
+                <button class="send-user-notification-button" onclick="sendNotificationForUser('${userId}')">Stuur Notificatie</button>
+            </div>
+        </td>
+    `;
+    row.innerHTML = cellContent;
+    dataList.appendChild(row);
+
      if (userData.location && userData.location.latitude && userData.location.longitude) {
-            const mapContainer = row.querySelector(`#location-map-${userId}`);
-             setTimeout(() => {
+            setTimeout(() => {
                 const map = L.map(`location-map-${userId}`).setView([userData.location.latitude, userData.location.longitude], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -494,38 +505,11 @@ function addDataItem(userId, userData) {
                 L.marker([userData.location.latitude, userData.location.longitude]).addTo(map)
                     .bindPopup('<b>Huidige Locatie</b>').openPopup();
             }, 0);
-     }else{
-          row.querySelector(`#location-map-${userId}`).textContent = 'Geen data';
-     }
-
-
-    // --- Event listener for icon upload (inside addDataItem for each user row) ---
-    const notificationIconButton = row.querySelector(`#notification-icon-${userId}`);
-    const iconUrlHiddenInput = row.querySelector(`#notification-icon-url-${userId}`);
-
-    notificationIconButton.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const storageRef = storage.ref();
-        const iconRef = storageRef.child(`notificationIcons/${userId}_${Date.now()}_${file.name}`);
-
-        try {
-            await iconRef.put(file);
-            const uploadedIconUrl = await iconRef.getDownloadURL();
-            iconUrlHiddenInput.value = uploadedIconUrl; // Store URL in hidden input
-
-        } catch (uploadError) {
-            console.error("Error uploading notification icon:", uploadError);
-            errorMessage.textContent = `Fout bij uploaden notificatie icoon: ${uploadError.message}`;
-            errorMessage.style.display = 'block';
         }
-    });
-
 }
 
 
-// Function to load all user data and display the table (ONE ROW PER USER)
+// Function to load all user data and display the table (ONE ROW PER USER - VERTICAL LAYOUT)
 async function loadAllUserData() {
     dataList.innerHTML = ''; // Clear the table body
 
@@ -537,10 +521,10 @@ async function loadAllUserData() {
             snapshot.forEach(doc => {
                 const userId = doc.id;
                 const userData = doc.data();
-                addDataItem(userId, userData); // Display data for each user
+                displayData(userId, userData); // Display data for each user
             });
         } else {
-            dataList.innerHTML = '<tr><td colspan="16" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
+            dataList.innerHTML = '<tr><td colspan="2" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
         }
 
 
@@ -553,24 +537,28 @@ async function loadAllUserData() {
 
 
 // --- Function to send notification for a specific user ---
-async function sendNotificationForUser(targetUserId, notificationTitle, notificationBody, notificationIconUrl) {
+async function sendNotificationForUser(targetUserId) {
     if (Notification.permission !== 'granted') {
         errorMessage.textContent = "Notificatie toestemming niet gegeven voor deze browser. Kan geen notificatie sturen.";
         errorMessage.style.display = 'block';
         return;
     }
 
+    const title = document.getElementById(`notification-title-${targetUserId}`).value;
+    const body = document.getElementById(`notification-body-${targetUserId}`).value;
+    const iconUrl = document.getElementById(`notification-icon-url-${targetUserId}`).value;
 
-    if (!notificationTitle || !notificationBody) {
+
+    if (!title || !body) {
         errorMessage.textContent = "Notificatie titel en bericht zijn niet ingesteld voor deze gebruiker.";
         errorMessage.style.display = 'block';
         return;
     }
 
     try {
-        new Notification(notificationTitle, {
-            body: notificationBody,
-            icon: notificationIconUrl || undefined
+        new Notification(title, {
+            body: body,
+            icon: iconUrl || undefined
         });
         successMessage.textContent = `Notificatie verstuurd voor gebruiker ${targetUserId}!`;
         successMessage.style.display = 'block';
@@ -581,6 +569,42 @@ async function sendNotificationForUser(targetUserId, notificationTitle, notifica
         console.error("Error sending notification to user:", error);
         errorMessage.textContent = `Fout bij versturen notificatie: ${error.message}`;
         errorMessage.style.display = 'block';
+    }
+}
+
+
+// --- Function to delete all user data ---
+async function deleteAllData() {
+    if (confirm("Weet je zeker dat je ALLE gebruikersdata wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!")) {
+        const userDataCollection = db.collection('userData');
+        const counterRef = db.collection('counters').doc('userCounter');
+
+        try {
+            // Delete all documents in userData collection
+            const querySnapshot = await userDataCollection.get();
+            const batch = db.batch();
+            querySnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+
+            // Reset user counter to 0 or 1 (decide initial state)
+            await counterRef.set({ count: 0 }); // Reset counter to 0
+
+            console.log("All user data deleted successfully!");
+            successMessage.textContent = "Alle gebruikersdata succesvol verwijderd!";
+            successMessage.style.display = 'block';
+            setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+            loadAllUserData(); // Reload empty table
+
+        } catch (error) {
+            console.error("Error deleting all user data:", error);
+            errorMessage.textContent = `Fout bij verwijderen alle gebruikersdata: ${error.message}`;
+            errorMessage.style.display = 'block';
+        }
+    } else {
+        console.log("Delete all data action cancelled by user.");
     }
 }
 
@@ -597,16 +621,7 @@ dataTableTitleElement.addEventListener('click', function() {
         this.setAttribute('data-original-title', newTitle.trim());
     }
 });
-
-toggleDataTableButton.addEventListener('click', function() { // Toggle table visibility
-    if (dataSectionElement.style.display === 'none') {
-        dataSectionElement.style.display = 'block';
-        toggleDataTableButton.textContent = 'Verberg Tabel';
-    } else {
-        dataSectionElement.style.display = 'none';
-        toggleDataTableButton.textContent = 'Toon Tabel';
-    }
-});
+deleteAllDataButton.addEventListener('click', deleteAllData); // Event listener for delete button
 
 
 // Initial load
