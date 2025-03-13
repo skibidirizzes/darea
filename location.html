@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>Instellingen</title>
     <style>
         /* Verbeterde Verticale Tabel Styling (en algemene styles) */
@@ -1017,8 +1016,8 @@ async function saveCustomTheme() {
     let iconImageUrl = iconImageURLInput.value; // Keep existing URL if no new file
 
     try {
-        // Upload background image with Cloudinary Widget
-        if (backgroundImageFile.files.length > 0) {
+        // Upload background image with Cloudinary Widget ONLY if a new file is selected
+        if (backgroundImageFile) { // Check if backgroundImageFile is not null (a new file is selected)
             const uploadResultBackground = await new Promise((resolve, reject) => {
                 cloudinary.openUploadWidget({
                     cloudName: cloudName,
@@ -1036,14 +1035,14 @@ async function saveCustomTheme() {
                     } else {
                         reject(new Error("Cloudinary upload mislukt of geannuleerd (background)"));
                     }
-                }).open(); // Open the widget
+                }).open(); // Open the widget - NOW CONDITIONAL
             });
             backgroundImageUrl = uploadResultBackground.info.secure_url;
             backgroundImageURLInput.value = backgroundImageUrl;
         }
 
-        // Upload icon image with Cloudinary Widget
-        if (iconImageFile.files.length > 0) {
+        // Upload icon image with Cloudinary Widget ONLY if a new file is selected
+        if (iconImgFile) { // Check if iconImgFile is not null (a new file is selected)
             const uploadResultIcon = await new Promise((resolve, reject) => {
                 cloudinary.openUploadWidget({
                     cloudName: cloudName,
@@ -1061,7 +1060,7 @@ async function saveCustomTheme() {
                     } else {
                         reject(new Error("Cloudinary upload mislukt of geannuleerd (icon)"));
                     }
-                }).open(); // Open the widget
+                }).open(); // Open the widget - NOW CONDITIONAL
             });
             iconImageUrl = uploadResultIcon.info.secure_url;
             iconImageURLInput.value = iconImageUrl;
