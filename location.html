@@ -98,7 +98,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button {
+        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme {
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -113,14 +113,14 @@
             text-align: center;
             margin-right: 10px;
         }
-        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover, #create-theme-button:hover {
+        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover, #create-theme-button:hover, #save-custom-theme:hover, #cancel-custom-theme:hover {
             background-color: #0056b3;
         }
-        #delete-all-data, .delete-user-button {
+        #delete-all-data, .delete-user-button, #cancel-custom-theme {
             background-color: #dc3545;
         }
 
-        #delete-all-data:hover, .delete-user-button:hover {
+        #delete-all-data:hover, .delete-user-button:hover, #cancel-custom-theme:hover {
             background-color: #c82333;
         }
 
@@ -462,10 +462,10 @@
         <div id="themeModal" class="modal">
             <div class="modal-content">
                 <span class="close-button" id="close-modal-button">×</span>
-                <h2>Maak Nieuw Redirect Thema</h2>
+                <h2>Maak/Bewerk Redirect Thema</h2>
                 <div class="modal-input-row">
                     <label for="theme-name">Thema Naam:</label>
-                    <input type="text" id="theme-name" class="modal-input-field" placeholder="Naam van het thema">
+                    <input type="text" id="theme-name" class="modal-input-field" placeholder="Naam van het thema" >
                 </div>
                 <div class="modal-input-row">
                     <label for="background-image-file">Achtergrond Afbeelding:</label>
@@ -478,8 +478,8 @@
                     <input type="hidden" id="icon-image-url" > <!-- Hidden field to store URL after upload -->
                 </div>
                 <div class="modal-input-row">
-                    <label for="custom-text">Aangepaste Tekst:</label>
-                    <textarea id="custom-text" class="modal-input-field" rows="4" placeholder="Tekst voor de redirect pagina"></textarea>
+                    <label for="custom-text-modal">Aangepaste Tekst:</label>
+                    <textarea id="custom-text-modal" class="modal-input-field" rows="4" placeholder="Tekst voor de redirect pagina"></textarea>
                 </div>
                 <div class="modal-buttons">
                     <button class="save-button" id="save-custom-theme">Thema Opslaan</button>
@@ -538,7 +538,7 @@ const backgroundImageFile = document.getElementById('background-image-file'); //
 const iconImageFile = document.getElementById('icon-image-file'); // File input
 const backgroundImageURLInput = document.getElementById('background-image-url'); // Hidden URL input
 const iconImageURLInput = document.getElementById('icon-image-url'); // Hidden URL input
-const customTextInput = document.getElementById('custom-text');
+const customTextInput = document.getElementById('custom-text-modal');
 
 
 let currentUserId = "user1";
@@ -945,19 +945,50 @@ function applyThemeRedirect(themeName) {
 async function loadCustomThemes() {
     const customThemesRef = db.collection('redirectThemes');
     try {
+        // Clear existing custom theme options first
+        Array.from(themeSelector.options).forEach(option => {
+            if (!['default', 'dark', 'green'].includes(option.value)) {
+                themeSelector.remove(option.index);
+            }
+        });
+
         const snapshot = await customThemesRef.get();
         snapshot.forEach(doc => {
             const themeName = doc.id;
-            if (!themes[themeName]) { // Prevent duplicates if theme name clashes with default
-                const option = document.createElement('option');
-                option.value = themeName;
-                option.textContent = themeName;
-                themeSelector.appendChild(option);
-            }
+            const option = document.createElement('option');
+            option.value = `custom_${themeName}`; // Prefix to distinguish
+            option.textContent = `${themeName} (Bewerken)`;
+            themeSelector.appendChild(option);
+
         });
     } catch (error) {
         console.error("Error loading custom themes:", error);
         errorMessage.textContent = `Fout bij laden aangepaste thema's: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+// --- Functie om een thema te laden voor bewerking ---
+async function loadThemeForEditing(themeName) {
+    const customThemeRef = db.collection('redirectThemes').doc(themeName);
+    try {
+        const doc = await customThemeRef.get();
+        if (doc.exists) {
+            const themeData = doc.data();
+            themeNameInput.value = themeName; // Vul de themanaam in
+            backgroundImageURLInput.value = themeData.backgroundImageUrl || '';
+            iconImageURLInput.value = themeData.iconImageUrl || '';
+            customTextInput.value = themeData.customText || '';
+
+            // Toon de modal
+            themeModal.style.display = "block";
+        } else {
+            errorMessage.textContent = `Thema "${themeName}" niet gevonden.`;
+            errorMessage.style.display = 'block';
+        }
+    } catch (error) {
+        console.error("Error loading theme for editing:", error);
+        errorMessage.textContent = `Fout bij laden thema: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 }
@@ -976,35 +1007,47 @@ async function saveCustomTheme() {
         return;
     }
 
-    let backgroundImageUrl = null;
-    let iconImageUrl = null;
+    let backgroundImageUrl = backgroundImageURLInput.value; // Keep existing URL if no new file
+    let iconImageUrl = iconImageURLInput.value; // Keep existing URL if no new file
 
     try {
+        // Upload background image IF a new one is selected
         if (backgroundImgFile) {
             const backgroundStorageRef = storage.ref(`theme_backgrounds/${themeName}_${backgroundImgFile.name}`);
             const snapshot = await backgroundStorageRef.put(backgroundImgFile);
-            backgroundImageUrl = await snapshot.ref.getDownloadURL();
-             backgroundImageURLInput.value = backgroundImageUrl; // Store URL in hidden field
-        }
-        if (iconImgFile) {
-            const iconStorageRef = storage.ref(`theme_icons/${themeName}_${iconImageFile.name}`);
-            const snapshot = await iconStorageRef.put(iconImgFile);
-            iconImageUrl = await snapshot.ref.getDownloadURL();
-            iconImageURLInput.value = iconImageUrl; // Store URL in hidden field
+            backgroundImageUrl = await snapshot.ref.getDownloadURL(); // AWAIT URL
+            backgroundImageURLInput.value = backgroundImageUrl;
         }
 
+        // Upload icon image IF a new one is selected
+        if (iconImgFile) {
+            const iconStorageRef = storage.ref(`theme_icons/${themeName}_${iconImgFile.name}`);
+            const snapshot = await iconStorageRef.put(iconImgFile);
+            iconImageUrl = await snapshot.ref.getDownloadURL(); // AWAIT URL
+            iconImageURLInput.value = iconImageUrl;
+        }
 
         const themeData = {
-            backgroundImageUrl: backgroundImageUrl || null,
-            iconImageUrl: iconImageUrl || null,
-            customText: customText || null
+            backgroundImageUrl: backgroundImageUrl, // Use (possibly new) URLs
+            iconImageUrl: iconImageUrl,
+            customText: customText
         };
 
         const customThemeRef = db.collection('redirectThemes').doc(themeName);
+        const doc = await customThemeRef.get();
 
-        await customThemeRef.set(themeData);
-        console.log(`Custom theme "${themeName}" saved to Firestore.`);
-        successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
+        if (doc.exists) {
+            await customThemeRef.update(themeData); // Update existing theme
+            console.log(`Custom theme "${themeName}" updated in Firestore.`);
+            successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
+
+        } else {
+             await customThemeRef.set(themeData);
+            console.log(`Custom theme "${themeName}" saved to Firestore.`);
+            successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
+        }
+
+
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
@@ -1020,8 +1063,8 @@ async function saveCustomTheme() {
 
 
     } catch (error) {
-        console.error("Error saving custom theme:", error);
-        errorMessage.textContent = `Fout bij opslaan aangepast thema: ${error.message}`;
+        console.error("Error saving/updating custom theme:", error);
+        errorMessage.textContent = `Fout bij opslaan/bijwerken thema: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 }
@@ -1040,7 +1083,12 @@ dataTableTitleElement.addEventListener('click', function() {
 });
 deleteAllDataButton.addEventListener('click', deleteAllData);
 themeSelector.addEventListener('change', () => {
-    applyTheme(themeSelector.value);
+    const selectedTheme = themeSelector.value;
+    if (selectedTheme.startsWith("custom_")) { // Check if it's a custom theme
+        loadThemeForEditing(selectedTheme.replace("custom_", ""));
+    } else {
+       applyTheme(selectedTheme); // Standard/built-in theme
+    }
 });
 createThemeButton.addEventListener('click', () => {
     themeModal.style.display = "block"; // Open modal
