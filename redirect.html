@@ -5,55 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
     <style>
-         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f3f7fa;
-            color: #333;
-             transition: background-color 0.5s, color 0.5s;
-             background-size: cover;
-             background-position: center;
-        }
-        .container {
-            text-align: center;
-            padding: 40px;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 500px;
-             transition: background-color 0.5s, box-shadow 0.5s;
-        }
-        h1 {
-            color: #007bff;
-            margin-bottom: 20px;
-             transition: color 0.5s;
-        }
-        p {
-            font-size: 1rem;
-            margin-bottom: 15px;
-             transition: color 0.5s;
-        }
-        .loading-dots::after {
-            content: "";
-            animation: dots 1s steps(4) infinite;
-        }
-        .error-message {
-            color: #dc3545;
-            margin-top: 20px;
-            font-weight: bold;
-             transition: color 0.5s;
-        }
-        @keyframes dots {
-            0%   {content: "";}
-            25%  {content: ".";}
-            50%  {content: "..";}
-            75%  {content: "...";}
-        }
+         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f3f7fa; color: #333; transition: background-color 0.5s, color 0.5s; background-size: cover; background-position: center; }
+        .container { text-align: center; padding: 40px; background-color: white; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); width: 80%; max-width: 500px; transition: background-color 0.5s, box-shadow 0.5s; }
+        h1 { color: #007bff; margin-bottom: 20px; transition: color 0.5s; }
+        p { font-size: 1rem; margin-bottom: 15px; transition: color 0.5s; }
+        .loading-dots::after { content: ""; animation: dots 1s steps(4) infinite; }
+        .error-message { color: #dc3545; margin-top: 20px; font-weight: bold; transition: color 0.5s; }
+        @keyframes dots { 0% {content: "";} 25% {content: ".";} 50% {content: "..";} 75% {content: "...";} }
         .icon-container { margin-bottom: 20px; }
         .icon-container img { max-width: 100px; }
         .custom-text { font-size: 1.2rem; margin-top: 20px; }
@@ -88,7 +46,7 @@ const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const errorMessage = document.getElementById("error-message");
 
-const cloudName = "dnvkhmgj0";
+const cloudName = "loctrac";
 const uploadPreset = "locstorage"; //  Corrected upload preset name.
 const apiKey = "811393725393156"; //  Keep, but DO NOT USE.
 const apiSecret = "kUg-q5QY1UsLastxfxLKu_cKjSQ"; //  For reference only.
