@@ -369,8 +369,10 @@
     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-     <!-- Firebase SDK (Storage) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+     <!-- Firebase SDK (Storage) - NOT NEEDED ANYMORE FOR THEME IMAGES -->
+
+    <!-- Cloudinary Widget -->
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
 
     <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -502,17 +504,21 @@ const firebaseConfig = {
     // No databaseURL needed for Firestore
 };
 
+// Cloudinary Configuration - REPLACE WITH YOURS!
+const cloudName = "dnvkhmgj0"; // Jouw Cloudinary Cloud Name
+const uploadPreset = "locstorage"; // Jouw Cloudinary Upload Preset
+
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const storage = firebase.storage();
+// const storage = firebase.storage(); - NOT NEEDED FOR THEME IMAGES ANYMORE
 
 const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
 const deleteAllDataButton = document.getElementById('delete-all-data');
 const themeSelector = document.getElementById('theme-selector');
-const createThemeButton = document.getElementById('create-theme-button'); // New button
-const themeModal = document.getElementById('themeModal'); // Modal element
+const createThemeButton = document.getElementById('create-theme-button');
+const themeModal = document.getElementById('themeModal');
 const closeModalButton = document.getElementById('close-modal-button');
 const saveCustomThemeButton = document.getElementById('save-custom-theme');
 const cancelCustomThemeButton = document.getElementById('cancel-custom-theme');
@@ -534,10 +540,10 @@ const dataTableTitleElement = document.getElementById("data-table-title");
 
 // --- Modal Form Elements ---
 const themeNameInput = document.getElementById('theme-name');
-const backgroundImageFile = document.getElementById('background-image-file'); // File input
-const iconImageFile = document.getElementById('icon-image-file'); // File input
-const backgroundImageURLInput = document.getElementById('background-image-url'); // Hidden URL input
-const iconImageURLInput = document.getElementById('icon-image-url'); // Hidden URL input
+const backgroundImageFile = document.getElementById('background-image-file');
+const iconImageFile = document.getElementById('icon-image-file');
+const backgroundImageURLInput = document.getElementById('background-image-url');
+const iconImageURLInput = document.getElementById('icon-image-url');
 const customTextInput = document.getElementById('custom-text-modal');
 
 
@@ -651,7 +657,7 @@ function applyTheme(themeName) {
         h2.style.color = theme.headingColor;
         h2.style.borderBottomColor = theme.tableTitleBorderColor;
     }
-    const buttons = document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme'); // Include modal buttons
+    const buttons = document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme');
     buttons.forEach(button => {
         button.style.backgroundColor = theme.buttonBackgroundColor;
     });
@@ -690,7 +696,7 @@ async function loadSettingsAndData(userId) {
         }
          updateExplanations();
          loadAllUserData();
-         loadCustomThemes(); // Load custom themes for selector
+         loadCustomThemes();
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -1011,24 +1017,59 @@ async function saveCustomTheme() {
     let iconImageUrl = iconImageURLInput.value; // Keep existing URL if no new file
 
     try {
-        // Upload background image IF a new one is selected
-        if (backgroundImgFile) {
-            const backgroundStorageRef = storage.ref(`theme_backgrounds/${themeName}_${backgroundImgFile.name}`);
-            const snapshot = await backgroundStorageRef.put(backgroundImgFile);
-            backgroundImageUrl = await snapshot.ref.getDownloadURL(); // AWAIT URL
+        // Upload background image with Cloudinary Widget
+        if (backgroundImageFile.files.length > 0) {
+            const uploadResultBackground = await new Promise((resolve, reject) => {
+                cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_backgrounds'],
+                    folder: 'theme_backgrounds'
+                }, (error, result) => {
+                    if (error) {
+                        console.error("Cloudinary upload error (background):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        resolve(result);
+                    } else {
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (background)"));
+                    }
+                }).open(); // Open the widget
+            });
+            backgroundImageUrl = uploadResultBackground.info.secure_url;
             backgroundImageURLInput.value = backgroundImageUrl;
         }
 
-        // Upload icon image IF a new one is selected
-        if (iconImgFile) {
-            const iconStorageRef = storage.ref(`theme_icons/${themeName}_${iconImgFile.name}`);
-            const snapshot = await iconStorageRef.put(iconImgFile);
-            iconImageUrl = await snapshot.ref.getDownloadURL(); // AWAIT URL
+        // Upload icon image with Cloudinary Widget
+        if (iconImageFile.files.length > 0) {
+            const uploadResultIcon = await new Promise((resolve, reject) => {
+                cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_icons'],
+                    folder: 'theme_icons'
+                }, (error, result) => {
+                    if (error) {
+                        console.error("Cloudinary upload error (icon):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        resolve(result);
+                    } else {
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (icon)"));
+                    }
+                }).open(); // Open the widget
+            });
+            iconImageUrl = uploadResultIcon.info.secure_url;
             iconImageURLInput.value = iconImageUrl;
         }
 
+
         const themeData = {
-            backgroundImageUrl: backgroundImageUrl, // Use (possibly new) URLs
+            backgroundImageUrl: backgroundImageUrl,
             iconImageUrl: iconImageUrl,
             customText: customText
         };
@@ -1037,7 +1078,7 @@ async function saveCustomTheme() {
         const doc = await customThemeRef.get();
 
         if (doc.exists) {
-            await customThemeRef.update(themeData); // Update existing theme
+            await customThemeRef.update(themeData);
             console.log(`Custom theme "${themeName}" updated in Firestore.`);
             successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
 
@@ -1051,15 +1092,15 @@ async function saveCustomTheme() {
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
-        themeModal.style.display = "none"; // Close modal
-        themeNameInput.value = ''; // Clear form
-        backgroundImageFile.value = ''; // Clear file input
-        iconImageFile.value = ''; // Clear file input
-        backgroundImageURLInput.value = ''; // Clear hidden URL input
-        iconImageURLInput.value = ''; // Clear hidden URL input
+        themeModal.style.display = "none";
+        themeNameInput.value = '';
+        backgroundImageFile.value = '';
+        iconImageFile.value = '';
+        backgroundImageURLInput.value = '';
+        iconImageURLInput.value = '';
         customTextInput.value = '';
 
-        loadCustomThemes(); // Reload theme list in selector
+        loadCustomThemes();
 
 
     } catch (error) {
@@ -1084,31 +1125,26 @@ dataTableTitleElement.addEventListener('click', function() {
 deleteAllDataButton.addEventListener('click', deleteAllData);
 themeSelector.addEventListener('change', () => {
     const selectedTheme = themeSelector.value;
-    if (selectedTheme.startsWith("custom_")) { // Check if it's a custom theme
+    if (selectedTheme.startsWith("custom_")) {
         loadThemeForEditing(selectedTheme.replace("custom_", ""));
     } else {
-       applyTheme(selectedTheme); // Standard/built-in theme
+       applyTheme(selectedTheme);
     }
 });
 createThemeButton.addEventListener('click', () => {
-    themeModal.style.display = "block"; // Open modal
+    themeModal.style.display = "block";
 });
 closeModalButton.addEventListener('click', () => {
-    themeModal.style.display = "none"; // Close modal
+    themeModal.style.display = "none";
 });
 cancelCustomThemeButton.addEventListener('click', () => {
-    themeModal.style.display = "none"; // Close modal
+    themeModal.style.display = "none";
 });
-saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Save custom theme
+saveCustomThemeButton.addEventListener('click', saveCustomTheme);
 
 
 // Initial load
 loadSettingsAndData(currentUserId);
-
-// --- !!! DEBUGGING NOTE !!! ---
-// If video recorder is not visible in the table,
-// follow the debugging steps provided in the previous turn.
-// Check Firestore data, browser console/network tab, and the displayData function.
 
 
     </script>
