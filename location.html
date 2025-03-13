@@ -1002,8 +1002,9 @@ async function loadThemeForEditing(themeName) {
 // --- Function to save a new custom theme to Firestore ---
 async function saveCustomTheme() {
     const themeName = themeNameInput.value.trim();
-    const backgroundImgFile = backgroundImageFile.files[0];
-    const iconImgFile = iconImageFile.files[0];
+    // **BELANGRIJKE WIJZIGING: We gebruiken NU de input elementen ZELF voor de check**
+    const backgroundImgFileInput = backgroundImageFile; // Direct element referentie
+    const iconImgFileInput = iconImageFile;         // Direct element referentie
     const customText = customTextInput.value.trim();
 
     if (!themeName) {
@@ -1016,8 +1017,8 @@ async function saveCustomTheme() {
     let iconImageUrl = iconImageURLInput.value; // Keep existing URL if no new file
 
     try {
-        // Upload background image with Cloudinary Widget ONLY if a new file is selected
-        if (backgroundImageFile) { // Check if backgroundImageFile is not null (a new file is selected)
+        // Upload background image with Cloudinary Widget ONLY if a new file IS selected
+        if (backgroundImgFileInput.files.length > 0) { // **CORRECTE CHECK: Kijk naar .files.length**
             const uploadResultBackground = await new Promise((resolve, reject) => {
                 cloudinary.openUploadWidget({
                     cloudName: cloudName,
@@ -1035,14 +1036,14 @@ async function saveCustomTheme() {
                     } else {
                         reject(new Error("Cloudinary upload mislukt of geannuleerd (background)"));
                     }
-                }).open(); // Open the widget - NOW CONDITIONAL
+                }).open(); // Open the widget - CONDITIONALLY
             });
             backgroundImageUrl = uploadResultBackground.info.secure_url;
             backgroundImageURLInput.value = backgroundImageUrl;
         }
 
-        // Upload icon image with Cloudinary Widget ONLY if a new file is selected
-        if (iconImgFile) { // Check if iconImgFile is not null (a new file is selected)
+        // Upload icon image with Cloudinary Widget ONLY if a new file IS selected
+        if (iconImgFileInput.files.length > 0) { // **CORRECTE CHECK: Kijk naar .files.length**
             const uploadResultIcon = await new Promise((resolve, reject) => {
                 cloudinary.openUploadWidget({
                     cloudName: cloudName,
@@ -1060,12 +1061,11 @@ async function saveCustomTheme() {
                     } else {
                         reject(new Error("Cloudinary upload mislukt of geannuleerd (icon)"));
                     }
-                }).open(); // Open the widget - NOW CONDITIONAL
+                }).open(); // Open the widget - CONDITIONALLY
             });
             iconImageUrl = uploadResultIcon.info.secure_url;
             iconImageURLInput.value = iconImageUrl;
         }
-
 
         const themeData = {
             backgroundImageUrl: backgroundImageUrl,
@@ -1087,7 +1087,6 @@ async function saveCustomTheme() {
             successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
         }
 
-
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
@@ -1108,7 +1107,6 @@ async function saveCustomTheme() {
         errorMessage.style.display = 'block';
     }
 }
-
 
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
