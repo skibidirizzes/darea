@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>Instellingen</title>
     <style>
+        /* Verbeterde Verticale Tabel Styling */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -145,26 +147,99 @@
             color: #333;
             margin-bottom: 20px;
         }
+
+        /* Verbeterde Verticale Tabel Styling */
         .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: none; /* Verwijder de basis tabel border */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Subtiele box-shadow voor de hele tabel */
+            border-radius: 10px; /* Afgeronde hoeken voor de tabel */
+            overflow: hidden; /* Zorg ervoor dat de box-shadow en border-radius netjes werken */
+            background-color: #fff; /* Witte achtergrond voor de tabel */
         }
-        .data-table th, .data-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            text-align: left;
+
+        .data-table tr {
+            border-bottom: 1px solid #eee; /* Subtiele scheidingslijn tussen user rows */
+            background-color: #f8f8f8; /* Lichtere achtergrond voor user rows */
+            padding: 20px; /* Meer padding binnen elke user row */
+            margin-bottom: 15px; /* Meer ruimte tussen user rows */
+            border-radius: 8px; /* Afgeronde hoeken voor user rows */
+            border: 1px solid #ddd; /* Subtiele border rond user rows */
         }
+
+        .data-table tr:last-child {
+            border-bottom: none; /* Verwijder border-bottom voor de laatste user row */
+        }
+
         .data-table th {
-            background-color: #f9f9f9;
-            color: #333;
-            font-weight: bold;
+            font-size: 1.2rem; /* Grotere font-size voor de user ID titel */
+            color: #555; /* Donkerdere kleur voor de user ID titel */
+            margin-bottom: 10px; /* Meer ruimte onder de user ID titel */
+            padding-bottom: 8px; /* Padding onder de titel */
+            border-bottom: 2px solid #ddd; /* Subtiele lijn onder de user ID titel */
+            text-align: left; /* Titel links uitlijnen */
         }
-        .data-table tbody tr:last-child td {
-            border-bottom: none;
+
+        .data-table td {
+            padding: 15px; /* Meer padding in de data cellen */
+            font-size: 1rem; /* Standaard font-size voor data */
+            color: #666; /* Iets donkerdere tekstkleur voor data */
         }
+
+        .data-table p {
+            margin-bottom: 10px; /* Ruimte onder elke paragraaf in de data cellen */
+        }
+
+        .data-table video {
+            border-radius: 6px; /* Afgeronde hoeken voor de video player */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtiele box-shadow voor de video player */
+            margin-top: 5px; /* Wat ruimte boven de video player */
+        }
+
+        .delete-user-button {
+            background-color: #e74c3c; /* Helderder rood voor de verwijderknop */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+            margin-top: 10px; /* Wat ruimte boven de verwijderknop */
+        }
+
+        .delete-user-button:hover {
+            background-color: #c0392b; /* Donkerder rood bij hover */
+        }
+
+        .notification-cell {
+            margin-top: 15px; /* Ruimte boven de notificatie sectie */
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            background-color: #f9f9f9; /* Lichte achtergrond voor notificatie sectie */
+        }
+
+        .notification-cell .input-field {
+            margin-bottom: 10px; /* Ruimte onder de input velden in notificatie sectie */
+        }
+
+        .send-user-notification-button {
+            background-color: #3498db; /* Blauwe kleur voor de notificatie verstuurknop */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+            margin-top: 5px; /* Wat ruimte boven de knop */
+        }
+
+        .send-user-notification-button:hover {
+            background-color: #2980b9; /* Donkerder blauw bij hover */
+        }
+
+
         .editable {
             cursor: pointer;
             border-bottom: 1px dashed #007bff;
@@ -383,9 +458,6 @@
                 </tbody>
             </table>
         </div>
-
-// --- START OF FILE location (4).html ---
-// ... (zelfde HTML tot aan de modal sectie)
 
          <!-- Theme Modal -->
         <div id="themeModal" class="modal">
@@ -723,7 +795,7 @@ async function displayData(userId, userData) {
                     .bindPopup('<b>Huidige Locatie</b>').openPopup();
             }, 0);
         }
-}
+    }
 
 
 // Function to load all user data and display the table (ONE ROW PER USER - VERTICAL LAYOUT)
@@ -985,6 +1057,12 @@ saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Save custom
 
 // Initial load
 loadSettingsAndData(currentUserId);
+
+// --- !!! DEBUGGING NOTE !!! ---
+// If video recorder is not visible in the table, 
+// follow the debugging steps provided in the previous turn.
+// Check Firestore data, browser console/network tab, and the displayData function.
+
 
     </script>
 </body>
