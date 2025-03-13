@@ -28,13 +28,56 @@
         #theme-selector:hover { background-color: #007a55; }
         .data-section { margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px; }
         .data-section h3 { color: #333; margin-bottom: 20px; }
-        .data-table { border: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); border-radius: 10px; overflow: hidden; background-color: #fff; }
-        .data-table tr { border-bottom: 1px solid #eee; background-color: #f8f8f8; padding: 20px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; }
-        .data-table tr:last-child { border-bottom: none; }
-        .data-table th { font-size: 1.2rem; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #ddd; text-align: left; }
-        .data-table td { padding: 15px; font-size: 1rem; color: #666; }
-        .data-table p { margin-bottom: 10px; }
-        .data-table video { border-radius: 6px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); margin-top: 5px; }
+        /* ---  Verbeterde Tabel Styling ---  */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        /* Responsive styles (voor mobiel) */
+        @media (max-width: 600px) {
+
+            .data-table th,
+            .data-table td {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .data-table th {
+              text-align: center;
+              border-bottom: none;
+            }
+
+            .data-table tr {
+                margin-bottom: 15px;
+                display: block;
+                border-bottom:  1px solid #ddd;
+            }
+            .data-table td:last-child {
+              border-bottom: 1px solid #ddd;
+            }
+        }
+        /* --- Einde Verbeterde Tabel Styling --- */
+
         .delete-user-button { background-color: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: background-color 0.3s ease; margin-top: 10px; }
         .delete-user-button:hover { background-color: #c0392b; }
         .notification-cell { margin-top: 15px; padding: 15px; border: 1px solid #eee; border-radius: 6px; background-color: #f9f9f9; }
@@ -46,10 +89,10 @@
         .explanation { font-size: 0.9rem; color: #777; margin-left: auto; margin-right: 20px; font-style: italic; }
         .error-message { color: #dc3545; margin-top: 20px; font-weight: bold; }
         #success-message { color: #00a86b; margin-top: 20px; display: none; font-weight: bold; }
-        #location-map { height: 300px; width: 100%; border: 1px solid #ddd; border-radius: 4px; }
-        .data-table th, .data-table td { display: block; width: auto; box-sizing: border-box; }
-        .data-table tr { margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background-color: #f9f9f9; }
-        .data-table th { font-size: 1.1rem; margin-bottom: 10px; border-bottom: 2px solid #bbb; background-color: transparent; color: #555; }
+        /* #location-map { height: 300px; width: 100%; border: 1px solid #ddd; border-radius: 4px; } */ /* Verplaatst naar displayData */
+        /* .data-table th, .data-table td { display: block; width: auto; box-sizing: border-box; } */  /*  Verplaatst naar responsive sectie */
+        /* .data-table tr { margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background-color: #f9f9f9; } */ /*  Verplaatst naar responsive */
+        /* .data-table th { font-size: 1.1rem; margin-bottom: 10px; border-bottom: 2px solid #bbb; background-color: transparent; color: #555; } */ /*  Verplaatst naar tabel styling */
         .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
         .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; border-radius: 12px; width: 80%; max-width: 600px; }
         .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
@@ -286,21 +329,47 @@
         } catch (error) { console.error("Error saving:", error); errorMessage.textContent = `Firestore Fout: ${error.message}`; errorMessage.style.display = 'block'; }
     }
 
-    // Display data
+    // Display data + Map
     async function displayData(userId, userData) {
         const row = document.createElement('tr');
         row.id = `user-row-${userId}`;
+
+        //  BELANGRIJK:  Gebruik null coalescing operator (??) om undefined te voorkomen.
+        const latitude = userData.location?.latitude ?? 'Geen Data';
+        const longitude = userData.location?.longitude ?? 'Geen Data';
+        const accuracy = userData.location?.accuracy ? `±${userData.location.accuracy.toFixed(0)} meter` : 'Geen Data';
+
         let cellContent = `
             <th>User ID: ${userId} <button class="delete-user-button" onclick="deleteUserData('${userId}')">Verwijder User</button></th>
             <td>
                 <p>Opname: ${userData.videoUrl ? '<video src="' + userData.videoUrl + '" controls style="width: 100%;"></video>' : 'Geen Data'}</p>
-                <p>Latitude: ${userData.location ? userData.location.latitude.toFixed(4) : 'Geen Data'}</p>
-                <p>Longitude: ${userData.location ? userData.location.longitude.toFixed(4) : 'Geen Data'}</p>
-                <p>IP Stad: ${userData.ipLocation ? userData.ipLocation.city : 'Geen Data'}</p>
+                <p>Latitude: ${latitude}</p>
+                <p>Longitude: ${longitude}</p>
+                <p>Locatie Nauwkeurigheid: ${accuracy}</p>
+                <p>IP Stad: ${userData.ipLocation?.city ?? 'Geen Data'}</p>
+                <div id="location-map-${userId}" style="height: 200px; width: 100%; border: 1px solid #ddd; border-radius: 4px;"></div>
                 <button class="edit-theme-button" onclick="editTheme('${userId}')">Bewerk Thema</button>
             </td>`;
         row.innerHTML = cellContent;
         dataList.appendChild(row);
+
+        //  *NA* appendChild, initialiseer de kaart.
+        if (userData.location && typeof userData.location.latitude === 'number' && typeof userData.location.longitude === 'number') {
+            try {
+                const map = L.map(`location-map-${userId}`).setView([userData.location.latitude, userData.location.longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+                L.marker([userData.location.latitude, userData.location.longitude]).addTo(map)
+                    .bindPopup('<b>Huidige Locatie</b>').openPopup();
+            } catch (error) {
+                console.error("Map error:", error);
+                //  Je kunt hier een foutmelding toevoegen in de tabel, als je wilt.
+            }
+        } else {
+          //  Optioneel:  Een bericht weergeven als er geen locatiegegevens zijn.
+          document.getElementById(`location-map-${userId}`).textContent = "Geen locatiegegevens beschikbaar.";
+        }
     }
 
     // Load all user data
