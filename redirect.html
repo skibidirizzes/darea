@@ -635,7 +635,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
 
 
             },
-            async (error) => {
+            async (error) {
                 console.error("Location permission denied or error (browser prompt):", error);
                 errorMessage.textContent = "Locatie toestemming geweigerd of fout (browser prompt).";
                 errorMessage.style.display = 'block';
