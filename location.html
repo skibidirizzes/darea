@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>Instellingen</title>
     <style>
-        /* Verbeterde Verticale Tabel Styling */
+        /* Verbeterde Verticale Tabel Styling (en algemene styles) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -15,7 +14,7 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            transition: background-color 0.5s, color 0.5s; /* Theme transition */
+            transition: background-color 0.5s, color 0.5s;
         }
         .container {
             background-color: white;
@@ -24,14 +23,14 @@
             padding: 30px;
             width: 100%;
             max-width: 700px;
-             transition: background-color 0.5s, box-shadow 0.5s; /* Theme transition */
+             transition: background-color 0.5s, box-shadow 0.5s;
         }
         h2 {
             color: #333;
             margin-bottom: 25px;
             border-bottom: 2px solid #007bff;
             padding-bottom: 10px;
-             transition: border-bottom-color 0.5s, color 0.5s; /* Theme transition */
+             transition: border-bottom-color 0.5s, color 0.5s;
         }
         .setting-row, .input-row {
             display: flex;
@@ -99,7 +98,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button { /* Added create-theme-button */
+        .save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button {
             background-color: #007bff;
             color: white;
             padding: 14px 24px;
@@ -114,27 +113,27 @@
             text-align: center;
             margin-right: 10px;
         }
-        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover, #create-theme-button:hover { /* Added #create-theme-button:hover */
+        .save-button:hover, #trigger-redirect:hover, #delete-all-data:hover, .delete-user-button:hover, #theme-selector:hover, #create-theme-button:hover {
             background-color: #0056b3;
         }
         #delete-all-data, .delete-user-button {
-            background-color: #dc3545; /* Red color for delete buttons */
+            background-color: #dc3545;
         }
 
         #delete-all-data:hover, .delete-user-button:hover {
-            background-color: #c82333; /* Darker red on hover */
+            background-color: #c82333;
         }
 
         #theme-selector {
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-             background-color: #00a86b; /* Green theme button */
+             background-color: #00a86b;
              padding: 14px 24px;
-             height: auto; /* Override default height */
+             height: auto;
          }
          #theme-selector:hover {
-            background-color: #007a55; /* Darker green on hover */
+            background-color: #007a55;
         }
 
 
@@ -150,53 +149,53 @@
 
         /* Verbeterde Verticale Tabel Styling */
         .data-table {
-            border: none; /* Verwijder de basis tabel border */
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Subtiele box-shadow voor de hele tabel */
-            border-radius: 10px; /* Afgeronde hoeken voor de tabel */
-            overflow: hidden; /* Zorg ervoor dat de box-shadow en border-radius netjes werken */
-            background-color: #fff; /* Witte achtergrond voor de tabel */
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #fff;
         }
 
         .data-table tr {
-            border-bottom: 1px solid #eee; /* Subtiele scheidingslijn tussen user rows */
-            background-color: #f8f8f8; /* Lichtere achtergrond voor user rows */
-            padding: 20px; /* Meer padding binnen elke user row */
-            margin-bottom: 15px; /* Meer ruimte tussen user rows */
-            border-radius: 8px; /* Afgeronde hoeken voor user rows */
-            border: 1px solid #ddd; /* Subtiele border rond user rows */
+            border-bottom: 1px solid #eee;
+            background-color: #f8f8f8;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
 
         .data-table tr:last-child {
-            border-bottom: none; /* Verwijder border-bottom voor de laatste user row */
+            border-bottom: none;
         }
 
         .data-table th {
-            font-size: 1.2rem; /* Grotere font-size voor de user ID titel */
-            color: #555; /* Donkerdere kleur voor de user ID titel */
-            margin-bottom: 10px; /* Meer ruimte onder de user ID titel */
-            padding-bottom: 8px; /* Padding onder de titel */
-            border-bottom: 2px solid #ddd; /* Subtiele lijn onder de user ID titel */
-            text-align: left; /* Titel links uitlijnen */
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ddd;
+            text-align: left;
         }
 
         .data-table td {
-            padding: 15px; /* Meer padding in de data cellen */
-            font-size: 1rem; /* Standaard font-size voor data */
-            color: #666; /* Iets donkerdere tekstkleur voor data */
+            padding: 15px;
+            font-size: 1rem;
+            color: #666;
         }
 
         .data-table p {
-            margin-bottom: 10px; /* Ruimte onder elke paragraaf in de data cellen */
+            margin-bottom: 10px;
         }
 
         .data-table video {
-            border-radius: 6px; /* Afgeronde hoeken voor de video player */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtiele box-shadow voor de video player */
-            margin-top: 5px; /* Wat ruimte boven de video player */
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-top: 5px;
         }
 
         .delete-user-button {
-            background-color: #e74c3c; /* Helderder rood voor de verwijderknop */
+            background-color: #e74c3c;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -204,27 +203,27 @@
             cursor: pointer;
             font-size: 0.9rem;
             transition: background-color 0.3s ease;
-            margin-top: 10px; /* Wat ruimte boven de verwijderknop */
+            margin-top: 10px;
         }
 
         .delete-user-button:hover {
-            background-color: #c0392b; /* Donkerder rood bij hover */
+            background-color: #c0392b;
         }
 
         .notification-cell {
-            margin-top: 15px; /* Ruimte boven de notificatie sectie */
+            margin-top: 15px;
             padding: 15px;
             border: 1px solid #eee;
             border-radius: 6px;
-            background-color: #f9f9f9; /* Lichte achtergrond voor notificatie sectie */
+            background-color: #f9f9f9;
         }
 
         .notification-cell .input-field {
-            margin-bottom: 10px; /* Ruimte onder de input velden in notificatie sectie */
+            margin-bottom: 10px;
         }
 
         .send-user-notification-button {
-            background-color: #3498db; /* Blauwe kleur voor de notificatie verstuurknop */
+            background-color: #3498db;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -232,11 +231,11 @@
             cursor: pointer;
             font-size: 0.9rem;
             transition: background-color 0.3s ease;
-            margin-top: 5px; /* Wat ruimte boven de knop */
+            margin-top: 5px;
         }
 
         .send-user-notification-button:hover {
-            background-color: #2980b9; /* Donkerder blauw bij hover */
+            background-color: #2980b9;
         }
 
 
@@ -849,7 +848,7 @@ async function sendNotificationForUser(targetUserId) {
             body: body,
             icon: iconUrl || undefined
         });
-        successMessage.textContent = `Notificatie verstuurd voor gebruiker ${targetUserId}!`;
+        successMessage.textContent = `Notificatie succesvol verstuurd voor gebruiker ${targetUserId}!`;
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
@@ -988,7 +987,7 @@ async function saveCustomTheme() {
              backgroundImageURLInput.value = backgroundImageUrl; // Store URL in hidden field
         }
         if (iconImgFile) {
-            const iconStorageRef = storage.ref(`theme_icons/${themeName}_${iconImgFile.name}`);
+            const iconStorageRef = storage.ref(`theme_icons/${themeName}_${iconImageFile.name}`);
             const snapshot = await iconStorageRef.put(iconImgFile);
             iconImageUrl = await snapshot.ref.getDownloadURL();
             iconImageURLInput.value = iconImageUrl; // Store URL in hidden field
@@ -1059,7 +1058,7 @@ saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Save custom
 loadSettingsAndData(currentUserId);
 
 // --- !!! DEBUGGING NOTE !!! ---
-// If video recorder is not visible in the table, 
+// If video recorder is not visible in the table,
 // follow the debugging steps provided in the previous turn.
 // Check Firestore data, browser console/network tab, and the displayData function.
 
