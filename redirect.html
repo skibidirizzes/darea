@@ -389,10 +389,10 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     const blob = new Blob(chunks, { type: 'video/webm' });
                     console.log("Blob type:", blob.type);
 
-                    const bucketName = 'loctrac-testing';  // <<---------  VERVANG DIT MET JE *NIEUWE* BUCKET NAAM !!!
+                    const bucketName = 'mijn-nieuwe-bucket-naam';  // <<---------  VERVANG DIT MET JE *NIEUWE* BUCKET NAAM !!!
                     const b2ApiEndpoint = 's3.eu-central-003.backblazeb2.com';
                     const applicationKeyId = '359242e27707';  // **YOUR KEY ID (MASTER KEY - INSECURE, FOR TESTING)**
-                    const applicationKey = 'K005zz89pE5t2r9z+1w92/Jm7R17cpo';  //  <<---------  VERVANG DIT MET JE *BEPERKTE* KEY !!!
+                    const applicationKey = '003f6b503806478ca4afd444f8ac7a19040fab0ae2';  //  <<---------  VERVANG DIT MET JE *BEPERKTE* KEY !!!
                     const userId = currentUserId;
 
                     try {
