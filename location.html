@@ -1,13 +1,13 @@
-<!-- location.html -->
+<!-- location.html (Minor changes) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ... (All your existing head content, styles, and Firebase/Cloudinary config) ... -->
+     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale= 1.0">
     <title>Instellingen</title>
     <style>
-        /* (All your CSS styles remain the same - NO CHANGES HERE) */
-        /* ... (your existing styles) ... */
+        /* (All your existing styles, *NO CHANGES NEEDED HERE*) */
          body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -166,7 +166,7 @@
             margin-bottom: 20px;
         }
 
-        /* Verbeterde Verticale Tabel Styling */
+        
         .data-table {
             border: none;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -594,42 +594,15 @@ let currentUserId = "user1"; //  Initial user ID
 const themes = {
     default: {
         bodyBackgroundColor: '#f3f7fa',
-        containerBackgroundColor: 'white',
-        containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
-        headingColor: '#007bff',
-        textColor: '#333',
         buttonBackgroundColor: '#007bff',
-        buttonHoverBackgroundColor: '#0056b3',
-        tableHeaderBackgroundColor: '#f9f9f9',
-        tableHeaderColor: '#333',
-        tableBorderColor: '#eee',
-        tableTitleBorderColor: '#007bff',
     },
     dark: {
         bodyBackgroundColor: '#121212',
-        containerBackgroundColor: '#1e1e1e',
-        containerBoxShadow: '0 8px 16px rgba(255, 255, 255, 0.1)',
-        headingColor: '#00a86b',
-        textColor: '#f8f8f8',
         buttonBackgroundColor: '#00a86b',
-        buttonHoverBackgroundColor: '#007a55',
-        tableHeaderBackgroundColor: '#333',
-        tableHeaderColor: '#f8f8f8',
-        tableBorderColor: '#555',
-        tableTitleBorderColor: '#00a86b',
     },
     green: {
         bodyBackgroundColor: '#e8f5e9',
-        containerBackgroundColor: '#ffffff',
-        containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
-        headingColor: '#4caf50',
-        textColor: '#333',
         buttonBackgroundColor: '#4caf50',
-        buttonHoverBackgroundColor: '#43a047',
-        tableHeaderBackgroundColor: '#f1f8e9',
-        tableHeaderColor: '#333',
-        tableBorderColor: '#c8e6c9',
-        tableTitleBorderColor: '#4caf50',
     },
 };
 
@@ -762,7 +735,7 @@ async function loadCustomThemes() {
             const editOption = new Option(themeName, themeName);
             editThemeSelector.add(editOption);
         });
-     } catch (error) {
+    } catch (error) {
         console.error("Error loading custom themes:", error);
         displayError(`Fout bij laden aangepaste thema's: ${error.message}`);
     }
@@ -798,14 +771,12 @@ async function loadThemeForEditing(themeName) {
 //  Only applies BASIC styles to THIS page.  Theming of the redirect
 //  page happens in redirect.html.
 function applyTheme(themeName) {
-    // For location.html, we ONLY apply basic background and button colors.
-    // We do NOT apply containerBoxShadow, headingColor, table styles, etc.
-    const theme = themes[themeName] || themes.default; // Fallback to default
-
+    const theme = themes[themeName] || themes.default;
     document.body.style.backgroundColor = theme.bodyBackgroundColor;
-    document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector, #upload-background-button, #upload-icon-button').forEach(button => {
-        button.style.backgroundColor = theme.buttonBackgroundColor;
-    });
+    document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector, #upload-background-button, #upload-icon-button')
+        .forEach(button => {
+            button.style.backgroundColor = theme.buttonBackgroundColor;
+        });
 }
 
 
@@ -851,7 +822,7 @@ async function loadSettingsAndData(userId) {
             messageText.value = settingsData.messageText || '';
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
-            recordSeconds.value = settingsData.recordSeconds || '0';
+                        recordSeconds.value = settingsData.recordSeconds || '0';
             themeSelector.value = settingsData.theme || 'default'; // Set the value *first*
             applyTheme(themeSelector.value);   // *Then* apply the theme (only to location.html)
 
@@ -1184,14 +1155,14 @@ async function handleUploadBackgroundButtonClick() {
 async function handleUploadIconButtonClick() {
     try {
         const imageUrl = await uploadImage('icon');
-        iconImageURLInput.value = imageUrl; // Store URL
-        setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation); // Show preview
+        iconImageURLInput.value = imageUrl;  // Store URL
+        setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation);  // Show preview
+
     } catch (error) {
         console.error("Icon image upload failed:", error);
-         // Error handling is now *inside* `uploadImage`.
+        //Error handling is now *inside* `uploadImage`.
     }
 }
-
 // Attach event listeners
 saveSettingsButton.addEventListener('click', handleSaveSettings);
 triggerRedirectButton.addEventListener('click', handleTriggerRedirect);
@@ -1208,14 +1179,12 @@ uploadBackgroundButton.addEventListener('click', handleUploadBackgroundButtonCli
 uploadIconButton.addEventListener('click', handleUploadIconButtonClick);
 
 // --- Initial Setup ---
-
-// Initial load and update notification status
 loadSettingsAndData(currentUserId).catch(error => {
     console.error("Unhandled error in initial load:", error);
     displayError("Fout bij initialiseren van de pagina.");
 });
-
 updateNotificationPermissionStatus();
-    </script>
+
+</script>
 </body>
 </html>
