@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -587,8 +588,8 @@ const notificationPermissionMessage = document.getElementById('notification-perm
 let currentUserId = "user1"; //  Initial user ID
 
 // --- Theme Definitions ---
-const themes = {  /* (Your theme definitions remain the same) */
- default: {
+const themes = {
+    default: {
         bodyBackgroundColor: '#f3f7fa',
         containerBackgroundColor: 'white',
         containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
@@ -664,6 +665,33 @@ async function getNextUserId() {
 
 // --- Core Functionality ---
 
+// Upload image to Cloudinary (reusable)
+async function uploadImage(imageType) {
+    return new Promise((resolve, reject) => {
+        const widget = cloudinary.openUploadWidget({
+            cloudName: cloudName,
+            uploadPreset: uploadPreset,
+            sources: ["local"],
+            resource_type: 'image',
+            tags: [`theme_${imageType}s`],
+            folder: `theme_${imageType}s`
+        }, (error, result) => {
+            if (error) {
+                console.error(`Cloudinary upload error (${imageType}):`, error);
+                errorMessage.textContent = `Cloudinary upload error (${imageType}): ${error.message}`;
+                reject(error);
+            } else if (result && result.event === "success") {
+                resolve(result.info.secure_url);
+            } else {
+                const rejectionError = new Error(`Cloudinary upload cancelled or failed (${imageType}) - Event: ${result ? result.event : 'unknown'}`);
+                console.log(`Cloudinary upload: not success or error (${imageType})`, result ? result.event : 'no result', rejectionError);
+                errorMessage.textContent = `Uploaden van ${imageType} afbeelding geannuleerd.`;
+                reject(rejectionError); // Pass named error
+            }
+        });
+        widget.open();
+    });
+}
 
 // Save/Update Custom Theme
 async function saveCustomTheme() {
@@ -773,19 +801,12 @@ function applyTheme(themeName) {
     document.body.style.setProperty('--heading-color', theme.headingColor);
     document.body.style.setProperty('--text-color', theme.textColor);
     document.body.style.setProperty('--button-bg-color', theme.buttonBackgroundColor);
-    document.body.style.setProperty('--button-hover-bg-color', theme.buttonHoverBackgroundColor: theme.buttonHoverBackgroundColor,
-        tableHeaderBackgroundColor: theme.tableHeaderBackgroundColor,
-        tableHeaderColor: theme.tableHeaderColor,
-        tableBorderColor: theme.tableBorderColor,
-        tableTitleBorderColor: theme.tableTitleBorderColor,
-    };
-
-    // Apply styles (using a loop for conciseness)
-    for (const [key, value] of Object.entries(theme)) {
-        if (key.endsWith('BackgroundColor')) {
-            document.body.style.backgroundColor = value; // Directly set body background
-        }
-    }
+    document.body.style.setProperty('--button-hover-bg-color', theme.buttonHoverBackgroundColor);
+     document.body.style.setProperty('--table-header-bg-color', theme.tableHeaderBackgroundColor);
+    document.body.style.setProperty('--table-header-color',  theme.tableHeaderBackgroundColor);
+    document.body.style.setProperty('--table-header-color', theme.tableHeaderColor);
+    document.body.style.setProperty('--table-border-color', theme.tableBorderColor);
+    document.body.style.setProperty('--table-title-border-color', theme.tableTitleBorderColor);
         const container = document.querySelector('.container');
         if (container) {
            container.style.backgroundColor = theme.containerBackgroundColor;
