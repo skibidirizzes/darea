@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>Instellingen</title>
     <style>
         /* Verbeterde Verticale Tabel Styling (en algemene styles) */
@@ -591,6 +592,129 @@ const themes = {
     },
 };
 
+// --- Function to save a new custom theme to Firestore ---
+async function saveCustomTheme() {
+    const themeName = themeNameInput.value.trim();
+    const backgroundImgFileInput = backgroundImageFile;
+    const iconImgFileInput = iconImageFile;
+    const customText = customTextInput.value.trim();
+
+    backgroundImageFileInput.value = ''; // Reset file inputs (voor de zekerheid)
+    iconImgFileInput.value = '';
+
+    if (!themeName) {
+        errorMessage.textContent = "Thema naam mag niet leeg zijn.";
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    let backgroundImageUrl = backgroundImageURLInput.value;
+    let iconImageUrl = iconImageURLInput.value;
+
+    let uploadBackground = false; // Vlaggen om aan te geven of er geupload moet worden
+    let uploadIcon = false;
+
+    // **EXPLICIETE CONTROLE OP BESTANDSOBJECT (niet alleen length):**
+    if (backgroundImageFile.files && backgroundImageFile.files[0]) { // Check of .files BESTAAT en OF er een EERSTE bestand is
+        uploadBackground = true; // Zet de vlag als er een nieuw achtergrondbestand is
+    }
+
+    if (iconImageFile.files && iconImageFile.files[0]) { // Check of .files BESTAAT en OF er een EERSTE bestand is
+        uploadIcon = true; // Zet de vlag als er een nieuw icoonbestand is
+    }
+
+
+    try {
+        if (uploadBackground) { // Gebruik de vlag om te bepalen of de widget geopend moet worden
+            const uploadResultBackground = await new Promise((resolve, reject) => {
+                cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_backgrounds'],
+                    folder: 'theme_backgrounds'
+                }, (error, result) => {
+                    if (error) {
+                        console.error("Cloudinary upload error (background):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        resolve(result);
+                    } else {
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (background)"));
+                    }
+                }).open();
+            });
+            backgroundImageUrl = uploadResultBackground.info.secure_url;
+            backgroundImageURLInput.value = backgroundImageUrl;
+        }
+
+        if (uploadIcon) { // Gebruik de vlag om te bepalen of de widget geopend moet worden
+            const uploadResultIcon = await new Promise((resolve, reject) => {
+                cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_icons'],
+                    folder: 'theme_icons'
+                }, (error, result) => {
+                    if (error) {
+                        console.error("Cloudinary upload error (icon):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        resolve(result);
+                    } else {
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (icon)"));
+                    }
+                }).open();
+            });
+            iconImageUrl = uploadResultIcon.info.secure_url;
+            iconImageURLInput.value = iconImageUrl;
+        }
+
+
+        const themeData = {
+            backgroundImageUrl: backgroundImageUrl,
+            iconImageUrl: iconImageUrl,
+            customText: customText
+        };
+
+        const customThemeRef = db.collection('redirectThemes').doc(themeName);
+        const doc = await customThemeRef.get();
+
+        if (doc.exists) {
+            await customThemeRef.update(themeData);
+            console.log(`Custom theme "${themeName}" updated in Firestore.`);
+            successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
+
+        } else {
+             await customThemeRef.set(themeData);
+            console.log(`Custom theme "${themeName}" saved to Firestore.`);
+            successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
+        }
+
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+        themeModal.style.display = "none";
+        themeNameInput.value = '';
+        backgroundImageFile.value = '';
+        iconImageFile.value = '';
+        backgroundImageURLInput.value = '';
+        iconImageURLInput.value = '';
+        customTextInput.value = '';
+
+        loadCustomThemes();
+
+
+    } catch (error) {
+        console.error("Error saving/updating custom theme:", error);
+        errorMessage.textContent = `Fout bij opslaan/bijwerken thema: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
 
 // Utility functions
 async function getNextUserId() {
@@ -999,7 +1123,6 @@ async function loadThemeForEditing(themeName) {
 }
 
 
-// --- Function to save a new custom theme to Firestore ---
 
 // Event listeners
 saveSettingsButton.addEventListener('click', saveSettings);
@@ -1018,7 +1141,7 @@ themeSelector.addEventListener('change', () => {
     if (selectedTheme.startsWith("custom_")) {
         loadThemeForEditing(selectedTheme.replace("custom_", ""));
     } else {
-       applyTheme(selectedTheme);
+       applyTheme(themeSelector.value);
     }
 });
 createThemeButton.addEventListener('click', () => {
