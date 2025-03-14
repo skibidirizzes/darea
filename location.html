@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale= 1.0">
     <title>Instellingen</title>
     <style>
-        /* Verbeterde Verticale Tabel Styling (en algemene styles) */
+        /* (All your CSS styles remain the same) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -382,7 +382,7 @@
             margin-top: 10px;
             display: none; /* Hidden by default */
         }
-        .upload-confirmation { /* Style for confirmation text */
+        .upload-confirmation {
             font-size: 0.9em;
             color: green;
             margin-top: 5px;
@@ -390,12 +390,11 @@
         }
     </style>
 
-    <!-- Leaflet CSS -->
-
-    <!-- Firebase SDK (Firestore) -->
+     <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-     <!-- Firebase SDK (Storage) - NOT NEEDED ANYMORE FOR THEME IMAGES -->
+    <!-- Firebase SDK (Storage) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 
     <!-- Cloudinary Widget -->
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
@@ -434,8 +433,7 @@
             <span class="label">Notificatie</span>
              <p id="notification-explanation" class="explanation hidden">Notificatie toestemming.</p>
         </div>
-        <p id="notification-permission-message">Accepteer notificatie toestemming om notificaties te ontvangen.</p> {/* Notification permission message added here */}
-
+        <p id="notification-permission-message">Accepteer notificatie toestemming om notificaties te ontvangen.</p>
 
         <!-- Global Input Fields -->
         <div class="input-row">
@@ -496,7 +494,7 @@
             </table>
         </div>
 
-         <!-- Theme Modal -->
+        <!-- Theme Modal -->
         <div id="themeModal" class="modal">
             <div class="modal-content">
                 <span class="close-button" id="close-modal-button">×</span>
@@ -509,14 +507,14 @@
                     <label>Achtergrond Afbeelding:</label>
                     <button type="button" id="upload-background-button" class="save-button">Upload Achtergrond Afbeelding</button> <br>
                     <img id="background-image-preview" src="" alt="Background Preview" style="max-width: 100px; max-height: 100px; margin-top: 5px; display: none;">
-                    <p id="background-upload-confirmation" class="upload-confirmation">Achtergrond afbeelding geupload!</p> {/* Confirmation text */}
+                    <p id="background-upload-confirmation" class="upload-confirmation">Achtergrond afbeelding geupload!</p>
                     <input type="hidden" id="background-image-url" >
                 </div>
                 <div class="modal-input-row">
                     <label>Icoon Afbeelding:</label>
                     <button type="button" id="upload-icon-button" class="save-button">Upload Icoon Afbeelding</button> <br>
                     <img id="icon-image-preview" src="" alt="Icon Preview" style="max-width: 100px; max-height: 100px; margin-top: 5px; display: none;">
-                    <p id="icon-upload-confirmation" class="upload-confirmation">Icoon afbeelding geupload!</p> {/* Confirmation text */}
+                    <p id="icon-upload-confirmation" class="upload-confirmation">Icoon afbeelding geupload!</p>
                     <input type="hidden" id="icon-image-url" >
                 </div>
                 <div class="modal-input-row">
@@ -534,44 +532,40 @@
     <script>
 // --- Firebase Config (YOUR ACTUAL CONFIG) ---
 const firebaseConfig = {
-    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // **REPLACE WITH YOUR ACTUAL API KEY**
-    authDomain: "loctrac-8d7ef.firebaseapp.com", // **REPLACE WITH YOUR ACTUAL AUTH DOMAIN**
-    projectId: "loctrac-8d7ef", // **REPLACE WITH YOUR ACTUAL PROJECT ID**
-    storageBucket: "loctrac-8d7ef.firebasestorage.com", // **REPLACE WITH YOUR ACTUAL STORAGE BUCKET**
-    messagingSenderId: "34491549339", // **REPLACE WITH YOUR ACTUAL MESSAGING SENDER ID**
-    appId: "1:34491549339:web:c666c4f8f3271bab06e83e", // **REPLACE WITH YOUR ACTUAL APP ID**
-    measurementId: "G-65PYC8E9VR", // **REPLACE WITH YOUR ACTUAL MEASUREMENT ID**
-    // No databaseURL needed for Firestore
+    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA",  // REPLACE
+    authDomain: "loctrac-8d7ef.firebaseapp.com",        // REPLACE
+    projectId: "loctrac-8d7ef",                          // REPLACE
+    storageBucket: "loctrac-8d7ef.firebasestorage.com",    // REPLACE
+    messagingSenderId: "34491549339",                    // REPLACE
+    appId: "1:34491549339:web:c666c4f8f3271bab06e83e",      // REPLACE
+    measurementId: "G-65PYC8E9VR"                       // REPLACE
 };
 
 // Cloudinary Configuration - REPLACE WITH YOURS!
-const cloudName = "dnvkhmgj0"; // Jouw Cloudinary Cloud Name **REPLACE WITH YOUR ACTUAL CLOUD NAME**
-const uploadPreset = "locstorage"; // Jouw Cloudinary Upload Preset **REPLACE WITH YOUR ACTUAL UPLOAD PRESET**
+const cloudName = "dnvkhmgj0";     // REPLACE
+const uploadPreset = "locstorage"; // REPLACE
 
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-// const storage = firebase.storage(); - NOT NEEDED FOR THEME IMAGES ANYMORE
 
+// DOM Element References (Good practice to have all at the top)
 const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
 const deleteAllDataButton = document.getElementById('delete-all-data');
 const themeSelector = document.getElementById('theme-selector');
-const editThemeSelector = document.getElementById('edit-theme-selector'); // NIEUW: Dropdown voor bewerken
+const editThemeSelector = document.getElementById('edit-theme-selector');
 const createThemeButton = document.getElementById('create-theme-button');
 const themeModal = document.getElementById('themeModal');
 const closeModalButton = document.getElementById('close-modal-button');
 const saveCustomThemeButton = document.getElementById('save-custom-theme');
 const cancelCustomThemeButton = document.getElementById('cancel-custom-theme');
-const uploadBackgroundButton = document.getElementById('upload-background-button'); // Get upload buttons
-const uploadIconButton = document.getElementById('upload-icon-button');       // Get upload buttons
-const backgroundImagePreview = document.getElementById('background-image-preview'); // Get preview elements
-const iconImagePreview = document.getElementById('icon-image-preview');           // Get preview elements
-const backgroundUploadConfirmation = document.getElementById('background-upload-confirmation'); // Confirmation text elements
-const iconUploadConfirmation = document.getElementById('icon-upload-confirmation');         // Confirmation text elements
-
-
-// --- Form Elements ---
+const uploadBackgroundButton = document.getElementById('upload-background-button');
+const uploadIconButton = document.getElementById('upload-icon-button');
+const backgroundImagePreview = document.getElementById('background-image-preview');
+const iconImagePreview = document.getElementById('icon-image-preview');
+const backgroundUploadConfirmation = document.getElementById('background-upload-confirmation');
+const iconUploadConfirmation = document.getElementById('icon-upload-confirmation');
 const micCamPermissionToggle = document.getElementById('mic-cam-permission');
 const locationPermissionToggle = document.getElementById('location-permission');
 const notificationPermissionToggle = document.getElementById('notification-permission');
@@ -585,22 +579,17 @@ const triggerRedirectButton = document.getElementById('trigger-redirect');
 const notificationExplanation = document.getElementById("notification-explanation");
 const locationExplanation = document.getElementById("location-explanation");
 const dataTableTitleElement = document.getElementById("data-table-title");
-
-// --- Modal Form Elements ---
 const themeNameInput = document.getElementById('theme-name');
 const backgroundImageURLInput = document.getElementById('background-image-url');
 const iconImageURLInput = document.getElementById('icon-image-url');
 const customTextInput = document.getElementById('custom-text-modal');
-
-// --- Notification Permission Message Element ---
 const notificationPermissionMessage = document.getElementById('notification-permission-message');
 
-
-let currentUserId = "user1";
+let currentUserId = "user1"; //  Initial user ID
 
 // --- Theme Definitions ---
-const themes = {
-    default: {
+const themes = {  /* (Your theme definitions remain the same) */
+ default: {
         bodyBackgroundColor: '#f3f7fa',
         containerBackgroundColor: 'white',
         containerBoxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
@@ -641,69 +630,43 @@ const themes = {
     },
 };
 
-// --- Function to save a new custom theme to Firestore ---
-async function saveCustomTheme() {
-    console.log("saveCustomTheme function started");
-    const themeName = themeNameInput.value.trim();
-    const customText = customTextInput.value.trim();
-    let backgroundImageUrl = backgroundImageURLInput.value; // Get URLs from hidden inputs
-    let iconImageUrl = iconImageURLInput.value;
+// --- Helper Functions ---
 
-    console.log("Theme Name:", themeName);
+// Promisified Geolocation API
+function getCurrentPositionPromise() {
+    return new Promise((resolve, reject) => {
+        navigator.geolocation ? navigator.geolocation.getCurrentPosition(resolve, reject) : reject(new Error("Geolocation is not supported"));
+    });
+}
 
-    if (!themeName) {
-        errorMessage.textContent = "Thema naam mag niet leeg zijn.";
-        errorMessage.style.display = 'block';
-        return;
-    }
+// Promisified Battery API
+function getBatteryPromise() {
+    return new Promise((resolve, reject) => {
+        navigator.getBattery ? resolve(navigator.getBattery()) : reject(new Error("Battery API is not supported."));
+    });
+}
 
-    const themeData = {
-        backgroundImageUrl: backgroundImageUrl,
-        iconImageUrl: iconImageUrl,
-        customText: customText
-    };
-
-    const customThemeRef = db.collection('redirectThemes').doc(themeName);
-    const doc = await customThemeRef.get();
-
-    if (doc.exists) {
-        await customThemeRef.update(themeData);
-        console.log(`Custom theme "${themeName}" updated in Firestore.`);
-        successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
-
-    } else {
-         await customThemeRef.set(themeData);
-        console.log(`Custom theme "${themeName}" saved to Firestore.`);
-        successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
-    }
-
-    successMessage.style.display = 'block';
-    setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-
-    themeModal.style.display = "none";
-    themeNameInput.value = '';
-    backgroundImageURLInput.value = '';
-    iconImageURLInput.value = '';
-    customTextInput.value = '';
-    backgroundImagePreview.src = '';
-    backgroundImagePreview.style.display = 'none';
-    backgroundUploadConfirmation.style.display = 'none'; // Hide confirmation text
-    iconImagePreview.src = '';
-    iconImagePreview.style.display = 'none';
-    iconUploadConfirmation.style.display = 'none';       // Hide confirmation text
-
-
-    loadCustomThemes();
-
-
+// Get next user ID (transaction-safe)
+async function getNextUserId() {
+    const counterRef = db.collection('counters').doc('userCounter');
+    try {
+        const nextId = await db.runTransaction(async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            const newCounter = counterDoc.exists ? counterDoc.data().count + 1 : 1;
+            transaction.set(counterRef, { count: newCounter }, { merge: true });
+            return newCounter;
+        });
+        return `user${nextId}`;
     } catch (error) {
-        console.error("Error saving/updating custom theme:", error);
-        errorMessage.textContent = `Fout bij opslaan/bijwerken thema: ${error.message}`;
-        errorMessage.style.display = 'block';
+        console.error("Error getting next user ID:", error);
+        throw error; // Re-throw to handle in calling function
     }
 }
 
-async function uploadImage(imageType) { // imageType can be 'background' or 'icon'
+// --- Core Functionality ---
+
+// Upload image to Cloudinary (reusable)
+async function uploadImage(imageType) {
     return new Promise((resolve, reject) => {
         const widget = cloudinary.openUploadWidget({
             cloudName: cloudName,
@@ -713,124 +676,178 @@ async function uploadImage(imageType) { // imageType can be 'background' or 'ico
             tags: [`theme_${imageType}s`],
             folder: `theme_${imageType}s`
         }, (error, result) => {
-            console.log(`Cloudinary Widget Callback (${imageType}) - ERROR:`, error);
-            console.log(`Cloudinary Widget Callback (${imageType}) - RESULT:`, result);
             if (error) {
                 console.error(`Cloudinary upload error (${imageType}):`, error);
-                errorMessage.textContent = `Cloudinary upload error (${imageType}): ${error.message}`; // User-friendly error
-                reject(error);
+                reject(error);  // Reject with the original error
             } else if (result && result.event === "success") {
-                resolve(result);
+                resolve(result.info.secure_url); // Resolve with the URL
             } else {
-                const rejectionError = new Error(`Cloudinary upload failed or cancelled (${imageType}) - Event: ${result ? result.event : 'unknown'}`);
-                console.log(`Cloudinary upload: not success or error (${imageType})`, result ? result.event : 'no result', rejectionError);
-                errorMessage.textContent = `Uploaden van ${imageType} afbeelding geannuleerd.`; // User-friendly cancel message
-                reject(rejectionError);
+                // Handle non-success, non-error cases (e.g., user closed widget)
+                reject(new Error(`Cloudinary upload cancelled or failed (${imageType}) - Event: ${result ? result.event : 'unknown'}`));
             }
         });
         widget.open();
     });
 }
 
+// Save/Update Custom Theme
+async function saveCustomTheme() {
+    const themeName = themeNameInput.value.trim();
+    const customText = customTextInput.value.trim();
+    const backgroundImageUrl = backgroundImageURLInput.value; // Get URL from hidden input
+    const iconImageUrl = iconImageURLInput.value;          // Get URL from hidden input
 
-// Utility functions
-async function getNextUserId() {
-    const counterRef = db.collection('counters').doc('userCounter');
+    if (!themeName) {
+        displayError("Thema naam mag niet leeg zijn.");
+        return;
+    }
+
+    // Validate URLs (basic check)
+    if (backgroundImageUrl && !isValidHttpUrl(backgroundImageUrl)) {
+        displayError("Ongeldige URL voor achtergrondafbeelding.");
+        return;
+    }
+     if (iconImageUrl && !isValidHttpUrl(iconImageUrl)) {
+        displayError("Ongeldige URL voor icoonafbeelding.");
+        return;
+    }
+
+    const themeData = {
+        backgroundImageUrl: backgroundImageUrl,
+        iconImageUrl: iconImageUrl,
+        customText: customText
+    };
 
     try {
-        const nextId = await db.runTransaction(async (transaction) => {
-            const counterDoc = await transaction.get(counterRef);
-            let newCounter = 1;
-            if (counterDoc.exists) {
-                newCounter = counterDoc.data().count + 1;
-            } else {
-                newCounter = 1;
-            }
-            transaction.set(counterRef, { count: newCounter }, { merge: true });
-            return newCounter;
-        });
-        return `user${nextId}`;
-    } catch (error) {
-        console.error("Error getting next user ID:", error);
-        errorMessage.textContent = `Firestore Fout: ${error.message}`;
-        errorMessage.style.display = 'block';
-        throw error;
-    }
-}
+        const customThemeRef = db.collection('redirectThemes').doc(themeName);
+        const doc = await customThemeRef.get();
 
-
-   // Utility function to promisify Geolocation API
-    function getCurrentPositionPromise() {
-        return new Promise((resolve, reject) => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
-            } else {
-                reject(new Error("Geolocation is not supported"));
-            }
-        });
-    }
-
-     // Utility function to promisify Battery API
-    function getBatteryPromise() {
-        return new Promise((resolve, reject) => {
-            if(navigator.getBattery) {
-               resolve(navigator.getBattery());
-            }else{
-                reject(new Error("Battery API is not supported."));
-            }
-        });
-
-    }
-
-// Function to apply theme
-function applyTheme(themeName) {
-    const theme = themes[themeName] || themes.default;
-    document.body.style.backgroundColor = theme.bodyBackgroundColor;
-    document.body.style.color = theme.textColor;
-    const container = document.querySelector('.container');
-    if (container) {
-        container.style.backgroundColor = theme.containerBackgroundColor;
-        container.style.boxShadow = theme.containerBoxShadow;
-    }
-    const h2 = document.querySelector('h2');
-    if (h2) {
-        h2.style.color = theme.headingColor;
-        h2.style.borderBottomColor = theme.tableTitleBorderColor;
-    }
-    const buttons = document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector, #upload-background-button, #upload-icon-button');  //Added edit-theme-selector and upload buttons
-    buttons.forEach(button => {
-        button.style.backgroundColor = theme.buttonBackgroundColor;
-    });
-    const tableHeaders = document.querySelectorAll('.data-table th');
-    tableHeaders.forEach(th => {
-        th.style.backgroundColor = theme.tableHeaderBackgroundColor;
-        th.style.color = theme.tableHeaderColor;
-        th.style.borderColor = theme.tableBorderColor;
-    });
-     const dataTable = document.querySelector('.data-table');
-        if(dataTable){
-            dataTable.style.borderColor = theme.tableBorderColor;
+        if (doc.exists) {
+            await customThemeRef.update(themeData);
+            displaySuccess(`Thema "${themeName}" succesvol bijgewerkt!`);
+        } else {
+            await customThemeRef.set(themeData);
+            displaySuccess(`Thema "${themeName}" succesvol opgeslagen!`);
         }
-}
 
-// --- Function to check and update notification permission status ---
-function updateNotificationPermissionStatus() {
-    if (Notification.permission === 'granted') {
-        notificationPermissionMessage.style.display = 'none'; // Hide message
-    } else {
-        notificationPermissionMessage.style.display = 'block'; // Show message
-        // Optionally disable notification-related features here if needed
+        resetThemeModal(); // Clear and hide modal
+        loadCustomThemes(); // Reload theme list
+
+    } catch (error) {
+        console.error("Error saving/updating custom theme:", error);
+        displayError(`Fout bij opslaan/bijwerken thema: ${error.message}`);
     }
 }
 
-// Load settings AND data from Firestore
-async function loadSettingsAndData(userId) {
-    const settingsRef = db.collection('userSettings').doc(userId);
-
+// Load Custom Themes into Selectors
+async function loadCustomThemes() {
+    const customThemesRef = db.collection('redirectThemes');
     try {
+        // Clear existing options (except defaults)
+        themeSelector.querySelectorAll('option:not([value="default"],[value="dark"],[value="green"])').forEach(o => o.remove());
+        editThemeSelector.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
+
+        const snapshot = await customThemesRef.get();
+        snapshot.forEach(doc => {
+            const themeName = doc.id;
+            const option = new Option(themeName, themeName); // Text, Value
+            themeSelector.add(option);
+
+            const editOption = new Option(themeName, themeName);
+            editThemeSelector.add(editOption);
+        });
+    } catch (error) {
+        console.error("Error loading custom themes:", error);
+        displayError(`Fout bij laden aangepaste thema's: ${error.message}`);
+    }
+}
+
+// Load Theme for Editing
+async function loadThemeForEditing(themeName) {
+    try {
+        const doc = await db.collection('redirectThemes').doc(themeName).get();
+        if (!doc.exists) {
+            displayError(`Thema "${themeName}" niet gevonden.`);
+            return;
+        }
+        const themeData = doc.data();
+        themeNameInput.value = themeName;
+        backgroundImageURLInput.value = themeData.backgroundImageUrl || '';
+        iconImageURLInput.value = themeData.iconImageUrl || '';
+        customTextInput.value = themeData.customText || '';
+
+        // Set preview images and confirmation text
+        setPreviewImage(backgroundImagePreview, backgroundImageURLInput.value, backgroundUploadConfirmation);
+        setPreviewImage(iconImagePreview, iconImageURLInput.value, iconUploadConfirmation);
+
+        themeModal.style.display = "block"; // Show modal
+
+    } catch (error) {
+        console.error("Error loading theme for editing:", error);
+        displayError(`Fout bij laden thema: ${error.message}`);
+    }
+}
+
+// Apply Theme (to settings page)
+function applyTheme(themeName) {
+    const theme = themes[themeName] || themes.default; // Fallback to default
+    // Apply styles (using CSS variables for easier management)
+    document.body.style.setProperty('--body-bg-color', theme.bodyBackgroundColor);
+    document.body.style.setProperty('--container-bg-color', theme.containerBackgroundColor);
+    document.body.style.setProperty('--container-box-shadow', theme.containerBoxShadow);
+    document.body.style.setProperty('--heading-color', theme.headingColor);
+    document.body.style.setProperty('--text-color', theme.textColor);
+    document.body.style.setProperty('--button-bg-color', theme.buttonBackgroundColor);
+    document.body.style.setProperty('--button-hover-bg-color', theme.        buttonHoverBackgroundColor: theme.buttonHoverBackgroundColor,
+        tableHeaderBackgroundColor: theme.tableHeaderBackgroundColor,
+        tableHeaderColor: theme.tableHeaderColor,
+        tableBorderColor: theme.tableBorderColor,
+        tableTitleBorderColor: theme.tableTitleBorderColor,
+    };
+
+    // Apply styles (using a loop for conciseness)
+    for (const [key, value] of Object.entries(theme)) {
+        if (key.endsWith('BackgroundColor')) {
+            document.body.style.backgroundColor = value; // Directly set body background
+        }
+    }
+        const container = document.querySelector('.container');
+        if (container) {
+           container.style.backgroundColor = theme.containerBackgroundColor;
+           container.style.boxShadow = theme.containerBoxShadow
+        }
+
+         const h2 = document.querySelector('h2');
+         if(h2){
+            h2.style.color = theme.headingColor;
+            h2.style.borderBottomColor = theme.tableTitleBorderColor;
+         }
+
+        document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector, #upload-background-button, #upload-icon-button').forEach(button => {
+            button.style.backgroundColor = theme.buttonBackgroundColor;
+        });
+        document.querySelectorAll('.data-table th').forEach(th => {
+            th.style.backgroundColor = theme.tableHeaderBackgroundColor;
+            th.style.color = theme.tableHeaderColor;
+            th.style.borderColor = theme.tableBorderColor; // Corrected property
+        });
+        const dataTable = document.querySelector('.data-table');
+        if(dataTable){
+          dataTable.style.borderColor = theme.tableBorderColor;
+        }
+
+}
+
+
+// Load Settings and Data
+async function loadSettingsAndData(userId) {
+    try {
+        const settingsRef = db.collection('userSettings').doc(userId);
         const settingsSnap = await settingsRef.get();
+
         if (settingsSnap.exists) {
             const settingsData = settingsSnap.data();
+            // Apply settings to form elements
             micCamPermissionToggle.checked = settingsData.micCamPermission || false;
             locationPermissionToggle.checked = settingsData.locationPermission || false;
             notificationPermissionToggle.checked = settingsData.notificationPermission || false;
@@ -838,50 +855,33 @@ async function loadSettingsAndData(userId) {
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
-            themeSelector.value = settingsData.theme || 'default';
+            themeSelector.value = settingsData.theme || 'default'; // Default theme
             applyTheme(themeSelector.value);
         } else {
-            applyTheme('default');
+            // Handle case where settings don't exist (e.g., new user)
+            applyTheme('default'); // Apply default theme
         }
-         updateExplanations();
-         loadAllUserData();
-         loadCustomThemes(); // Herlaad thema's, inclusief voor de bewerk-dropdown
-         updateNotificationPermissionStatus(); // Check and update on load
+        updateExplanations();
+        await loadAllUserData(); // Load user data *after* settings
+        await loadCustomThemes(); // Load custom themes
+        updateNotificationPermissionStatus();
 
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
-        errorMessage.textContent = `Firestore Fout: ${error.message}`;
-        errorMessage.style.display = 'block';
+        displayError(`Fout bij laden instellingen/data: ${error.message}`);
     }
 }
 
- // Update explanations
-      function updateExplanations(){
-        if(locationPermissionToggle.checked){
-            locationExplanation.classList.remove("hidden");
-        }else {
-            locationExplanation.classList.add("hidden");
-        }
-
-        if(notificationPermissionToggle.checked){
-                notificationExplanation.classList.remove("hidden");
-        }else {
-                notificationExplanation.classList.add("hidden");
-        }
-    }
-
-
-// Save settings to Firestore, get next user ID, and reload
+// Save Settings
 async function saveSettings() {
     try {
         const nextUserId = await getNextUserId();
-
         const settingsRef = db.collection('userSettings').doc(nextUserId);
         const settings = {
             micCamPermission: micCamPermissionToggle.checked,
             locationPermission: locationPermissionToggle.checked,
-             notificationPermission: notificationPermissionToggle.checked,
+            notificationPermission: notificationPermissionToggle.checked,
             messageText: messageText.value,
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
@@ -891,24 +891,19 @@ async function saveSettings() {
          updateExplanations();
 
         await settingsRef.set(settings);
-        console.log("Settings saved successfully for user:", nextUserId);
-        successMessage.style.display = 'block';
-        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-
-        currentUserId = nextUserId;
-        loadSettingsAndData(currentUserId);
+        displaySuccess("Instellingen succesvol opgeslagen!");
+        currentUserId = nextUserId; // Update current user
+        await loadSettingsAndData(currentUserId); // Reload settings and data
 
     } catch (error) {
         console.error("Error saving settings:", error);
-        errorMessage.textContent = `Firestore Fout: ${error.message}`;
-        errorMessage.style.display = 'block';
+        displayError(`Fout bij opslaan instellingen: ${error.message}`);
     }
 }
 
-
-// Function to display all user data in the table (ONE ROW PER USER - VERTICAL LAYOUT)
+// Display User Data (Vertical Layout)
 async function displayData(userId, userData) {
-    const row = document.createElement('tr');
+     const row = document.createElement('tr');
     row.id = `user-row-${userId}`;
 
     let cellContent = `
@@ -941,49 +936,51 @@ async function displayData(userId, userData) {
     row.innerHTML = cellContent;
     dataList.appendChild(row);
 
-     if (userData.location && userData.location.latitude && userData.location.longitude) {
+
+    if (userData.location && userData.location.latitude && userData.location.longitude) {
+        // Use a closure to capture the correct userId for each map
+        (function(userId) {
             setTimeout(() => {
-                const map = L.map(`location-map-${userId}`).setView([userData.location.latitude, userData.location.longitude], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-                L.marker([userData.location.latitude, userData.location.longitude]).addTo(map)
-                    .bindPopup('<b>Huidige Locatie</b>').openPopup();
+                const mapId = `location-map-${userId}`;
+                const mapElement = document.getElementById(mapId);
+
+                // Check if the map element exists *before* creating the map
+                if (mapElement) {
+                    const map = L.map(mapId).setView([userData.location.latitude, userData.location.longitude], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+                    L.marker([userData.location.latitude, userData.location.longitude]).addTo(map)
+                        .bindPopup('<b>Huidige Locatie</b>').openPopup();
+                } else {
+                    console.error(`Map element not found for user ${userId}`);
+                }
             }, 0);
-        }
-    }
-
-
-// Function to load all user data and display the table (ONE ROW PER USER - VERTICAL LAYOUT)
-async function loadAllUserData() {
-    dataList.innerHTML = '';
-
-    const userDataCollection = db.collection('userData');
-
-    try {
-        const snapshot = await userDataCollection.get();
-        if (!snapshot.empty) {
-            snapshot.forEach(doc => {
-                const userId = doc.id;
-                const userData = doc.data();
-                displayData(userId, userData);
-            });
-        } else {
-            dataList.innerHTML = '<tr><td colspan="2" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
-        }
-
-
-    } catch (error) {
-        console.error("Error fetching all user data:", error);
-        errorMessage.textContent = `Firestore Fout: ${error.message}`;
-        errorMessage.style.display = 'block';
+        })(userId); // Immediately invoke the function with the current userId
     }
 }
 
+// Load All User Data
+async function loadAllUserData() {
+    dataList.innerHTML = ''; // Clear existing data
 
-// --- Function to send notification for a specific user ---
+    try {
+        const snapshot = await db.collection('userData').get();
+        if (snapshot.empty) {
+            dataList.innerHTML = '<tr><td colspan="2" style="text-align:center;">Geen gebruikersdata gevonden.</td></tr>';
+            return;
+        }
+        snapshot.forEach(doc => {
+            displayData(doc.id, doc.data());
+        });
+    } catch (error) {
+        console.error("Error fetching all user data:", error);
+        displayError(`Fout bij ophalen gebruikersdata: ${error.message}`);
+    }
+}
+
+// Send Notification for User
 async function sendNotificationForUser(targetUserId) {
-    //Removed the notification permission. Because that check happens in loadSettingsData, and in the eventlistener
 
     const title = document.getElementById(`notification-title-${targetUserId}`).value;
     const body = document.getElementById(`notification-body-${targetUserId}`).value;
@@ -991,269 +988,241 @@ async function sendNotificationForUser(targetUserId) {
 
 
     if (!title || !body) {
-        errorMessage.textContent = "Notificatie titel en bericht zijn niet ingesteld voor deze gebruiker.";
-        errorMessage.style.display = 'block';
+        displayError("Notificatie titel en bericht zijn niet ingesteld voor deze gebruiker.");
+        return;
+    }
+
+    if (Notification.permission !== 'granted')
+    {
+        displayError('Notificatie toestemming is geweigerd.');
         return;
     }
 
     try {
-        new Notification(title, {
-            body: body,
-            icon: iconUrl || undefined
-        });
-        successMessage.textContent = `Notificatie succesvol verstuurd voor gebruiker ${targetUserId}!`;
-        successMessage.style.display = 'block';
-        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-
-
+        new Notification(title, { body: body, icon: iconUrl });
+        displaySuccess(`Notificatie succesvol verstuurd voor gebruiker ${targetUserId}!`);
     } catch (error) {
         console.error("Error sending notification to user:", error);
-        errorMessage.textContent = `Fout bij versturen notificatie: ${error.message}`;
-        errorMessage.style.display = 'block';
+        displayError(`Fout bij versturen notificatie: ${error.message}`);
     }
 }
 
-
-// --- Function to delete all user data ---
+// Delete All User Data
 async function deleteAllData() {
-    if (confirm("Weet je zeker dat je ALLE gebruikersdata wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!")) {
-        const userDataCollection = db.collection('userData');
-        const counterRef = db.collection('counters').doc('userCounter');
+    if (!confirm("Weet je zeker dat je ALLE gebruikersdata wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!")) {
+        return; // Exit if cancelled
+    }
 
-        try {
-            // Delete all documents in userData collection
-            const querySnapshot = await userDataCollection.get();
-            const batch = db.batch();
-            querySnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            await batch.commit();
+    try {
+        const batch = db.batch();
+        const snapshot = await db.collection('userData').get();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
 
-            // Reset user counter to 0 or 1 (decide initial state)
-            await counterRef.set({ count: 0 });
+        // Reset user counter (consider what initial value is appropriate)
+        await db.collection('counters').doc('userCounter').set({ count: 0 });
 
-            console.log("All user data deleted successfully!");
-            successMessage.textContent = "Alle gebruikersdata succesvol verwijderd!";
-            successMessage.style.display = 'block';
-            setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+        displaySuccess("Alle gebruikersdata succesvol verwijderd!");
+        await loadAllUserData(); // Refresh data display
 
-            loadAllUserData();
-
-        } catch (error) {
-            console.error("Error deleting all user data:", error);
-            errorMessage.textContent = `Firestore Fout: ${error.message}`;
-            errorMessage.style.display = 'block';
-        }
-    } else {
-        console.log("Delete all data action cancelled by user.");
+    } catch (error) {
+        console.error("Error deleting all user data:", error);
+        displayError(`Fout bij verwijderen gebruikersdata: ${error.message}`);
     }
 }
 
-// --- Function to delete data for a specific user ---
+// Delete User Data
 async function deleteUserData(targetUserId) {
-    if (confirm(`Weet je zeker dat je de data van gebruiker ${targetUserId} wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!`)) {
-        const userRef = db.collection('userData').doc(targetUserId);
-
-        try {
-            await userRef.delete();
-            console.log(`Data voor gebruiker ${targetUserId} succesvol verwijderd!`);
-            successMessage.textContent = `Data voor gebruiker ${targetUserId} succesvol verwijderd!`;
-            successMessage.style.display = 'block';
-            setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-
-            loadAllUserData();
-
-        } catch (error) {
-            console.error("Error deleting user data:", error);
-            errorMessage.textContent = `Fout bij verwijderen gebruikersdata: ${error.message}`;
-            errorMessage.style.display = 'block';
-        }
-    } else {
-        console.log("Delete user data action cancelled by user.");
+    if (!confirm(`Weet je zeker dat je de data van gebruiker ${targetUserId} wilt verwijderen?`)) {
+        return;
     }
-}
 
-// Function to apply theme on redirect page
-function applyThemeRedirect(themeName) {
-    const theme = themes[themeName] || themes.default;
-    document.body.style.backgroundColor = theme.bodyBackgroundColor;
-    document.body.style.color = theme.textColor;
-    const container = document.querySelector('.container');
-    if (container) {
-        container.style.backgroundColor = theme.containerBackgroundColor;
-        container.style.boxShadow = theme.containerBoxShadow;
-    }
-    const h1 = document.querySelector('h1');
-    if (h1) {
-        h1.style.color = theme.headingColor;
-    }
-     const p = document.querySelectorAll('p');
-    p.forEach(pElement => {
-        pElement.style.color = theme.textColor;
-    });
-
-}
-
-// --- Function to load custom themes from Firestore and populate the theme selectors ---
-async function loadCustomThemes() {
-    const customThemesRef = db.collection('redirectThemes');
     try {
-        // Clear existing options in BOTH dropdowns first
-        Array.from(themeSelector.options).forEach(option => {
-            if (!['default', 'dark', 'green'].includes(option.value)) {
-                themeSelector.remove(option.index);
-            }
-        });
-        Array.from(editThemeSelector.options).forEach(option => {
-            if (option.value !== "") { // Keep the default "Choose..." option
-                editThemeSelector.remove(option.index);
-            }
-        });
-
-
-        const snapshot = await customThemesRef.get();
-        snapshot.forEach(doc => {
-            const themeName = doc.id;
-
-            // Add to the THEME SELECTION dropdown (no prefix)
-            const option = document.createElement('option');
-            option.value = themeName;  // No "custom_" prefix
-            option.textContent = themeName;
-            themeSelector.appendChild(option);
-
-            // Add to the THEME EDITING dropdown
-            const editOption = document.createElement('option');
-            editOption.value = themeName;
-            editOption.textContent = themeName;
-            editThemeSelector.appendChild(editOption);
-        });
-
+        await db.collection('userData').doc(targetUserId).delete();
+        displaySuccess(`Data voor gebruiker ${targetUserId} succesvol verwijderd!`);
+        await loadAllUserData(); // Refresh data display
     } catch (error) {
-        console.error("Error loading custom themes:", error);
-        errorMessage.textContent = `Fout bij laden aangepaste thema's: ${error.message}`;
-        errorMessage.style.display = 'block';
+        console.error("Error deleting user data:", error);
+        displayError(`Fout bij verwijderen gebruikersdata: ${error.message}`);
     }
 }
 
-// --- Functie om een thema te laden voor bewerking ---
-async function loadThemeForEditing(themeName) {
-    const customThemeRef = db.collection('redirectThemes').doc(themeName);
-    try {
-        const doc = await customThemeRef.get();
-        if (doc.exists) {
-            const themeData = doc.data();
-            themeNameInput.value = themeName; // Vul de themanaam in
-            backgroundImageURLInput.value = themeData.backgroundImageUrl || '';
-            iconImageURLInput.value = themeData.iconImageUrl || '';
-            customTextInput.value = themeData.customText || '';
-            backgroundImagePreview.src = themeData.backgroundImageUrl || '';
-            backgroundImagePreview.style.display = themeData.backgroundImageUrl ? 'block' : 'none';
-            backgroundUploadConfirmation.style.display = themeData.backgroundImageUrl ? 'block' : 'none'; // Show confirmation
-            iconImagePreview.src = themeData.iconImageUrl || '';
-            iconImagePreview.style.display = themeData.iconImageUrl ? 'block' : 'none';
-            iconUploadConfirmation.style.display = themeData.iconImageUrl ? 'block' : 'none';         // Show confirmation
-
-
-            // Toon de modal
-            themeModal.style.display = "block";
-        } else {
-            errorMessage.textContent = `Thema "${themeName}" niet gevonden.`;
-            errorMessage.style.display = 'block';
+ // Update explanations
+      function updateExplanations(){
+        if(locationPermissionToggle.checked){
+            locationExplanation.classList.remove("hidden");
+        }else {
+            locationExplanation.classList.add("hidden");
         }
-    } catch (error) {
-        console.error("Error loading theme for editing:", error);
-        errorMessage.textContent = `Fout bij laden thema: ${error.message}`;
-        errorMessage.style.display = 'block';
+
+        if(notificationPermissionToggle.checked){
+                notificationExplanation.classList.remove("hidden");
+        }else {
+                notificationExplanation.classList.add("hidden");
+        }
     }
+
+
+// --- Helper Functions (for UI and other tasks) ---
+
+// Display Error Message
+function displayError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+    setTimeout(() => { errorMessage.style.display = 'none'; }, 5000); // Hide after 5 seconds
 }
 
+// Display Success Message
+function displaySuccess(message) {
+    successMessage.textContent = message;
+    successMessage.style.display = 'block';
+    setTimeout(() => { successMessage.style.display = 'none'; }, 3000); // Hide after 3 seconds
+}
 
-
-// Event listeners
-saveSettingsButton.addEventListener('click', saveSettings);
-triggerRedirectButton.addEventListener('click', (event) => {});
-dataTableTitleElement.addEventListener('click', function() {
-    const originalTitle = this.getAttribute('data-original-title');
-    const newTitle = prompt("Bewerk de tabel titel:", originalTitle);
-    if (newTitle !== null && newTitle.trim() !== "") {
-        this.textContent = newTitle.trim();
-        this.setAttribute('data-original-title', newTitle.trim());
-    }
-});
-deleteAllDataButton.addEventListener('click', deleteAllData);
-
-// --- Event listener voor de THEMA SELECTIE dropdown ---
-themeSelector.addEventListener('change', () => {
-    applyTheme(themeSelector.value); // Pas het thema direct toe
-});
-
-// --- Event listener voor de THEMA BEWERKING dropdown ---
-editThemeSelector.addEventListener('change', () => {
-    const selectedTheme = editThemeSelector.value;
-    if (selectedTheme) { // Check of er een thema is geselecteerd (niet de default optie)
-        loadThemeForEditing(selectedTheme); // Laad de thema gegevens in de modal
-    }
-});
-
-notificationPermissionToggle.addEventListener('change', updateNotificationPermissionStatus); // Update status on toggle change
-
-
-createThemeButton.addEventListener('click', () => {
-    themeModal.style.display = "block"; // Open modal
-    // Reset modal fields when creating a NEW theme
+// Reset Theme Modal (clear inputs, previews, and hide)
+function resetThemeModal() {
     themeNameInput.value = '';
     backgroundImageURLInput.value = '';
     iconImageURLInput.value = '';
     customTextInput.value = '';
     backgroundImagePreview.src = '';
     backgroundImagePreview.style.display = 'none';
-    backgroundUploadConfirmation.style.display = 'none'; // Hide confirmation text
+    backgroundUploadConfirmation.style.display = 'none';
     iconImagePreview.src = '';
     iconImagePreview.style.display = 'none';
-    iconUploadConfirmation.style.display = 'none';       // Hide confirmation text
+    iconUploadConfirmation.style.display = 'none';
+    themeModal.style.display = "none";
+}
 
-});
-closeModalButton.addEventListener('click', () => {
-    themeModal.style.display = "none"; // Close modal
-});
-cancelCustomThemeButton.addEventListener('click', () => {
-    themeModal.style.display = "none"; // Close modal
-});
-saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Corrected event listener
+// Set Preview Image and Confirmation Text
+function setPreviewImage(previewElement, imageUrl, confirmationElement) {
+    if (imageUrl) {
+        previewElement.src = imageUrl;
+        previewElement.style.display = 'block';
+        confirmationElement.style.display = 'block';
+    } else {
+        previewElement.src = '';
+        previewElement.style.display = 'none';
+        confirmationElement.style.display = 'none';
+    }
+}
 
-uploadBackgroundButton.addEventListener('click', async () => {
+// Basic URL Validation (for image URLs)
+function isValidHttpUrl(string) {
     try {
-        const uploadResult = await uploadImage('background');
-        backgroundImageURLInput.value = uploadResult.info.secure_url;
-        backgroundImagePreview.src = uploadResult.info.secure_url;
-        backgroundImagePreview.style.display = 'block'; // Show preview
-        backgroundUploadConfirmation.style.display = 'block'; // Show confirmation text
+        const url = new URL(string);
+        return url.protocol === "http:" || url.protocol === "https:";
+    } catch (_) {
+        return false;
+    }
+}
+
+// --- Event Listeners ---
+// Event listeners (using named functions for better organization)
+
+function handleSaveSettings() {
+    saveSettings().catch(error => {
+        console.error("Unhandled error in saveSettings:", error);
+    });
+}
+
+function handleTriggerRedirect() {
+    // Handle redirect (if needed)
+}
+
+function handleDataTableTitleClick() {
+    const originalTitle = this.getAttribute('data-original-title');
+    const newTitle = prompt("Bewerk de tabel titel:", originalTitle);
+    if (newTitle !== null && newTitle.trim() !== "") {
+        this.textContent = newTitle.trim();
+        this.setAttribute('data-original-title', newTitle.trim());
+    }
+}
+
+function handleDeleteAllData() {
+    deleteAllData().catch(error => {
+        console.error("Unhandled error in deleteAllData:", error);
+    });
+}
+
+function handleThemeSelectorChange() {
+    applyTheme(themeSelector.value);
+}
+
+function handleEditThemeSelectorChange() {
+    const selectedTheme = editThemeSelector.value;
+    if (selectedTheme) {
+        loadThemeForEditing(selectedTheme);
+    }
+}
+
+function handleNotificationPermissionToggle() {
+    updateNotificationPermissionStatus();
+    updateExplanations();
+}
+
+function handleCreateThemeButtonClick() {
+    resetThemeModal(); // Clear any previous state
+    themeModal.style.display = "block";
+}
+
+function handleCloseModalButtonClick() {
+    themeModal.style.display = "none";
+}
+
+function handleCancelCustomThemeButtonClick() {
+    themeModal.style.display = "none";
+}
+
+function handleSaveCustomThemeButtonClick() {
+    saveCustomTheme(); // No .catch() here, handled inside saveCustomTheme
+}
+async function handleUploadBackgroundButtonClick() {
+    try {
+        const imageUrl = await uploadImage('background');
+        backgroundImageURLInput.value = imageUrl; // Store URL
+        setPreviewImage(backgroundImagePreview, imageUrl, backgroundUploadConfirmation); // Show preview
     } catch (error) {
         console.error("Background image upload failed:", error);
-        errorMessage.textContent = `Fout bij uploaden achtergrond afbeelding: ${error.message}`;
-        errorMessage.style.display = 'block';
+        // Error handling is now *inside* `uploadImage`, so we don't need
+        // a separate error message here.  The `uploadImage` function
+        // sets the `errorMessage` directly.
     }
-});
+}
 
-uploadIconButton.addEventListener('click', async () => {
+async function handleUploadIconButtonClick() {
     try {
-        const uploadResult = await uploadImage('icon');
-        iconImageURLInput.value = uploadResult.info.secure_url;
-        iconImagePreview.src = uploadResult.info.secure_url;
-        iconImagePreview.style.display = 'block'; // Show preview
-        iconUploadConfirmation.style.display = 'block';       // Show confirmation text
+        const imageUrl = await uploadImage('icon');
+        iconImageURLInput.value = imageUrl; // Store URL
+        setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation); // Show preview
     } catch (error) {
         console.error("Icon image upload failed:", error);
-        errorMessage.textContent = `Fout bij uploaden icoon afbeelding: ${error.message}`;
-        errorMessage.style.display = 'block';
+        // Error handling is now *inside* `uploadImage`.
     }
+}
+
+// Attach event listeners
+saveSettingsButton.addEventListener('click', handleSaveSettings);
+triggerRedirectButton.addEventListener('click', handleTriggerRedirect);
+dataTableTitleElement.addEventListener('click', handleDataTableTitleClick);
+deleteAllDataButton.addEventListener('click', handleDeleteAllData);
+themeSelector.addEventListener('change', handleThemeSelectorChange);
+editThemeSelector.addEventListener('change', handleEditThemeSelectorChange);
+notificationPermissionToggle.addEventListener('change', handleNotificationPermissionToggle);
+createThemeButton.addEventListener('click', handleCreateThemeButtonClick);
+closeModalButton.addEventListener('click', handleCloseModalButtonClick);
+cancelCustomThemeButton.addEventListener('click', handleCancelCustomThemeButtonClick);
+saveCustomThemeButton.addEventListener('click', handleSaveCustomThemeButtonClick);
+uploadBackgroundButton.addEventListener('click', handleUploadBackgroundButtonClick);
+uploadIconButton.addEventListener('click', handleUploadIconButtonClick);
+
+// --- Initial Setup ---
+loadSettingsAndData(currentUserId).catch(error => {
+    console.error("Unhandled error in initial load:", error);
+    displayError("Fout bij initialiseren van de pagina."); // Top-level error handling
 });
+updateNotificationPermissionStatus();
 
-
-// Initial load
-loadSettingsAndData(currentUserId);
-updateNotificationPermissionStatus(); // Check and update on initial load!
-
-    </script>
+</script>
 </body>
 </html>
