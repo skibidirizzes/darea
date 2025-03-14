@@ -863,6 +863,7 @@ function updateNotificationPermissionStatus() {
 
 
 // Load Settings and Data
+// Load Settings and Data
 async function loadSettingsAndData(userId) {
     try {
         const settingsRef = db.collection('userSettings').doc(userId);
@@ -878,8 +879,10 @@ async function loadSettingsAndData(userId) {
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
-            themeSelector.value = settingsData.theme || 'default'; // Default theme
-            applyTheme(themeSelector.value);
+            themeSelector.value = settingsData.theme || 'default'; //  Set the value *first*
+            applyTheme(themeSelector.value);   // *Then* apply the theme.
+
+
         } else {
             // Handle case where settings don't exist (e.g., new user)
             applyTheme('default'); // Apply default theme
@@ -887,8 +890,7 @@ async function loadSettingsAndData(userId) {
         updateExplanations();
         await loadAllUserData(); // Load user data *after* settings
         await loadCustomThemes(); // Load custom themes
-
-
+        updateNotificationPermissionStatus();
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
