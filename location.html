@@ -1,8 +1,9 @@
+--- START OF FILE location (11).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
+    <meta name="viewport" content="width=device-width, initial-scale= 1.0">
     <title>Instellingen</title>
     <style>
         /* Verbeterde Verticale Tabel Styling (en algemene styles) */
@@ -595,11 +596,13 @@ const themes = {
 // --- Function to save a new custom theme to Firestore ---
 async function saveCustomTheme() {
     const themeName = themeNameInput.value.trim();
+    // Correcte declaratie BUITEN de try block:
     const backgroundImgFileInput = backgroundImageFile;
     const iconImgFileInput = iconImageFile;
     const customText = customTextInput.value.trim();
 
-    backgroundImageFileInput.value = ''; // Reset file inputs (voor de zekerheid)
+    // Reset file inputs (voor de zekerheid)
+    backgroundImgFileInput.value = '';
     iconImgFileInput.value = '';
 
     if (!themeName) {
@@ -615,11 +618,11 @@ async function saveCustomTheme() {
     let uploadIcon = false;
 
     // **EXPLICIETE CONTROLE OP BESTANDSOBJECT (niet alleen length):**
-    if (backgroundImageFile.files && backgroundImageFile.files[0]) { // Check of .files BESTAAT en OF er een EERSTE bestand is
+    if (backgroundImgFileInput.files && backgroundImgFileInput.files[0]) {
         uploadBackground = true; // Zet de vlag als er een nieuw achtergrondbestand is
     }
 
-    if (iconImageFile.files && iconImageFile.files[0]) { // Check of .files BESTAAT en OF er een EERSTE bestand is
+    if (iconImgFileInput.files && iconImgFileInput.files[0]) {
         uploadIcon = true; // Zet de vlag als er een nieuw icoonbestand is
     }
 
@@ -657,8 +660,7 @@ async function saveCustomTheme() {
                     sources: ["local"],
                     resource_type: 'image',
                     tags: ['theme_icons'],
-                    folder: 'theme_icons'
-                }, (error, result) => {
+                                    }, (error, result) => {
                     if (error) {
                         console.error("Cloudinary upload error (icon):", error);
                         reject(error);
@@ -699,8 +701,8 @@ async function saveCustomTheme() {
 
         themeModal.style.display = "none";
         themeNameInput.value = '';
-        backgroundImageFile.value = '';
-        iconImageFile.value = '';
+        backgroundImageFile.value = '';  // Correcte reset van file input
+        iconImageFile.value = '';      // Correcte reset van file input
         backgroundImageURLInput.value = '';
         iconImageURLInput.value = '';
         customTextInput.value = '';
@@ -1141,7 +1143,7 @@ themeSelector.addEventListener('change', () => {
     if (selectedTheme.startsWith("custom_")) {
         loadThemeForEditing(selectedTheme.replace("custom_", ""));
     } else {
-       applyTheme(themeSelector.value);
+       applyTheme(selectedTheme.value);
     }
 });
 createThemeButton.addEventListener('click', () => {
@@ -1153,7 +1155,7 @@ closeModalButton.addEventListener('click', () => {
 cancelCustomThemeButton.addEventListener('click', () => {
     themeModal.style.display = "none";
 });
-saveCustomThemeButton.addEventListener('click', saveCustomTheme);
+saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Corrected event listener
 
 
 // Initial load
