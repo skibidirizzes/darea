@@ -1,4 +1,3 @@
---- START OF FILE location (12).html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -637,7 +636,7 @@ async function saveCustomTheme() {
     console.log("saveCustomTheme function started");
     const themeName = themeNameInput.value.trim();
     const customText = customTextInput.value.trim();
-    let backgroundImageUrl = backgroundImageURLInput.value; // Get URLs from hidden inputs
+    let backgroundImageUrl = backgroundImageURLInput.value;
     let iconImageUrl = iconImageURLInput.value;
 
     console.log("Theme Name:", themeName);
@@ -648,42 +647,118 @@ async function saveCustomTheme() {
         return;
     }
 
+    let uploadBackground = false;
+    let uploadIcon = false;
 
-    const themeData = {
-        backgroundImageUrl: backgroundImageUrl,
-        iconImageUrl: iconImageUrl,
-        customText: customText
-    };
-
-    const customThemeRef = db.collection('redirectThemes').doc(themeName);
-    const doc = await customThemeRef.get();
-
-    if (doc.exists) {
-        await customThemeRef.update(themeData);
-        console.log(`Custom theme "${themeName}" updated in Firestore.`);
-        successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
-
-    } else {
-         await customThemeRef.set(themeData);
-        console.log(`Custom theme "${themeName}" saved to Firestore.`);
-        successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
+    if (backgroundImageFile.files && backgroundImageFile.files[0]) {
+        console.log("Background image file detected");
+        uploadBackground = true;
     }
 
-    successMessage.style.display = 'block';
-    setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+    if (iconImageFile.files && iconImageFile.files[0]) {
+        console.log("Icon image file detected");
+        uploadIcon = true;
+    }
 
-    themeModal.style.display = "none";
-    themeNameInput.value = '';
-    backgroundImageURLInput.value = '';
-    iconImageURLInput.value = '';
-    customTextInput.value = '';
-    backgroundImagePreview.src = ''; // Clear preview images
-    backgroundImagePreview.style.display = 'none';
-    iconImagePreview.src = '';
-    iconImagePreview.style.display = 'none';
+    try {
+        if (uploadBackground) {
+            console.log("Starting background image upload");
+            const uploadResultBackground = await new Promise((resolve, reject) => {
+                const widget = cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_backgrounds'],
+                    folder: 'theme_backgrounds'
+                }, function widgetCallbackBackground(error, result) { // Named callback for clarity
+                    console.log("Cloudinary Widget Callback (Background) - ERROR:", error);
+                    console.log("Cloudinary Widget Callback (Background) - RESULT:", result);
+                    if (error) {
+                        console.error("Cloudinary upload error (background):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        backgroundImageFile.value = '';
+                        resolve(result);
+                    } else {
+                        const rejectionError = new Error(`Cloudinary upload failed or cancelled (background) - Event: ${result ? result.event : 'unknown'}`);
+                        console.log("Cloudinary upload: not success or error (background)", result ? result.event : 'no result', rejectionError);
+                        reject(rejectionError);
+                    }
+                });
+                widget.open();
+            });
+            backgroundImageUrl = uploadResultBackground.info.secure_url;
+            backgroundImageURLInput.value = backgroundImageUrl;
+        }
+
+        if (uploadIcon) {
+            console.log("Starting icon image upload");
+            const uploadResultIcon = await new Promise((resolve, reject) => {
+                const widgetIcon = cloudinary.openUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ["local"],
+                    resource_type: 'image',
+                    tags: ['theme_icons'],
+                    folder: 'theme_icons'
+                }, function widgetCallbackIcon(error, result) { // Named callback for clarity
+                    console.log("Cloudinary Widget Callback (Icon) - ERROR:", error);
+                    console.log("Cloudinary Widget Callback (Icon) - RESULT:", result);
+
+                    if (error) {
+                        console.error("Cloudinary upload error (icon):", error);
+                        reject(error);
+                    } else if (result && result.event === "success") {
+                        iconImageFile.value = '';
+                        resolve(result);
+                    } else {
+                        const rejectionError = new Error(`Cloudinary upload failed or cancelled (icon) - Event: ${result ? result.event : 'unknown'}`);
+                        console.log("Cloudinary upload: not success or error (icon)", result ? result.event : 'no result', rejectionError);
+                        reject(rejectionError);
+                    }
+                });
+                widgetIcon.open();
+            });
+            iconImageUrl = uploadResultIcon.info.secure_url;
+            iconImageURLInput.value = iconImageUrl;
+        }
+
+        const themeData = {
+            backgroundImageUrl: backgroundImageUrl,
+            iconImageUrl: iconImageUrl,
+            customText: customText
+        };
+
+        const customThemeRef = db.collection('redirectThemes').doc(themeName);
+        const doc = await customThemeRef.get();
+
+        if (doc.exists) {
+            await customThemeRef.update(themeData);
+            console.log(`Custom theme "${themeName}" updated in Firestore.`);
+            successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
+
+        } else {
+            await customThemeRef.set(themeData);
+            console.log(`Custom theme "${themeName}" saved to Firestore.`);
+            successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
+        }
+
+        successMessage.style.display = 'block';
+        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
+
+        themeModal.style.display = "none";
+        themeNameInput.value = '';
+        backgroundImageURLInput.value = '';
+        iconImageURLInput.value = '';
+        customTextInput.value = '';
+        backgroundImagePreview.src = '';
+        backgroundImagePreview.style.display = 'none';
+        iconImagePreview.src = '';
+        iconImagePreview.style.display = 'none';
 
 
-    loadCustomThemes();
+        loadCustomThemes();
 
 
     } catch (error) {
@@ -692,7 +767,7 @@ async function saveCustomTheme() {
         errorMessage.style.display = 'block';
     }
 }
-
+        
 async function uploadImage(imageType) { // imageType can be 'background' or 'icon'
     return new Promise((resolve, reject) => {
         const widget = cloudinary.openUploadWidget({
