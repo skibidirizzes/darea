@@ -1,12 +1,14 @@
+<!-- location.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale= 1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-        /* (All your CSS styles remain the same) */
-        body {
+        /* (All your CSS styles remain the same - NO CHANGES HERE) */
+        /* ... (your existing styles) ... */
+         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
@@ -548,7 +550,7 @@ const uploadPreset = "locstorage"; // REPLACE
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// DOM Element References (Good practice to have all at the top)
+// DOM Element References
 const errorMessage = document.getElementById("error-message");
 const successMessage = document.getElementById('success-message');
 const deleteAllDataButton = document.getElementById('delete-all-data');
@@ -587,6 +589,8 @@ const notificationPermissionMessage = document.getElementById('notification-perm
 let currentUserId = "user1"; //  Initial user ID
 
 // --- Theme Definitions ---
+// NOTE: These are now *only* used for the settings page itself.
+// The redirect page gets its theming information from Firestore.
 const themes = {
     default: {
         bodyBackgroundColor: '#f3f7fa',
@@ -758,7 +762,7 @@ async function loadCustomThemes() {
             const editOption = new Option(themeName, themeName);
             editThemeSelector.add(editOption);
         });
-    } catch (error) {
+     } catch (error) {
         console.error("Error loading custom themes:", error);
         displayError(`Fout bij laden aangepaste thema's: ${error.message}`);
     }
@@ -791,48 +795,19 @@ async function loadThemeForEditing(themeName) {
 }
 
 // Apply Theme (to settings page)
+//  Only applies BASIC styles to THIS page.  Theming of the redirect
+//  page happens in redirect.html.
 function applyTheme(themeName) {
+    // For location.html, we ONLY apply basic background and button colors.
+    // We do NOT apply containerBoxShadow, headingColor, table styles, etc.
     const theme = themes[themeName] || themes.default; // Fallback to default
 
-    // Apply styles using CSS variables
-    document.body.style.setProperty('--body-bg-color', theme.bodyBackgroundColor);
-    document.body.style.setProperty('--container-bg-color', theme.containerBackgroundColor);
-    document.body.style.setProperty('--container-box-shadow', theme.containerBoxShadow);
-    document.body.style.setProperty('--heading-color', theme.headingColor);
-    document.body.style.setProperty('--text-color', theme.textColor);
-    document.body.style.setProperty('--button-bg-color', theme.buttonBackgroundColor);
-    document.body.style.setProperty('--button-hover-bg-color', theme.buttonHoverBackgroundColor);
-    document.body.style.setProperty('--table-header-bg-color', theme.tableHeaderBackgroundColor);
-    document.body.style.setProperty('--table-header-color', theme.tableHeaderColor);
-    document.body.style.setProperty('--table-border-color', theme.tableBorderColor);
-    document.body.style.setProperty('--table-title-border-color', theme.tableTitleBorderColor);
-
-    // Apply styles to specific elements (for those not using CSS variables)
-    const container = document.querySelector('.container');
-    if (container) {
-        container.style.backgroundColor = theme.containerBackgroundColor;
-        container.style.boxShadow = theme.containerBoxShadow;
-    }
-
-    const h2 = document.querySelector('h2');
-    if (h2) {
-        h2.style.color = theme.headingColor;
-        h2.style.borderBottomColor = theme.tableTitleBorderColor;
-    }
-
+    document.body.style.backgroundColor = theme.bodyBackgroundColor;
     document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector, #upload-background-button, #upload-icon-button').forEach(button => {
         button.style.backgroundColor = theme.buttonBackgroundColor;
     });
-    document.querySelectorAll('.data-table th').forEach(th => {
-        th.style.backgroundColor = theme.tableHeaderBackgroundColor;
-        th.style.color = theme.tableHeaderColor;
-        th.style.borderColor = theme.tableBorderColor;
-    });
-    const dataTable = document.querySelector('.data-table');
-    if (dataTable) {
-        dataTable.style.borderColor = theme.tableBorderColor;
-    }
 }
+
 
 
 // --- Function to check and update notification permission status ---
@@ -878,10 +853,20 @@ async function loadSettingsAndData(userId) {
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
             themeSelector.value = settingsData.theme || 'default'; // Set the value *first*
-            applyTheme(themeSelector.value); // *Then* apply the theme.
+            applyTheme(themeSelector.value);   // *Then* apply the theme (only to location.html)
+
 
         } else {
             // Handle case where settings don't exist (e.g., new user)
+            // Set default values
+            micCamPermissionToggle.checked = false;
+            locationPermissionToggle.checked = false;
+            notificationPermissionToggle.checked = false;
+            messageText.value = '';
+            redirectUrl.value = '';
+            redirectSeconds.value = '0';
+            recordSeconds.value = '0';
+            themeSelector.value = 'default';
             applyTheme('default'); // Apply default theme
         }
         updateExplanations();
@@ -909,7 +894,7 @@ async function saveSettings() {
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
             recordSeconds: recordSeconds.value,
-            theme: themeSelector.value
+            theme: themeSelector.value // Save the selected theme *name*
         };
         updateExplanations();
 
@@ -1192,9 +1177,7 @@ async function handleUploadBackgroundButtonClick() {
         setPreviewImage(backgroundImagePreview, imageUrl, backgroundUploadConfirmation); // Show preview
     } catch (error) {
         console.error("Background image upload failed:", error);
-        // Error handling is now *inside* `uploadImage`, so we don't need
-        // a separate error message here.  The `uploadImage` function
-        // sets the `errorMessage` directly.
+        // Error handling is now *inside* `uploadImage`.
     }
 }
 
@@ -1205,7 +1188,7 @@ async function handleUploadIconButtonClick() {
         setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation); // Show preview
     } catch (error) {
         console.error("Icon image upload failed:", error);
-        // Error handling is now *inside* `uploadImage`.
+         // Error handling is now *inside* `uploadImage`.
     }
 }
 
@@ -1225,12 +1208,14 @@ uploadBackgroundButton.addEventListener('click', handleUploadBackgroundButtonCli
 uploadIconButton.addEventListener('click', handleUploadIconButtonClick);
 
 // --- Initial Setup ---
+
+// Initial load and update notification status
 loadSettingsAndData(currentUserId).catch(error => {
     console.error("Unhandled error in initial load:", error);
-    displayError("Fout bij initialiseren van de pagina."); // Top-level error handling
+    displayError("Fout bij initialiseren van de pagina.");
 });
-updateNotificationPermissionStatus();
 
-</script>
+updateNotificationPermissionStatus();
+    </script>
 </body>
 </html>
