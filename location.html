@@ -376,8 +376,12 @@
         .modal-buttons button {
             margin-left: 10px;
         }
-
-
+    /* Style for notification permission message */
+        #notification-permission-message {
+            color: red;
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+        }
     </style>
 
     <!-- Leaflet CSS -->
@@ -425,6 +429,8 @@
             <span class="label">Notificatie</span>
              <p id="notification-explanation" class="explanation hidden">Notificatie toestemming.</p>
         </div>
+        <p id="notification-permission-message">Accepteer notificatie toestemming om notificaties te ontvangen.</p> {/* Notification permission message added here */}
+
 
         <!-- Global Input Fields -->
         <div class="input-row">
@@ -571,6 +577,9 @@ const iconImageFile = document.getElementById('icon-image-file');
 const backgroundImageURLInput = document.getElementById('background-image-url');
 const iconImageURLInput = document.getElementById('icon-image-url');
 const customTextInput = document.getElementById('custom-text-modal');
+
+// --- Notification Permission Message Element ---
+const notificationPermissionMessage = document.getElementById('notification-permission-message');
 
 
 let currentUserId = "user1";
@@ -821,6 +830,15 @@ function applyTheme(themeName) {
         }
 }
 
+// --- Function to check and update notification permission status ---
+function updateNotificationPermissionStatus() {
+    if (Notification.permission === 'granted') {
+        notificationPermissionMessage.style.display = 'none'; // Hide message
+    } else {
+        notificationPermissionMessage.style.display = 'block'; // Show message
+        // Optionally disable notification-related features here if needed
+    }
+}
 
 // Load settings AND data from Firestore
 async function loadSettingsAndData(userId) {
@@ -845,10 +863,12 @@ async function loadSettingsAndData(userId) {
          updateExplanations();
          loadAllUserData();
          loadCustomThemes(); // Herlaad thema's, inclusief voor de bewerk-dropdown
+         updateNotificationPermissionStatus(); // Check and update on load
+
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
-                errorMessage.textContent = `Firestore Fout: ${error.message}`;
+        errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 }
@@ -980,11 +1000,7 @@ async function loadAllUserData() {
 
 // --- Function to send notification for a specific user ---
 async function sendNotificationForUser(targetUserId) {
-    if (Notification.permission !== 'granted') {
-        errorMessage.textContent = "Notificatie toestemming niet gegeven voor deze browser. Kan geen notificatie sturen.";
-        errorMessage.style.display = 'block';
-        return;
-    }
+    //Removed the notification permission. Because that check happens in loadSettingsData, and in the eventlistener
 
     const title = document.getElementById(`notification-title-${targetUserId}`).value;
     const body = document.getElementById(`notification-body-${targetUserId}`).value;
@@ -1189,6 +1205,9 @@ editThemeSelector.addEventListener('change', () => {
     }
 });
 
+notificationPermissionToggle.addEventListener('change', updateNotificationPermissionStatus); // Update status on toggle change
+
+
 createThemeButton.addEventListener('click', () => {
     themeModal.style.display = "block"; // Open modal
     // Reset modal fields when creating a NEW theme
@@ -1211,6 +1230,7 @@ saveCustomThemeButton.addEventListener('click', saveCustomTheme); // Corrected e
 
 // Initial load
 loadSettingsAndData(currentUserId);
+updateNotificationPermissionStatus(); // Check and update on initial load!
 
     </script>
 </body>
