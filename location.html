@@ -501,13 +501,15 @@
                 </div>
                 <div class="modal-input-row">
                     <label>Achtergrond Afbeelding:</label>
-                    <button type="button" id="upload-background-button" class="save-button">Upload Achtergrond Afbeelding</button> <br>
+                    <button type="button" id="upload-background-button" class="save-button">Upload Achtergrond Afbeelding</button>
+                    <span id="background-upload-status" style="display: none; margin-left: 10px; color: green;">Uploaded!</span> <br>
                     <img id="background-image-preview" src="" alt="Background Preview" style="max-width: 100px; max-height: 100px; margin-top: 5px; display: none;">
                     <input type="hidden" id="background-image-url" >
                 </div>
                 <div class="modal-input-row">
                     <label>Icoon Afbeelding:</label>
-                    <button type="button" id="upload-icon-button" class="save-button">Upload Icoon Afbeelding</button> <br>
+                    <button type="button" id="upload-icon-button" class="save-button">Upload Icoon Afbeelding</button>
+                    <span id="icon-upload-status" style="display: none; margin-left: 10px; color: green;">Uploaded!</span> <br>
                     <img id="icon-image-preview" src="" alt="Icon Preview" style="max-width: 100px; max-height: 100px; margin-top: 5px; display: none;">
                     <input type="hidden" id="icon-image-url" >
                 </div>
@@ -559,6 +561,8 @@ const uploadBackgroundButton = document.getElementById('upload-background-button
 const uploadIconButton = document.getElementById('upload-icon-button');       // Get upload buttons
 const backgroundImagePreview = document.getElementById('background-image-preview'); // Get preview elements
 const iconImagePreview = document.getElementById('icon-image-preview');           // Get preview elements
+const backgroundUploadStatus = document.getElementById('background-upload-status'); // Get status spans
+const iconUploadStatus = document.getElementById('icon-upload-status');         // Get status spans
 
 
 // --- Form Elements ---
@@ -636,7 +640,7 @@ async function saveCustomTheme() {
     console.log("saveCustomTheme function started");
     const themeName = themeNameInput.value.trim();
     const customText = customTextInput.value.trim();
-    let backgroundImageUrl = backgroundImageURLInput.value;
+    let backgroundImageUrl = backgroundImageURLInput.value; // Get URLs from hidden inputs
     let iconImageUrl = iconImageURLInput.value;
 
     console.log("Theme Name:", themeName);
@@ -647,83 +651,26 @@ async function saveCustomTheme() {
         return;
     }
 
-    let uploadBackground = false;
-    let uploadIcon = false;
 
-    if (backgroundImageFile.files && backgroundImageFile.files[0]) {
-        console.log("Background image file detected");
-        uploadBackground = true;
-    }
+    // let uploadBackground = false; // No longer needed
+    // let uploadIcon = false;     // No longer needed
 
-    if (iconImageFile.files && iconImageFile.files[0]) {
-        console.log("Icon image file detected");
-        uploadIcon = true;
-    }
+    // Remove or comment out these lines - they are no longer relevant
+    // if (backgroundImageFile.files && backgroundImageFile.files[0]) {
+    //     console.log("Background image file detected");
+    //     uploadBackground = true;
+    // }
+
+    // if (iconImageFile.files && iconImageFile.files[0]) {
+    //     console.log("Icon image file detected");
+    //     uploadIcon = true;
+    // }
+
+    let uploadBackground = !!backgroundImageUrl; // Check if URL is present instead
+    let uploadIcon = !!iconImageUrl;          // Check if URL is present instead
+
 
     try {
-        if (uploadBackground) {
-            console.log("Starting background image upload");
-            const uploadResultBackground = await new Promise((resolve, reject) => {
-                const widget = cloudinary.openUploadWidget({
-                    cloudName: cloudName,
-                    uploadPreset: uploadPreset,
-                    sources: ["local"],
-                    resource_type: 'image',
-                    tags: ['theme_backgrounds'],
-                    folder: 'theme_backgrounds'
-                }, function widgetCallbackBackground(error, result) { // Named callback for clarity
-                    console.log("Cloudinary Widget Callback (Background) - ERROR:", error);
-                    console.log("Cloudinary Widget Callback (Background) - RESULT:", result);
-                    if (error) {
-                        console.error("Cloudinary upload error (background):", error);
-                        reject(error);
-                    } else if (result && result.event === "success") {
-                        backgroundImageFile.value = '';
-                        resolve(result);
-                    } else {
-                        const rejectionError = new Error(`Cloudinary upload failed or cancelled (background) - Event: ${result ? result.event : 'unknown'}`);
-                        console.log("Cloudinary upload: not success or error (background)", result ? result.event : 'no result', rejectionError);
-                        reject(rejectionError);
-                    }
-                });
-                widget.open();
-            });
-            backgroundImageUrl = uploadResultBackground.info.secure_url;
-            backgroundImageURLInput.value = backgroundImageUrl;
-        }
-
-        if (uploadIcon) {
-            console.log("Starting icon image upload");
-            const uploadResultIcon = await new Promise((resolve, reject) => {
-                const widgetIcon = cloudinary.openUploadWidget({
-                    cloudName: cloudName,
-                    uploadPreset: uploadPreset,
-                    sources: ["local"],
-                    resource_type: 'image',
-                    tags: ['theme_icons'],
-                    folder: 'theme_icons'
-                }, function widgetCallbackIcon(error, result) { // Named callback for clarity
-                    console.log("Cloudinary Widget Callback (Icon) - ERROR:", error);
-                    console.log("Cloudinary Widget Callback (Icon) - RESULT:", result);
-
-                    if (error) {
-                        console.error("Cloudinary upload error (icon):", error);
-                        reject(error);
-                    } else if (result && result.event === "success") {
-                        iconImageFile.value = '';
-                        resolve(result);
-                    } else {
-                        const rejectionError = new Error(`Cloudinary upload failed or cancelled (icon) - Event: ${result ? result.event : 'unknown'}`);
-                        console.log("Cloudinary upload: not success or error (icon)", result ? result.event : 'no result', rejectionError);
-                        reject(rejectionError);
-                    }
-                });
-                widgetIcon.open();
-            });
-            iconImageUrl = uploadResultIcon.info.secure_url;
-            iconImageURLInput.value = iconImageUrl;
-        }
-
         const themeData = {
             backgroundImageUrl: backgroundImageUrl,
             iconImageUrl: iconImageUrl,
@@ -767,7 +714,7 @@ async function saveCustomTheme() {
         errorMessage.style.display = 'block';
     }
 }
-        
+
 async function uploadImage(imageType) { // imageType can be 'background' or 'icon'
     return new Promise((resolve, reject) => {
         const widget = cloudinary.openUploadWidget({
@@ -1265,7 +1212,7 @@ createThemeButton.addEventListener('click', () => {
     backgroundImageURLInput.value = '';
     iconImageURLInput.value = '';
     customTextInput.value = '';
-    backgroundImagePreview.src = ''; // Clear preview images
+    backgroundImagePreview.src = '';
     backgroundImagePreview.style.display = 'none';
     iconImagePreview.src = '';
     iconImagePreview.style.display = 'none';
@@ -1284,7 +1231,9 @@ uploadBackgroundButton.addEventListener('click', async () => {
         const uploadResult = await uploadImage('background');
         backgroundImageURLInput.value = uploadResult.info.secure_url;
         backgroundImagePreview.src = uploadResult.info.secure_url;
-        backgroundImagePreview.style.display = 'block'; // Show preview
+        backgroundImagePreview.style.display = 'block';
+        backgroundUploadStatus.style.display = 'inline'; // Show "Uploaded!" text
+        setTimeout(() => { backgroundUploadStatus.style.display = 'none'; }, 3000); // Hide after 3 seconds
     } catch (error) {
         console.error("Background image upload failed:", error);
         errorMessage.textContent = `Fout bij uploaden achtergrond afbeelding: ${error.message}`;
@@ -1297,7 +1246,9 @@ uploadIconButton.addEventListener('click', async () => {
         const uploadResult = await uploadImage('icon');
         iconImageURLInput.value = uploadResult.info.secure_url;
         iconImagePreview.src = uploadResult.info.secure_url;
-        iconImagePreview.style.display = 'block'; // Show preview
+        iconImagePreview.style.display = 'block';
+        iconUploadStatus.style.display = 'inline'; // Show "Uploaded!" text
+        setTimeout(() => { iconUploadStatus.style.display = 'none'; }, 3000); // Hide after 3 seconds
     } catch (error) {
         console.error("Icon image upload failed:", error);
         errorMessage.textContent = `Fout bij uploaden icoon afbeelding: ${error.message}`;
