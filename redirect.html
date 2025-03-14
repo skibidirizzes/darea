@@ -134,7 +134,15 @@
     </div>
 
 <script>
-const firebaseConfig = {
+
+    // Inside redirect.html's <script> tag:
+function displayError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+    setTimeout(() => { errorMessage.style.display = 'none'; }, 5000); // Hide after 5 seconds
+}
+    
+    const firebaseConfig = {
     apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // REPLACE
     authDomain: "loctrac-8d7ef.firebaseapp.com",       // REPLACE
     projectId: "loctrac-8d7ef",                         // REPLACE
