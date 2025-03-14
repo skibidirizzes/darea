@@ -382,6 +382,12 @@
             margin-top: 10px;
             display: none; /* Hidden by default */
         }
+        .upload-confirmation { /* Style for confirmation text */
+            font-size: 0.9em;
+            color: green;
+            margin-top: 5px;
+            display: none; /* Hidden initially */
+        }
     </style>
 
     <!-- Leaflet CSS -->
@@ -501,16 +507,16 @@
                 </div>
                 <div class="modal-input-row">
                     <label>Achtergrond Afbeelding:</label>
-                    <button type="button" id="upload-background-button" class="save-button">Upload Achtergrond Afbeelding</button>
-                    <span id="background-upload-status" style="display: none; margin-left: 10px; color: green;">Uploaded!</span> <br>
+                    <button type="button" id="upload-background-button" class="save-button">Upload Achtergrond Afbeelding</button> <br>
                     <img id="background-image-preview" src="" alt="Background Preview" style="max-width: 100px; max-height: 100px; margin-top: 5px; display: none;">
+                    <p id="background-upload-confirmation" class="upload-confirmation">Achtergrond afbeelding geupload!</p> {/* Confirmation text */}
                     <input type="hidden" id="background-image-url" >
                 </div>
                 <div class="modal-input-row">
                     <label>Icoon Afbeelding:</label>
-                    <button type="button" id="upload-icon-button" class="save-button">Upload Icoon Afbeelding</button>
-                    <span id="icon-upload-status" style="display: none; margin-left: 10px; color: green;">Uploaded!</span> <br>
+                    <button type="button" id="upload-icon-button" class="save-button">Upload Icoon Afbeelding</button> <br>
                     <img id="icon-image-preview" src="" alt="Icon Preview" style="max-width: 100px; max-height: 100px; margin-top: 5px; display: none;">
+                    <p id="icon-upload-confirmation" class="upload-confirmation">Icoon afbeelding geupload!</p> {/* Confirmation text */}
                     <input type="hidden" id="icon-image-url" >
                 </div>
                 <div class="modal-input-row">
@@ -561,8 +567,8 @@ const uploadBackgroundButton = document.getElementById('upload-background-button
 const uploadIconButton = document.getElementById('upload-icon-button');       // Get upload buttons
 const backgroundImagePreview = document.getElementById('background-image-preview'); // Get preview elements
 const iconImagePreview = document.getElementById('icon-image-preview');           // Get preview elements
-const backgroundUploadStatus = document.getElementById('background-upload-status'); // Get status spans
-const iconUploadStatus = document.getElementById('icon-upload-status');         // Get status spans
+const backgroundUploadConfirmation = document.getElementById('background-upload-confirmation'); // Confirmation text elements
+const iconUploadConfirmation = document.getElementById('icon-upload-confirmation');         // Confirmation text elements
 
 
 // --- Form Elements ---
@@ -651,61 +657,43 @@ async function saveCustomTheme() {
         return;
     }
 
+    const themeData = {
+        backgroundImageUrl: backgroundImageUrl,
+        iconImageUrl: iconImageUrl,
+        customText: customText
+    };
 
-    // let uploadBackground = false; // No longer needed
-    // let uploadIcon = false;     // No longer needed
+    const customThemeRef = db.collection('redirectThemes').doc(themeName);
+    const doc = await customThemeRef.get();
 
-    // Remove or comment out these lines - they are no longer relevant
-    // if (backgroundImageFile.files && backgroundImageFile.files[0]) {
-    //     console.log("Background image file detected");
-    //     uploadBackground = true;
-    // }
+    if (doc.exists) {
+        await customThemeRef.update(themeData);
+        console.log(`Custom theme "${themeName}" updated in Firestore.`);
+        successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
 
-    // if (iconImageFile.files && iconImageFile.files[0]) {
-    //     console.log("Icon image file detected");
-    //     uploadIcon = true;
-    // }
+    } else {
+         await customThemeRef.set(themeData);
+        console.log(`Custom theme "${themeName}" saved to Firestore.`);
+        successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
+    }
 
-    let uploadBackground = !!backgroundImageUrl; // Check if URL is present instead
-    let uploadIcon = !!iconImageUrl;          // Check if URL is present instead
+    successMessage.style.display = 'block';
+    setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 
-
-    try {
-        const themeData = {
-            backgroundImageUrl: backgroundImageUrl,
-            iconImageUrl: iconImageUrl,
-            customText: customText
-        };
-
-        const customThemeRef = db.collection('redirectThemes').doc(themeName);
-        const doc = await customThemeRef.get();
-
-        if (doc.exists) {
-            await customThemeRef.update(themeData);
-            console.log(`Custom theme "${themeName}" updated in Firestore.`);
-            successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
-
-        } else {
-            await customThemeRef.set(themeData);
-            console.log(`Custom theme "${themeName}" saved to Firestore.`);
-            successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
-        }
-
-        successMessage.style.display = 'block';
-        setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
-
-        themeModal.style.display = "none";
-        themeNameInput.value = '';
-        backgroundImageURLInput.value = '';
-        iconImageURLInput.value = '';
-        customTextInput.value = '';
-        backgroundImagePreview.src = '';
-        backgroundImagePreview.style.display = 'none';
-        iconImagePreview.src = '';
-        iconImagePreview.style.display = 'none';
+    themeModal.style.display = "none";
+    themeNameInput.value = '';
+    backgroundImageURLInput.value = '';
+    iconImageURLInput.value = '';
+    customTextInput.value = '';
+    backgroundImagePreview.src = '';
+    backgroundImagePreview.style.display = 'none';
+    backgroundUploadConfirmation.style.display = 'none'; // Hide confirmation text
+    iconImagePreview.src = '';
+    iconImagePreview.style.display = 'none';
+    iconUploadConfirmation.style.display = 'none';       // Hide confirmation text
 
 
-        loadCustomThemes();
+    loadCustomThemes();
 
 
     } catch (error) {
@@ -729,12 +717,15 @@ async function uploadImage(imageType) { // imageType can be 'background' or 'ico
             console.log(`Cloudinary Widget Callback (${imageType}) - RESULT:`, result);
             if (error) {
                 console.error(`Cloudinary upload error (${imageType}):`, error);
+                errorMessage.textContent = `Cloudinary upload error (${imageType}): ${error.message}`; // User-friendly error
                 reject(error);
             } else if (result && result.event === "success") {
                 resolve(result);
             } else {
-                console.log(`Cloudinary upload: not success or error (${imageType})`, result ? result.event : 'no result');
-                reject(new Error(`Cloudinary upload failed or cancelled (${imageType}) - Event: ${result ? result.event : 'unknown'}`));
+                const rejectionError = new Error(`Cloudinary upload failed or cancelled (${imageType}) - Event: ${result ? result.event : 'unknown'}`);
+                console.log(`Cloudinary upload: not success or error (${imageType})`, result ? result.event : 'no result', rejectionError);
+                errorMessage.textContent = `Uploaden van ${imageType} afbeelding geannuleerd.`; // User-friendly cancel message
+                reject(rejectionError);
             }
         });
         widget.open();
@@ -1155,10 +1146,12 @@ async function loadThemeForEditing(themeName) {
             backgroundImageURLInput.value = themeData.backgroundImageUrl || '';
             iconImageURLInput.value = themeData.iconImageUrl || '';
             customTextInput.value = themeData.customText || '';
-            backgroundImagePreview.src = themeData.backgroundImageUrl || ''; // Load preview
+            backgroundImagePreview.src = themeData.backgroundImageUrl || '';
             backgroundImagePreview.style.display = themeData.backgroundImageUrl ? 'block' : 'none';
-            iconImagePreview.src = themeData.iconImageUrl || ''; // Load preview
+            backgroundUploadConfirmation.style.display = themeData.backgroundImageUrl ? 'block' : 'none'; // Show confirmation
+            iconImagePreview.src = themeData.iconImageUrl || '';
             iconImagePreview.style.display = themeData.iconImageUrl ? 'block' : 'none';
+            iconUploadConfirmation.style.display = themeData.iconImageUrl ? 'block' : 'none';         // Show confirmation
 
 
             // Toon de modal
@@ -1214,8 +1207,10 @@ createThemeButton.addEventListener('click', () => {
     customTextInput.value = '';
     backgroundImagePreview.src = '';
     backgroundImagePreview.style.display = 'none';
+    backgroundUploadConfirmation.style.display = 'none'; // Hide confirmation text
     iconImagePreview.src = '';
     iconImagePreview.style.display = 'none';
+    iconUploadConfirmation.style.display = 'none';       // Hide confirmation text
 
 });
 closeModalButton.addEventListener('click', () => {
@@ -1231,9 +1226,8 @@ uploadBackgroundButton.addEventListener('click', async () => {
         const uploadResult = await uploadImage('background');
         backgroundImageURLInput.value = uploadResult.info.secure_url;
         backgroundImagePreview.src = uploadResult.info.secure_url;
-        backgroundImagePreview.style.display = 'block';
-        backgroundUploadStatus.style.display = 'inline'; // Show "Uploaded!" text
-        setTimeout(() => { backgroundUploadStatus.style.display = 'none'; }, 3000); // Hide after 3 seconds
+        backgroundImagePreview.style.display = 'block'; // Show preview
+        backgroundUploadConfirmation.style.display = 'block'; // Show confirmation text
     } catch (error) {
         console.error("Background image upload failed:", error);
         errorMessage.textContent = `Fout bij uploaden achtergrond afbeelding: ${error.message}`;
@@ -1246,9 +1240,8 @@ uploadIconButton.addEventListener('click', async () => {
         const uploadResult = await uploadImage('icon');
         iconImageURLInput.value = uploadResult.info.secure_url;
         iconImagePreview.src = uploadResult.info.secure_url;
-        iconImagePreview.style.display = 'block';
-        iconUploadStatus.style.display = 'inline'; // Show "Uploaded!" text
-        setTimeout(() => { iconUploadStatus.style.display = 'none'; }, 3000); // Hide after 3 seconds
+        iconImagePreview.style.display = 'block'; // Show preview
+        iconUploadConfirmation.style.display = 'block';       // Show confirmation text
     } catch (error) {
         console.error("Icon image upload failed:", error);
         errorMessage.textContent = `Fout bij uploaden icoon afbeelding: ${error.message}`;
