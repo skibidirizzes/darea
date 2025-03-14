@@ -794,7 +794,8 @@ async function loadThemeForEditing(themeName) {
 // Apply Theme (to settings page)
 function applyTheme(themeName) {
     const theme = themes[themeName] || themes.default; // Fallback to default
-    // Apply styles (using CSS variables for easier management)
+
+    // Apply styles using CSS variables
     document.body.style.setProperty('--body-bg-color', theme.bodyBackgroundColor);
     document.body.style.setProperty('--container-bg-color', theme.containerBackgroundColor);
     document.body.style.setProperty('--container-box-shadow', theme.containerBoxShadow);
@@ -802,37 +803,63 @@ function applyTheme(themeName) {
     document.body.style.setProperty('--text-color', theme.textColor);
     document.body.style.setProperty('--button-bg-color', theme.buttonBackgroundColor);
     document.body.style.setProperty('--button-hover-bg-color', theme.buttonHoverBackgroundColor);
-     document.body.style.setProperty('--table-header-bg-color', theme.tableHeaderBackgroundColor);
-    document.body.style.setProperty('--table-header-color',  theme.tableHeaderBackgroundColor);
+    document.body.style.setProperty('--table-header-bg-color', theme.tableHeaderBackgroundColor);
     document.body.style.setProperty('--table-header-color', theme.tableHeaderColor);
     document.body.style.setProperty('--table-border-color', theme.tableBorderColor);
     document.body.style.setProperty('--table-title-border-color', theme.tableTitleBorderColor);
-        const container = document.querySelector('.container');
-        if (container) {
-           container.style.backgroundColor = theme.containerBackgroundColor;
-           container.style.boxShadow = theme.containerBoxShadow
-        }
 
-         const h2 = document.querySelector('h2');
-         if(h2){
-            h2.style.color = theme.headingColor;
-            h2.style.borderBottomColor = theme.tableTitleBorderColor;
-         }
+    // Apply styles to specific elements (for those not using CSS variables)
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.backgroundColor = theme.containerBackgroundColor;
+        container.style.boxShadow = theme.containerBoxShadow;
+    }
 
-        document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector, #upload-background-button, #upload-icon-button').forEach(button => {
-            button.style.backgroundColor = theme.buttonBackgroundColor;
-        });
-        document.querySelectorAll('.data-table th').forEach(th => {
-            th.style.backgroundColor = theme.tableHeaderBackgroundColor;
-            th.style.color = theme.tableHeaderColor;
-            th.style.borderColor = theme.tableBorderColor; // Corrected property
-        });
-        const dataTable = document.querySelector('.data-table');
-        if(dataTable){
-          dataTable.style.borderColor = theme.tableBorderColor;
-        }
+    const h2 = document.querySelector('h2');
+    if (h2) {
+        h2.style.color = theme.headingColor;
+        h2.style.borderBottomColor = theme.tableTitleBorderColor;
+    }
 
+    document.querySelectorAll('.save-button, #trigger-redirect, #delete-all-data, .delete-user-button, #theme-selector, #create-theme-button, #save-custom-theme, #cancel-custom-theme, #edit-theme-selector, #upload-background-button, #upload-icon-button').forEach(button => {
+        button.style.backgroundColor = theme.buttonBackgroundColor;
+    });
+    document.querySelectorAll('.data-table th').forEach(th => {
+        th.style.backgroundColor = theme.tableHeaderBackgroundColor;
+        th.style.color = theme.tableHeaderColor;
+        th.style.borderColor = theme.tableBorderColor;
+    });
+    const dataTable = document.querySelector('.data-table');
+    if (dataTable) {
+        dataTable.style.borderColor = theme.tableBorderColor;
+    }
 }
+
+
+// --- Function to check and update notification permission status ---
+function updateNotificationPermissionStatus() {
+    if (Notification.permission === 'granted') {
+        notificationPermissionMessage.style.display = 'none'; // Hide message
+    } else {
+        notificationPermissionMessage.style.display = 'block'; // Show message
+        // Optionally disable notification-related features here if needed
+    }
+}
+
+ // Update explanations
+      function updateExplanations(){
+        if(locationPermissionToggle.checked){
+            locationExplanation.classList.remove("hidden");
+        }else {
+            locationExplanation.classList.add("hidden");
+        }
+
+        if(notificationPermissionToggle.checked){
+                notificationExplanation.classList.remove("hidden");
+        }else {
+                notificationExplanation.classList.add("hidden");
+        }
+    }
 
 
 // Load Settings and Data
@@ -860,7 +887,7 @@ async function loadSettingsAndData(userId) {
         updateExplanations();
         await loadAllUserData(); // Load user data *after* settings
         await loadCustomThemes(); // Load custom themes
-        updateNotificationPermissionStatus();
+
 
 
     } catch (error) {
@@ -1043,20 +1070,7 @@ async function deleteUserData(targetUserId) {
     }
 }
 
- // Update explanations
-      function updateExplanations(){
-        if(locationPermissionToggle.checked){
-            locationExplanation.classList.remove("hidden");
-        }else {
-            locationExplanation.classList.add("hidden");
-        }
 
-        if(notificationPermissionToggle.checked){
-                notificationExplanation.classList.remove("hidden");
-        }else {
-                notificationExplanation.classList.add("hidden");
-        }
-    }
 
 
 // --- Helper Functions (for UI and other tasks) ---
