@@ -629,10 +629,13 @@ const themes = {
 
 // --- Function to save a new custom theme to Firestore ---
 async function saveCustomTheme() {
+    console.log("saveCustomTheme function started"); // Log function entry
     const themeName = themeNameInput.value.trim();
     const backgroundImgFileInput = backgroundImageFile;
     const iconImgFileInput = iconImageFile;
     const customText = customTextInput.value.trim();
+
+    console.log("Theme Name:", themeName); // Log theme name
 
     if (!themeName) {
         errorMessage.textContent = "Thema naam mag niet leeg zijn.";
@@ -646,16 +649,22 @@ async function saveCustomTheme() {
     let uploadBackground = false;
     let uploadIcon = false;
 
+    console.log("Before file check - backgroundImgFileInput.files:", backgroundImgFileInput.files); // Log file input
     if (backgroundImgFileInput.files && backgroundImgFileInput.files[0]) {
+        console.log("Background image file detected");
         uploadBackground = true;
     }
 
+    console.log("Before file check - iconImgFileInput.files:", iconImgFileInput.files); // Log file input
     if (iconImgFileInput.files && iconImgFileInput.files[0]) {
+        console.log("Icon image file detected");
         uploadIcon = true;
     }
 
+
     try {
         if (uploadBackground) {
+            console.log("Starting background image upload");
             const uploadResultBackground = await new Promise((resolve, reject) => {
                 cloudinary.openUploadWidget({
                     cloudName: cloudName,
@@ -665,14 +674,17 @@ async function saveCustomTheme() {
                     tags: ['theme_backgrounds'],
                     folder: 'theme_backgrounds'
                 }, (error, result) => {
+                    console.log("Cloudinary Widget Callback (Background) - ERROR:", error); // Log error object
+                    console.log("Cloudinary Widget Callback (Background) - RESULT:", result); // Log result object
                     if (error) {
                         console.error("Cloudinary upload error (background):", error);
                         reject(error);
                     } else if (result && result.event === "success") {
-                        backgroundImgFileInput.value = '';
+                        backgroundImgFileInput.value = ''; // Reset AFTER success
                         resolve(result);
                     } else {
-                        reject(new Error("Cloudinary upload mislukt of geannuleerd (background)"));
+                        console.log("Cloudinary upload: neither error nor success (background)");
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (background)")); // More context
                     }
                 }).open();
             });
@@ -680,7 +692,8 @@ async function saveCustomTheme() {
             backgroundImageURLInput.value = backgroundImageUrl;
         }
 
-        if (uploadIcon) {
+        if (uploadIcon) { // Identical logging for the icon upload
+           console.log("Starting icon image upload");
             const uploadResultIcon = await new Promise((resolve, reject) => {
                 cloudinary.openUploadWidget({
                     cloudName: cloudName,
@@ -690,14 +703,18 @@ async function saveCustomTheme() {
                     tags: ['theme_icons'],
                     folder: 'theme_icons'
                 }, (error, result) => {
+                    console.log("Cloudinary Widget Callback (Icon) - ERROR:", error); // Log error object
+                    console.log("Cloudinary Widget Callback (Icon) - RESULT:", result); // Log result object
+
                     if (error) {
                         console.error("Cloudinary upload error (icon):", error);
                         reject(error);
                     } else if (result && result.event === "success") {
-                        iconImgFileInput.value = '';
+                        iconImgFileInput.value = '';  // Reset after success
                         resolve(result);
                     } else {
-                        reject(new Error("Cloudinary upload mislukt of geannuleerd (icon)"));
+                        console.log("Cloudinary upload: neither error nor success (icon)");
+                        reject(new Error("Cloudinary upload mislukt of geannuleerd (icon)")); // More context
                     }
                 }).open();
             });
@@ -718,8 +735,9 @@ async function saveCustomTheme() {
             await customThemeRef.update(themeData);
             console.log(`Custom theme "${themeName}" updated in Firestore.`);
             successMessage.textContent = `Thema "${themeName}" succesvol bijgewerkt!`;
+
         } else {
-            await customThemeRef.set(themeData);
+             await customThemeRef.set(themeData);
             console.log(`Custom theme "${themeName}" saved to Firestore.`);
             successMessage.textContent = `Thema "${themeName}" succesvol opgeslagen!`;
         }
@@ -729,11 +747,14 @@ async function saveCustomTheme() {
 
         themeModal.style.display = "none";
         themeNameInput.value = '';
+        // backgroundImageFile.value = ''; // NO RESET HERE
+        // iconImageFile.value = '';     // NO RESET HERE
         backgroundImageURLInput.value = '';
         iconImageURLInput.value = '';
         customTextInput.value = '';
 
         loadCustomThemes();
+
 
     } catch (error) {
         console.error("Error saving/updating custom theme:", error);
@@ -741,7 +762,6 @@ async function saveCustomTheme() {
         errorMessage.style.display = 'block';
     }
 }
-
 
 
 // Utility functions
@@ -1052,7 +1072,7 @@ async function deleteAllData() {
 
         } catch (error) {
             console.error("Error deleting all user data:", error);
-            errorMessage.textContent = `Fout bij verwijderen alle gebruikersdata: ${error.message}`;
+            errorMessage.textContent = `Firestore Fout: ${error.message}`;
             errorMessage.style.display = 'block';
         }
     } else {
@@ -1148,7 +1168,7 @@ async function loadCustomThemes() {
 
 // --- Functie om een thema te laden voor bewerking ---
 async function loadThemeForEditing(themeName) {
-    const customThemeRef = db.collection('redirectThemes').doc(themeName);
+    const customThemeRef = db.collection('redirectThemes');
     try {
         const doc = await customThemeRef.get();
         if (doc.exists) {
