@@ -643,6 +643,7 @@ async function getNextUserId() {
 
 // Upload image to Cloudinary (reusable)
 // Upload image to Cloudinary (reusable)
+// Upload image to Cloudinary (reusable)
 async function uploadImage(imageType) {
     return new Promise((resolve, reject) => {
         const widget = cloudinary.openUploadWidget({
@@ -670,9 +671,11 @@ async function uploadImage(imageType) {
                 } else if (result && result.event === 'close') {
                      console.log(`Cloudinary widget closed without upload (${imageType}).`);
                     resolve(null); // Resolve with null if just closed, no real error
-                }
-                else if (result && result.event === 'display-changed' || result && result.event === 'source-changed') {
+                } else if (result && result.event === 'display-changed' || result && result.event === 'source-changed') {
                     console.log(`Cloudinary widget state changed (${imageType}) - Event: ${result.event}. Ignoring.`);
+                    resolve(null); // Resolve with null, not an error in this context
+                } else if (result && result.event === 'queues-end') {
+                    console.log(`Cloudinary upload queues finished (${imageType}) - Event: ${result.event}. Ignoring.`);
                     resolve(null); // Resolve with null, not an error in this context
                 }
                 else {
@@ -686,7 +689,6 @@ async function uploadImage(imageType) {
         widget.open();
     });
 }
-
 // Save/Update Custom Theme
 async function saveCustomTheme() {
     const themeName = themeNameInput.value.trim();
