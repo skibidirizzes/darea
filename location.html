@@ -1,10 +1,10 @@
-<!-- location.html (Minor changes) -->
+<!-- location.html (Complete with Corrections) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <!-- ... (All your existing head content, styles, and Firebase/Cloudinary config) ... -->
      <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale= 1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
         /* (All your existing styles, *NO CHANGES NEEDED HERE*) */
@@ -166,7 +166,7 @@
             margin-bottom: 20px;
         }
 
-        
+
         .data-table {
             border: none;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -639,58 +639,8 @@ async function getNextUserId() {
     }
 }
 
-// --- Core Functionality ---
-
-// Upload image to Cloudinary (reusable)
-// Upload image to Cloudinary (reusable)
-// Upload image to Cloudinary (reusable)
-async function uploadImage(imageType) {
-    return new Promise((resolve, reject) => {
-        const widget = cloudinary.openUploadWidget({
-            cloudName: cloudName,
-            uploadPreset: uploadPreset,
-            sources: ["local"],
-            resource_type: 'image',
-            tags: [`theme_${imageType}s`],
-            folder: `theme_${imageType}s`
-        }, (error, result) => {
-            if (error) {
-                console.error(`Cloudinary upload error (${imageType}):`, error);
-                errorMessage.textContent = `Cloudinary upload error (${imageType}): ${error.message}`;
-                reject(error);
-            } else if (result && result.event === "success") {
-                resolve(result.info.secure_url);
-            } else {
-                // Handle cases that are NOT "success" and NOT "error" more gracefully
-                console.log(`Cloudinary upload: non-success event (${imageType}) - Event: ${result ? result.event : 'unknown'}`);
-
-                if (result && result.event === 'abort') {
-                    console.log(`Cloudinary upload aborted by user (${imageType}).`);
-                    errorMessage.textContent = `Uploaden van ${imageType} afbeelding geannuleerd.`; // Optional user feedback
-                    reject(new Error(`Cloudinary upload cancelled by user (${imageType}) - Event: ${result.event}`)); // Still reject, but with a more specific message
-                } else if (result && result.event === 'close') {
-                     console.log(`Cloudinary widget closed without upload (${imageType}).`);
-                    resolve(null); // Resolve with null if just closed, no real error
-                } else if (result && result.event === 'display-changed' || result && result.event === 'source-changed') {
-                    console.log(`Cloudinary widget state changed (${imageType}) - Event: ${result.event}. Ignoring.`);
-                    resolve(null); // Resolve with null, not an error in this context
-                } else if (result && result.event === 'queues-end') {
-                    console.log(`Cloudinary upload queues finished (${imageType}) - Event: ${result.event}. Ignoring.`);
-                    resolve(null); // Resolve with null, not an error in this context
-                }
-                else {
-                     const rejectionError = new Error(`Cloudinary upload cancelled or failed (${imageType}) - Event: ${result ? result.event : 'unknown'}`);
-                     console.log(`Cloudinary upload: unknown non-success event (${imageType})`, result ? result.event : 'no result', rejectionError);
-                     errorMessage.textContent = `Uploaden van ${imageType} afbeelding geannuleerd.`;
-                     reject(rejectionError); // Fallback reject for other unexpected non-success events
-                }
-            }
-        });
-        widget.open();
-    });
-}
-// Save/Update Custom Theme
-async function saveCustomTheme() {
+// Save/Update Custom Theme (Modified to accept a 'saveNow' flag)
+async function saveCustomTheme(saveNow = true) { // Default to saving
     const themeName = themeNameInput.value.trim();
     const customText = customTextInput.value.trim();
     const backgroundImageUrl = backgroundImageURLInput.value; // Get URL from hidden input
@@ -698,17 +648,17 @@ async function saveCustomTheme() {
 
     if (!themeName) {
         displayError("Thema naam mag niet leeg zijn.");
-        return;
+        return null; // Return null on error
     }
 
     // Validate URLs (basic check)
     if (backgroundImageUrl && !isValidHttpUrl(backgroundImageUrl)) {
         displayError("Ongeldige URL voor achtergrondafbeelding.");
-        return;
+        return null;
     }
-     if (iconImageUrl && !isValidHttpUrl(iconImageUrl)) {
+    if (iconImageUrl && !isValidHttpUrl(iconImageUrl)) {
         displayError("Ongeldige URL voor icoonafbeelding.");
-        return;
+        return null;
     }
 
     const themeData = {
@@ -717,25 +667,29 @@ async function saveCustomTheme() {
         customText: customText
     };
 
-    try {
-        const customThemeRef = db.collection('redirectThemes').doc(themeName);
-        const doc = await customThemeRef.get();
+    if (saveNow) {
+        try {
+            const customThemeRef = db.collection('redirectThemes').doc(themeName);
+            const doc = await customThemeRef.get();
 
-        if (doc.exists) {
-            await customThemeRef.update(themeData);
-            displaySuccess(`Thema "${themeName}" succesvol bijgewerkt!`);
-        } else {
-            await customThemeRef.set(themeData);
-            displaySuccess(`Thema "${themeName}" succesvol opgeslagen!`);
+            if (doc.exists) {
+                await customThemeRef.update(themeData);
+                displaySuccess(`Thema "${themeName}" succesvol bijgewerkt!`);
+            } else {
+                await customThemeRef.set(themeData);
+                displaySuccess(`Thema "${themeName}" succesvol opgeslagen!`);
+            }
+
+            resetThemeModal(); // Clear and hide modal
+            loadCustomThemes(); // Reload theme list
+
+        } catch (error) {
+            console.error("Error saving/updating custom theme:", error);
+            displayError(`Fout bij opslaan/bijwerken thema: ${error.message}`);
+            return null; // Return null on error
         }
-
-        resetThemeModal(); // Clear and hide modal
-        loadCustomThemes(); // Reload theme list
-
-    } catch (error) {
-        console.error("Error saving/updating custom theme:", error);
-        displayError(`Fout bij opslaan/bijwerken thema: ${error.message}`);
     }
+    return themeData; // Return the theme data (useful for immediate preview)
 }
 
 // Load Custom Themes into Selectors
@@ -1159,31 +1113,108 @@ function handleCancelCustomThemeButtonClick() {
 }
 
 function handleSaveCustomThemeButtonClick() {
-    saveCustomTheme(); // No .catch() here, handled inside saveCustomTheme
+    saveCustomTheme(); // Call the saveCustomTheme, which saves directly.
 }
+
 async function handleUploadBackgroundButtonClick() {
-    try {
-        const imageUrl = await uploadImage('background');
-        backgroundImageURLInput.value = imageUrl; // Store URL
-        setPreviewImage(backgroundImagePreview, imageUrl, backgroundUploadConfirmation); // Show preview
-    } catch (error) {
-        console.error("Background image upload failed:", error);
-        // Error handling is now *inside* `uploadImage`.
-    }
+      const widget = cloudinary.openUploadWidget({
+            cloudName: cloudName,
+            uploadPreset: uploadPreset,
+            sources: ["local"],
+            resource_type: 'image',
+            tags: [`theme_backgrounds`],
+            folder: `theme_backgrounds`
+        }, async (error, result) => { // IMPORTANT: Make this callback async
+            if (error) {
+                console.error(`Cloudinary upload error (background):`, error);
+                errorMessage.textContent = `Cloudinary upload error (background): ${error.message}`;
+                return; // Stop here on error.
+            }
+            if (result && result.event === "success") {
+                const imageUrl = result.info.secure_url;
+                backgroundImageURLInput.value = imageUrl; // Store URL
+                setPreviewImage(backgroundImagePreview, imageUrl, backgroundUploadConfirmation); // Show preview
+            }
+             else {
+                // Handle cases that are NOT "success" and NOT "error" more gracefully
+                console.log(`Cloudinary upload: non-success event (background) - Event: ${result ? result.event : 'unknown'}`);
+
+                if (result && result.event === 'abort') {
+                    console.log(`Cloudinary upload aborted by user (background).`);
+                    errorMessage.textContent = `Uploaden van achtergrond afbeelding geannuleerd.`; // Optional user feedback
+                   // Still reject, but with a more specific message
+                } else if (result && result.event === 'close') {
+                     console.log(`Cloudinary widget closed without upload (background).`);
+                    // Resolve with null if just closed, no real error
+                } else if (result && result.event === 'display-changed' || result && result.event === 'source-changed') {
+                    console.log(`Cloudinary widget state changed (background) - Event: ${result.event}. Ignoring.`);
+                    // Resolve with null, not an error in this context
+                } else if (result && result.event === 'queues-end') {
+                    console.log(`Cloudinary upload queues finished (background) - Event: ${result.event}. Ignoring.`);
+                    // Resolve with null, not an error in this context
+                }
+                else {
+                     const rejectionError = new Error(`Cloudinary upload cancelled or failed (background) - Event: ${result ? result.event : 'unknown'}`);
+                     console.log(`Cloudinary upload: unknown non-success event (background)`, result ? result.event : 'no result', rejectionError);
+                     errorMessage.textContent = `Uploaden van background afbeelding geannuleerd.`;
+                    // Fallback reject for other unexpected non-success events
+                }
+            }
+        });
+        widget.open();
 }
+
 
 async function handleUploadIconButtonClick() {
-    try {
-        const imageUrl = await uploadImage('icon');
-        iconImageURLInput.value = imageUrl;  // Store URL
-        setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation);  // Show preview
+      const widget = cloudinary.openUploadWidget({
+            cloudName: cloudName,
+            uploadPreset: uploadPreset,
+            sources: ["local"],
+            resource_type: 'image',
+            tags: [`theme_icons`],
+            folder: `theme_icons`
+        }, async (error, result) => { // IMPORTANT: Make this callback async
+            if (error) {
+                console.error(`Cloudinary upload error (icon):`, error);
+                errorMessage.textContent = `Cloudinary upload error (icon): ${error.message}`;
+                return; // Stop here on error
+            }
+            if (result && result.event === "success") {
+                const imageUrl = result.info.secure_url;
+                iconImageURLInput.value = imageUrl;  // Store URL
+                setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation);  // Show preview
 
-    } catch (error) {
-        console.error("Icon image upload failed:", error);
-        //Error handling is now *inside* `uploadImage`.
-    }
+            }
+             else {
+                // Handle cases that are NOT "success" and NOT "error" more gracefully
+                console.log(`Cloudinary upload: non-success event (icon) - Event: ${result ? result.event : 'unknown'}`);
+
+                if (result && result.event === 'abort') {
+                    console.log(`Cloudinary upload aborted by user (icon).`);
+                    errorMessage.textContent = `Uploaden van icoon afbeelding geannuleerd.`; // Optional user feedback
+                  // Still reject, but with a more specific message
+                } else if (result && result.event === 'close') {
+                     console.log(`Cloudinary widget closed without upload (icon).`);
+                   // Resolve with null if just closed, no real error
+                } else if (result && result.event === 'display-changed' || result && result.event === 'source-changed') {
+                    console.log(`Cloudinary widget state changed (icon) - Event: ${result.event}. Ignoring.`);
+                  // Resolve with null, not an error in this context
+                } else if (result && result.event === 'queues-end') {
+                    console.log(`Cloudinary upload queues finished (icon) - Event: ${result.event}. Ignoring.`);
+                  // Resolve with null, not an error in this context
+                }
+                else {
+                     const rejectionError = new Error(`Cloudinary upload cancelled or failed (icon) - Event: ${result ? result.event : 'unknown'}`);
+                     console.log(`Cloudinary upload: unknown non-success event (icon)`, result ? result.event : 'no result', rejectionError);
+                     errorMessage.textContent = `Uploaden van icoon afbeelding geannuleerd.`;
+                    // Fallback reject for other unexpected non-success events
+                }
+            }
+        });
+        widget.open();
 }
-// Attach event listeners
+
+// --- Attach event listeners (Corrected) ---
 saveSettingsButton.addEventListener('click', handleSaveSettings);
 triggerRedirectButton.addEventListener('click', handleTriggerRedirect);
 dataTableTitleElement.addEventListener('click', handleDataTableTitleClick);
@@ -1194,7 +1225,9 @@ notificationPermissionToggle.addEventListener('change', handleNotificationPermis
 createThemeButton.addEventListener('click', handleCreateThemeButtonClick);
 closeModalButton.addEventListener('click', handleCloseModalButtonClick);
 cancelCustomThemeButton.addEventListener('click', handleCancelCustomThemeButtonClick);
-saveCustomThemeButton.addEventListener('click', handleSaveCustomThemeButtonClick);
+saveCustomThemeButton.addEventListener('click', handleSaveCustomThemeButtonClick); // Call the handler function
+
+// ... (Other event listeners - NO CHANGE NEEDED) ...
 uploadBackgroundButton.addEventListener('click', handleUploadBackgroundButtonClick);
 uploadIconButton.addEventListener('click', handleUploadIconButtonClick);
 
@@ -1207,4 +1240,4 @@ updateNotificationPermissionStatus();
 
 </script>
 </body>
-</html>
+</html>    
