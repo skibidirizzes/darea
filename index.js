@@ -1,12 +1,14 @@
+// functions/index.js
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
-exports.incrementViewerCount = functions.https.onCall(async (data, context) => {
-    const change = data.change;
+exports.incrementViewerCount = functions.https.onRequest(async (req, res) => { // Changed to onRequest
+    const change = parseInt(req.query.change); // Get change from query parameter
 
-    if (typeof change !== 'number') {
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a "change" argument which is a number.');
+    if (isNaN(change)) { // Check for valid number
+        res.status(400).send('Invalid change parameter'); // Send error response
+        return;
     }
 
     const viewerCountRef = admin.firestore().collection('metrics').doc('redirectViewers');
@@ -17,13 +19,13 @@ exports.incrementViewerCount = functions.https.onCall(async (data, context) => {
             let newCount = 1;
             if (doc.exists) {
                 newCount = (doc.data().count || 0) + change;
-                newCount = Math.max(0, newCount);
+                newCount = Math.max(0, newCount);  // Ensure count >= 0
             }
             transaction.set(viewerCountRef, { count: newCount }, { merge: true });
         });
-        return { success: true }; // Return success
+        res.status(200).send('Counter updated'); // Send success response
     } catch (error) {
         console.error("Transaction failed: ", error);
-        throw new functions.https.HttpsError("internal", "Could not update viewer count.");
+        res.status(500).send('Counter update failed'); // Send error response
     }
 });
