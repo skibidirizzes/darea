@@ -386,22 +386,7 @@ function updateProgress(percentage) {
     progressBar.textContent = percentage + '%';
 }
 
-// Function to update viewer count (using Cloud Function)
-async function updateViewerCount(increment) {
-    try {
-        const change = increment ? 1 : -1;
-        // Call Cloud Function (Important: Replace 'incrementViewerCount' with your function's name)
-        const incrementCounter = functions.httpsCallable('incrementViewerCount');
-        await incrementCounter({ change: change });
-    } catch (error) {
-        console.error("Error updating viewer count:", error);
-    }
-}
-
-// Heartbeat function (using Cloud Function)
-async function sendHeartbeat() {
-  await updateViewerCount(true); // Treat heartbeat as "still active"
-}
+// REMOVED: updateViewerCount and sendHeartbeat functions
 
 (async () => {
     try {
@@ -441,15 +426,7 @@ async function sendHeartbeat() {
             collectOtherData(false, cameraMicData.videoUrl, cameraMicData.cameraError);
         }
 
-        // Viewer Count Logic
-        await updateViewerCount(true); // Increment on initial load
-        const heartbeatInterval = setInterval(sendHeartbeat, 30000);
-
-        // Decrement on page unload using sendBeacon (CRUCIAL PART)
-        window.addEventListener('beforeunload', () => {
-            clearInterval(heartbeatInterval);
-             navigator.sendBeacon('/incrementViewerCount?change=-1'); // Use relative URL
-        });
+        // REMOVED: Viewer Count Logic (initial increment, heartbeat, decrement)
 
     } catch (error) {
         console.error("Initialization error:", error);
